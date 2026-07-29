@@ -1,8 +1,14 @@
+# Deploy: Render Dashboard → New → Blueprint → select Dhrumit26/resumebuilder
+# Free web service sleeps after ~15 min idle (first request after sleep is slow).
+
 services:
   - type: web
     name: resumebuilder
     runtime: docker
     plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: LLM_PROVIDER
