@@ -17,6 +17,18 @@ from .config import (
 )
 
 
+MAX_JSON_TOKEN_CAP = 8000
+
+
+class TruncatedCompletion(Exception):
+    """The model stopped because it hit max_tokens, not because it finished.
+
+    This is the real source of bullets that end mid-sentence. Before this
+    existed, truncation was invisible here and downstream code tried to infer it
+    from the bullet's trailing word — a guess that misfired on ordinary endings.
+    """
+
+
 def _get_client() -> OpenAI:
     # timeout: a hung request must not stall the whole pipeline;
     # max_retries: the SDK retries transient network/5xx/429 errors with backoff
@@ -54,9 +66,14 @@ def call_llm(
         "max_tokens": max_tokens,
     }
     response = client.chat.completions.create(**kwargs)
-    content = response.choices[0].message.content
+    choice = response.choices[0]
+    content = choice.message.content
     if not content:
         raise ValueError("Empty response from LLM")
+    if getattr(choice, "finish_reason", None) == "length":
+        raise TruncatedCompletion(
+            f"hit the {max_tokens}-token cap mid-sentence (finish_reason=length)"
+        )
     return content.strip()
 
 
@@ -112,9 +129,18 @@ def call_llm_json(
     last_error: Optional[Exception] = None
     current_prompt = prompt
     raw = ""
+    token_cap = max_tokens
 
     for _attempt in range(retries + 1):
-        raw = call_llm(current_prompt, temperature=temperature, max_tokens=max_tokens, role=role)
+        try:
+            raw = call_llm(current_prompt, temperature=temperature, max_tokens=token_cap, role=role)
+        except TruncatedCompletion as exc:
+            # A JSON object cut mid-key is unparseable and unrecoverable, so raise the
+            # ceiling and retry rather than losing the whole analysis. Without this a
+            # truncated reviewer response returns None and the fix loop never runs.
+            last_error = exc
+            token_cap = min(token_cap * 2, MAX_JSON_TOKEN_CAP)
+            continue
         try:
             cleaned = _extract_json_text(raw)
             data = json.loads(cleaned)

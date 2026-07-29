@@ -21,8 +21,10 @@ services:
         value: grok-4.20-0309-non-reasoning
       - key: SCORE_THRESHOLD
         value: "90"
+      # 92 = the rubric's reachable ceiling once the anti-AI penalty applies.
+      # 95 was unsatisfiable, so the fix loop never exited early.
       - key: TARGET_SCORE
-        value: "95"
+        value: "92"
       - key: MAX_REMAKE_ATTEMPTS
         value: "4"
       - key: BEST_OF_N

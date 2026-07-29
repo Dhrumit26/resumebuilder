@@ -390,3 +390,31 @@ footer code {
   border-radius: 4px;
   padding: 0.15rem 0.4rem;
 }
+
+.stream-status {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+  min-height: 1.2em;
+}
+
+.stream-status.refining {
+  color: var(--warning);
+}
+
+.stream-status.refining::after {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-left: 0.5em;
+  border-radius: 50%;
+  background: currentColor;
+  animation: stream-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes stream-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}

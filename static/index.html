@@ -11,7 +11,7 @@
     <header>
       <h1>Tech Resume Builder</h1>
       <p class="subtitle">Gold-standard tech resume tailoring — built to beat typical applicants</p>
-      <p class="tagline">2 AI calls · hard 1-page limits · ATS + hiring manager score</p>
+      <p class="tagline">Parallel section agents · hard 1-page limits · ATS + hiring manager score</p>
     </header>
 
     <main>
@@ -27,12 +27,14 @@
 
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
-        <p>Generating — remakes until ATS ≥90 (aim 95)...</p>
-        <p class="loading-steps">Tailor → Score → Apply suggestions &amp; remake (up to 5x)</p>
-        <p class="loading-note">Jake LaTeX only (no markdown) · mostly 2-line bullets · remake to ATS 90+</p>
+        <p>Analyzing the job description and writing sections…</p>
+        <p class="loading-steps">A usable resume appears as soon as it exists, then improves in place</p>
+        <p class="loading-note">Jake LaTeX only (no markdown) · mostly 2-line bullets · targets ATS 90+</p>
       </div>
 
       <div id="error" class="error hidden"></div>
+
+      <div id="stream-status" class="stream-status"></div>
 
       <section id="results" class="results hidden">
         <div id="role-target" class="role-target"></div>
