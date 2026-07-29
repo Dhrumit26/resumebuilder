@@ -20,6 +20,15 @@ GROK_WRITER_MODEL = os.getenv("GROK_WRITER_MODEL", GROK_MODEL)
 GROK_JUDGE_MODEL = os.getenv("GROK_JUDGE_MODEL", "grok-4.20-0309-non-reasoning")
 GROK_BASE_URL = os.getenv("GROK_BASE_URL", "https://api.x.ai/v1")
 
+# Companies whose experience bullets may be re-angled to the JD's domain and may
+# adopt JD-named tools absent from the original resume. Intended for the CURRENT
+# role, where the candidate can speak to a range of work. Past roles stay strict.
+FLEXIBLE_EXPERIENCE_COMPANIES = [
+    c.strip()
+    for c in os.getenv("FLEXIBLE_EXPERIENCE_COMPANIES", "Clerxi AI").split(",")
+    if c.strip()
+]
+
 # Fix loop: keep applying reviewer suggestions until ATS score hits threshold
 SCORE_THRESHOLD = int(os.getenv("SCORE_THRESHOLD", "90"))
 MAX_REMAKE_ATTEMPTS = int(os.getenv("MAX_REMAKE_ATTEMPTS", "4"))  # targeted fix rounds
