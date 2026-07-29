@@ -20,14 +20,24 @@ TARGET_BULLET_WORDS = 30
 MAX_BULLET_WORDS = 38
 MAX_SUMMARY_WORDS = 38
 
+# Words that genuinely cannot end a declarative sentence: function words plus
+# transitive participles that require an object.
+#
+# Adjectives and nouns are deliberately NOT listed. The old set included
+# "features", "own", "scalable", "reliable", "accurate", "collaborative" and
+# friends, which are all valid sentence endings — "Shipped three customer-facing
+# features." was classified as truncated, then silently reverted to the
+# untailored original bullet AND capped the resume score at 89, forcing another
+# fix round. ("features" was simultaneously whitelisted as a valid ending 300
+# lines below, so the two rules contradicted each other.)
+#
+# Real mid-sentence truncation is now caught at the source by the
+# finish_reason=="length" check in llm.py, which is where it actually happens.
 INCOMPLETE_LAST_WORDS = {
     "by", "and", "to", "of", "for", "with", "from", "the", "a", "an",
     "cutting", "reducing", "using", "via", "into", "onto", "as", "or",
     "on", "in", "at", "that", "which", "while", "when", "where",
-    # dangling adjectives / fragments the model keeps trailing
-    "accurate", "preserve", "scalable", "reliable", "pragmatic",
-    "customer-minded", "impact-driven", "ai-powered", "productionization",
-    "thoughtful", "collaborative", "own", "features",
+    "preserve",  # bare transitive verb — "...monitoring to preserve." is cut
 }
 
 # Concept/methodology terms that don't belong in a Technical Skills section
@@ -326,14 +336,12 @@ def is_incomplete_plain(plain: str) -> bool:
     last = words[-1].lower().rstrip(",;:")
     if last in INCOMPLETE_LAST_WORDS:
         return True
-    # dangling hyphen compounds: AI-powered / customer-minded / impact-driven
-    if re.search(r"(?i)(powered|minded|driven|oriented|focused)$", last) and len(words) >= 2:
-        # often incomplete when used as trailing adjective without noun
-        if not text.endswith(("systems.", "features.", "services.", "approach.", "design.")):
-            if last.endswith(("-powered", "-minded", "-driven", "-oriented", "-focused")) or last in {
-                "powered", "minded", "driven", "oriented", "focused", "accurate", "preserve"
-            }:
-                return True
+    # NOTE: a "dangling adjective" rule used to live here, flagging any bullet
+    # ending in -powered/-minded/-driven/-oriented/-focused. Those are ordinary
+    # sentence endings ("...making the pipeline self-healing and event-driven."),
+    # so it fired constantly on good bullets and reverted them. Removed — buzzword
+    # adjectives are handled by scrub_ai_fluff, and true truncation is detected by
+    # finish_reason in llm.py.
     # bare number that should be a percent: "... by 70."
     if re.fullmatch(r"\d+", last):
         return True
@@ -524,6 +532,8 @@ def _whitelist_skills(skills: str, original_skills: str, jd_tools: list[str], ma
         allowed.add(key)
         to_inject.append(tool)
 
+    emptied: list[str] = []
+
     def filter_category(m: re.Match) -> str:
         kept = []
         for entry in _split_skill_entries(m.group(2)):
@@ -531,10 +541,18 @@ def _whitelist_skills(skills: str, original_skills: str, jd_tools: list[str], ma
             if entry.strip().lower() in allowed or base.lower() in allowed:
                 kept.append(entry.strip())
         if not kept:
-            kept = _split_skill_entries(m.group(2))[:3]
+            # Nothing in this category survived the whitelist, i.e. the model
+            # replaced it wholesale with tools the candidate never used. The old
+            # code kept the first 3 entries UNFILTERED here, smuggling the
+            # inventions through in exactly the case the whitelist exists to stop.
+            emptied.append(m.group(0))
+            return m.group(0)
         return m.group(1) + ", ".join(kept) + m.group(3)
 
     out = SKILL_CATEGORY_RE.sub(filter_category, skills)
+    if emptied:
+        # Trust the candidate's real skills section; JD tools still get injected below.
+        out = original_skills
 
     # Inject missing JD tools into Backend/Cloud/DevOps category if still absent
     still_missing = [t for t in to_inject if t.lower() not in latex_to_plain(out).lower()]
@@ -555,6 +573,19 @@ def _whitelist_skills(skills: str, original_skills: str, jd_tools: list[str], ma
         else:
             # fallback: first category
             out = SKILL_CATEGORY_RE.sub(inject, out, count=1)
+    return out
+
+
+_TEXTBF_RE = re.compile(r"\\textbf\{([^{}]*)\}")
+
+
+def strip_bold(text: str) -> str:
+    """Unwrap every \\textbf{...}, keeping the inner text. Loops to handle nesting."""
+    out = text or ""
+    prev = None
+    while prev != out:
+        prev = out
+        out = _TEXTBF_RE.sub(r"\1", out)
     return out
 
 
@@ -916,8 +947,16 @@ def clean_generated_sections(
             fallback_used["summary"] = True
             gate_reverts["summary"] = hit
 
-    experience = _repair_bullets_with_original(experience, fallback["experience"])
-    projects = _repair_bullets_with_original(projects, fallback["projects"])
+    # ORDER MATTERS: every text-mutating pass runs BEFORE the final repair pass.
+    # scrub_ai_fluff deletes whole words, so it can turn a complete bullet into a
+    # fragment ("...built for robust." -> "...built for."). It used to run *after*
+    # the last repair, so those self-inflicted fragments were never fixed — they
+    # just surfaced as incomplete_bullets, capped the score at 89 and bought
+    # another fix round.
+    experience = scrub_ai_fluff(experience)
+    projects = scrub_ai_fluff(projects)
+    experience = _strip_concept_bolds(experience)
+    projects = _strip_concept_bolds(projects)
     experience = _enforce_bullet_length(experience)
     projects = _enforce_bullet_length(projects)
     experience = _repair_bullets_with_original(experience, fallback["experience"])
@@ -933,6 +972,11 @@ def clean_generated_sections(
         return re.sub(r"\\textit\{([^{}]*)\}", repl, text, count=1)
 
     if is_valid_jake_summary(summary):
+        # No bold in the summary, by choice. Doing this FIRST also un-nests the
+        # braces, which is the only reason trim_summary and the weak-language
+        # scrub can match at all — both are anchored on \textit{[^{}]*}, so a
+        # \textbf inside \textit used to make them silently no-op.
+        summary = strip_bold(summary)
         summary = trim_summary(summary)
         summary = _scrub_weak_summary_language(summary)
         summary = scrub_ai_fluff(summary)
@@ -945,10 +989,6 @@ def clean_generated_sections(
         summary = fallback["summary"]
         fallback_used["summary"] = True
 
-    experience = scrub_ai_fluff(experience)
-    projects = scrub_ai_fluff(projects)
-    experience = _strip_concept_bolds(experience)
-    projects = _strip_concept_bolds(projects)
     summary = _strip_concept_bolds(summary)
 
     if is_valid_jake_skills(skills):

@@ -396,13 +396,17 @@ def t18_unicode_jd():
 
 
 def t19_best_of_n_picks_higher():
-    # BEST_OF_N=2: reviewer scores candidate 1 at 85, candidate 2 at 92
+    # BEST_OF_N=2: the mock hands out 85 and 92 by reviewer-call order. Candidates
+    # are now scored CONCURRENTLY, so which candidate draws which score is not
+    # deterministic — assert the invariant that actually matters (the winner is the
+    # top scorer) rather than a fixed ordering.
     m = MockLLM(reviewer_scores=[make_scores(85), make_scores(92), make_scores(92)])
     with_mock(m, best_of_n=2)
     out = pl.build_tailored_resume(JD)
     h0 = out["meta"]["history"][0]
-    assert h0["candidate_scores"] == [85, 92], h0
-    assert h0["picked_candidate"] == 2
+    assert sorted(h0["candidate_scores"]) == [85, 92], h0
+    picked = h0["candidate_scores"][h0["picked_candidate"] - 1]
+    assert picked == max(h0["candidate_scores"]), h0
     assert out["meta"]["final_score"] >= 92
     # 8 section calls happened (4 per candidate)
     assert all(v >= 2 for v in m.section_calls.values()), m.section_calls

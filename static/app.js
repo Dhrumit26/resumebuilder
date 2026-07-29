@@ -140,6 +140,92 @@ function renderScores(data) {
   }
 }
 
+function setStatus(text, refining) {
+  const el = document.getElementById("stream-status");
+  if (!el) return;
+  el.textContent = text || "";
+  el.classList.toggle("refining", !!refining);
+}
+
+function renderResult(data, refining) {
+  latestLatex = data.latex;
+  latexOutput.textContent = data.latex;
+  renderRoleTarget(data.jd_analysis);
+  renderRemakeMeta(data.meta);
+  renderScores(data);
+  show(results);
+  setStatus(
+    refining
+      ? `Usable resume ready (ATS ${data.meta?.final_score ?? "—"}). Still refining — this will update automatically.`
+      : "",
+    refining
+  );
+}
+
+// SSE over POST, so EventSource (GET-only) can't be used — parse the frames by hand.
+async function streamBuild(jobDescription) {
+  const res = await fetch("/api/build/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_description: jobDescription }),
+  });
+  if (!res.ok) {
+    let detail = "Generation failed";
+    try { detail = (await res.json()).detail || detail; } catch (_) {}
+    throw new Error(detail);
+  }
+  if (!res.body) throw new Error("Streaming is not supported by this browser");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let sawResult = false;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let split;
+    while ((split = buffer.indexOf("\n\n")) !== -1) {
+      const frame = buffer.slice(0, split);
+      buffer = buffer.slice(split + 2);
+
+      let event = "message";
+      const dataLines = [];
+      for (const line of frame.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+      }
+      if (!dataLines.length) continue;
+
+      let payload;
+      try { payload = JSON.parse(dataLines.join("\n")); } catch (_) { continue; }
+
+      if (event === "jd") {
+        renderRoleTarget(payload.jd_analysis);
+        setStatus("Job description analyzed — writing sections…", true);
+      } else if (event === "draft") {
+        hide(loading);
+        renderResult(payload, true);
+        sawResult = true;
+      } else if (event === "pass") {
+        setStatus(
+          `Refining — pass ${payload.pass}, best ATS ${payload.best_score ?? "—"}…`,
+          true
+        );
+      } else if (event === "final") {
+        hide(loading);
+        renderResult(payload, false);
+        sawResult = true;
+      } else if (event === "error") {
+        throw new Error(payload.detail || "Generation failed");
+      }
+    }
+  }
+  if (!sawResult) throw new Error("Stream ended before a resume was produced");
+}
+
 buildBtn.addEventListener("click", async () => {
   const jobDescription = jobInput.value.trim();
   if (jobDescription.length < 20) {
@@ -150,25 +236,12 @@ buildBtn.addEventListener("click", async () => {
 
   hide(errorEl);
   hide(results);
+  setStatus("", false);
   show(loading);
   buildBtn.disabled = true;
 
   try {
-    const res = await fetch("/api/build", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_description: jobDescription }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Generation failed");
-
-    latestLatex = data.latex;
-    latexOutput.textContent = data.latex;
-    renderRoleTarget(data.jd_analysis);
-    renderRemakeMeta(data.meta);
-    renderScores(data);
-    show(results);
+    await streamBuild(jobDescription);
   } catch (err) {
     errorEl.textContent = err.message;
     show(errorEl);

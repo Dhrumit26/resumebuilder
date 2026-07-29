@@ -20,12 +20,11 @@ from .config import (
     SCORE_THRESHOLD,
     TARGET_SCORE,
 )
-from .llm import call_llm, call_llm_json
+from .llm import TruncatedCompletion, call_llm, call_llm_json
 from .resume_builder import (
     _debug_dump,
     assemble_full_resume,
     bold_keywords_in_bullets,
-    bold_keywords_in_summary,
     bullet_rewrite_ratio,
     clean_generated_sections,
     clean_llm_latex,
@@ -71,6 +70,12 @@ SCORE_SAMPLES = max(1, min(CFG_SCORE_SAMPLES, 3))
 
 # Temperature schedule for candidate diversity in best-of-N generation
 CANDIDATE_TEMPERATURES = [0.25, 0.55, 0.75, 0.9]
+
+# Section attempts share one budget: an invalid-LaTeX retry, a too-close-to-original
+# retry, and a truncation retry-at-a-higher-cap all draw from it.
+MAX_SECTION_ATTEMPTS = 3
+SECTION_TOKEN_CAP = 2500
+MAX_SECTION_TOKEN_CAP = 6000
 
 _DEFAULT_JD_ANALYSIS = {
     "role_title": "",
@@ -119,13 +124,19 @@ def _clamp_scores_bundle(bundle: dict) -> dict:
         breakdown = ats.get("breakdown")
         if isinstance(breakdown, dict):
             cat_scores = []
+            max_total = 0
             for cat in breakdown.values():
                 if isinstance(cat, dict):
                     hi = cat.get("max") if isinstance(cat.get("max"), (int, float)) else 100
                     cat["score"] = _clamp(cat.get("score"), 0, int(hi))
                     if cat["score"] is not None:
                         cat_scores.append(cat["score"])
-            if len(cat_scores) >= 5:  # trust the sum only when the breakdown is complete
+                        max_total += int(hi)
+            # Trust the derived sum ONLY when the breakdown is complete: every
+            # category scored AND the maxes add up to the full 100-point rubric.
+            # The old ">= 5 of 7" test happily summed a partial breakdown, which
+            # understated the score by up to 15 points and bought extra fix rounds.
+            if cat_scores and len(cat_scores) == len(breakdown) and max_total >= 100:
                 ats["overall_score"] = _clamp(sum(cat_scores))
     review = bundle.get("ats_reviewer")
     if isinstance(review, dict):
@@ -156,7 +167,7 @@ def run_jd_agent(jd: str) -> tuple[dict, bool]:
     """Analyze the JD once. Never fails the pipeline: degrades to a minimal analysis."""
     prompt = fill_prompt(load_prompt("agent_jd.txt"), JOB_DESCRIPTION=jd)
     try:
-        raw = call_llm_json(prompt, temperature=0.0, max_tokens=1500)
+        raw = call_llm_json(prompt, temperature=0.0, max_tokens=2000)
     except Exception:
         _debug_dump("agent_jd_error", "JD agent failed twice; using default analysis")
         return dict(_DEFAULT_JD_ANALYSIS), False
@@ -248,10 +259,20 @@ def write_section(
         temperature = 0.15 if fix_context else 0.25
 
     last_error = None
-    for attempt in range(2):
+    token_cap = SECTION_TOKEN_CAP
+    attempts = 0
+    while attempts < MAX_SECTION_ATTEMPTS:
+        attempts += 1
         try:
-            raw = call_llm(prompt, temperature=temperature, max_tokens=2500)
-        except Exception as exc:  # network/timeouts: retry once, then give up
+            raw = call_llm(prompt, temperature=temperature, max_tokens=token_cap)
+        except TruncatedCompletion as exc:
+            # The model ran out of room mid-bullet. Retrying at the same cap would
+            # truncate again, so raise the ceiling instead of falling back.
+            last_error = exc
+            _debug_dump(f"agent_{name}_truncated", f"cap={token_cap}: {exc}")
+            token_cap = min(token_cap * 2, MAX_SECTION_TOKEN_CAP)
+            continue
+        except Exception as exc:  # network/timeouts: retry, then give up
             last_error = exc
             continue
         latex = strip_markdown_artifacts(clean_llm_latex(raw))
@@ -266,7 +287,7 @@ def write_section(
         # Experience/projects must be real rewrites, not near-copies of ORIGINAL
         if name in ("experience", "projects") and not fix_context:
             ratio = bullet_rewrite_ratio(latex, original_section)
-            if ratio < 0.6 and attempt == 0:
+            if ratio < 0.6 and attempts == 1:
                 prompt += (
                     "\n\nWARNING: Your bullets were too close to ORIGINAL (copy/paraphrase). "
                     "REWRITE every \\resumeItem with different wording and a JD angle. "
@@ -276,7 +297,7 @@ def write_section(
                 temperature = min(0.55, max(temperature, 0.4))
                 continue
         _debug_dump(f"agent_{name}", latex)
-        return latex, ("ok" if attempt == 0 else "retried")
+        return latex, ("ok" if attempts == 1 else "retried")
 
     status = "error" if last_error is not None else "invalid"
     _debug_dump(f"agent_{name}_failed", f"{status}: {last_error}")
@@ -339,7 +360,7 @@ def run_reviewer(resume_text: str, jd: str, jd_analysis: dict) -> dict | None:
         JD_ANALYSIS=json.dumps(jd_analysis, indent=1),
     )
     try:
-        bundle = call_llm_json(prompt, temperature=0.0, max_tokens=2200)
+        bundle = call_llm_json(prompt, temperature=0.0, max_tokens=3000)
     except Exception:
         return None
     bundle = _clamp_scores_bundle(bundle)
@@ -459,10 +480,10 @@ def _assemble(
         fallback_sections=fallback_sections,
         jd_keywords=jd_keywords,
     )
-    # Guarantee JD keywords are visually bolded (the model's own bolding is inconsistent)
+    # Guarantee JD keywords are visually bolded (the model's own bolding is inconsistent).
+    # The summary is deliberately left unbolded — see strip_bold() in resume_builder.
     cleaned["experience"] = bold_keywords_in_bullets(cleaned["experience"], jd_keywords)
     cleaned["projects"] = bold_keywords_in_bullets(cleaned["projects"], jd_keywords)
-    cleaned["summary"] = bold_keywords_in_summary(cleaned["summary"], jd_keywords)
     full_latex = assemble_full_resume(
         template, cleaned["summary"], cleaned["experience"], cleaned["projects"], cleaned["skills"]
     )
@@ -470,8 +491,79 @@ def _assemble(
     return cleaned, full_latex, latex_to_plain(full_latex)
 
 
-def build_tailored_resume(job_description: str) -> dict:
-    """Agent pipeline entry point. API-compatible with the previous implementation."""
+def _result_payload(
+    best: dict,
+    jd_analysis: dict,
+    llm_calls: int,
+    rounds: int,
+    history: list[dict],
+    jd_ok: bool,
+    reviewer_ok: bool,
+    final: bool,
+) -> dict:
+    """Build the response body. Shared by the streamed draft and the final result."""
+    cleaned = best["cleaned"]
+    scores = best["scores"]
+    return {
+        "latex": best["full_latex"],
+        "sections": {n: cleaned[n] for n in SECTION_NAMES},
+        "jd_analysis": jd_analysis,
+        "meta": {
+            "architecture": "agents-v2",
+            # False on a streamed draft: the fix loop is still running and a
+            # better version may replace this one.
+            "final": final,
+            "llm_calls": llm_calls,
+            "score_threshold": SCORE_THRESHOLD,
+            "target_score": TARGET_SCORE,
+            "final_score": best["score"],
+            "passed_threshold": best["score"] >= SCORE_THRESHOLD,
+            "hit_target": best["score"] >= TARGET_SCORE,
+            "remake_attempts": rounds,
+            "best_pass": best["pass"],
+            "history": history,
+            "jd_agent_ok": jd_ok,
+            "reviewer_ok": reviewer_ok,
+            "incomplete_bullets": find_incomplete_bullets(cleaned["experience"])
+            + find_incomplete_bullets(cleaned["projects"]),
+            "bullet_counts_expected": {
+                "experience": cleaned["expected_experience_bullets"],
+                "projects": cleaned["expected_project_bullets"],
+            },
+            "bullet_counts_actual": {
+                "experience": cleaned["actual_experience_bullets"],
+                "projects": cleaned["actual_project_bullets"],
+            },
+            "summary_words": word_count(latex_to_plain(cleaned["summary"])),
+            "approx_body_words": word_count(best["resume_text"]),
+        },
+        "scores": {
+            "ats_scorer": scores.get("ats_scorer", {}),
+            "ats_reviewer": scores.get("ats_reviewer", {}),
+            "human_reviewer": scores.get("human_reviewer", {}),
+        },
+    }
+
+
+def _emit(on_progress, event: str, payload: dict) -> None:
+    """Fire a progress event. A broken consumer must never fail the build."""
+    if on_progress is None:
+        return
+    try:
+        on_progress(event, payload)
+    except Exception:
+        pass
+
+
+def build_tailored_resume(job_description: str, on_progress=None) -> dict:
+    """Agent pipeline entry point. API-compatible with the previous implementation.
+
+    on_progress: optional callable(event: str, payload: dict). Receives "jd" once
+    the JD is analyzed, "draft" as soon as stage 3 picks a winner (usable resume,
+    ~1/3 of total wall-clock), and "pass" after each fix round. The fix loop is
+    inherently serial — each round needs the previous round's scores — so this is
+    how the wait becomes usable rather than shorter.
+    """
     jd = sanitize_jd(job_description)
     original_sections = load_original_sections()
     template = load_full_template()
@@ -484,6 +576,7 @@ def build_tailored_resume(job_description: str) -> dict:
     jd_analysis, jd_ok = run_jd_agent(jd)
     llm_calls += 1
     keywords = jd_keywords_of(jd_analysis)
+    _emit(on_progress, "jd", {"jd_analysis": jd_analysis, "jd_agent_ok": jd_ok})
 
     # ---- Stage 2: best-of-N candidate resumes, all section agents parallel --
     n = BEST_OF_N
@@ -515,14 +608,37 @@ def build_tailored_resume(job_description: str) -> dict:
     llm_calls += len(SECTION_NAMES) * n
 
     # ---- Stage 3: assemble + score every candidate, keep the strongest -----
-    scored_candidates = []
-    reviewer_ok = False
+    # Assembly is pure CPU, so do it up front; then score every candidate
+    # CONCURRENTLY. Candidates are independent, so the old sequential loop paid a
+    # full reviewer round per extra candidate for no reason.
+    assembled = []
     for idx, (drafts, statuses) in enumerate(candidates):
         cleaned, full_latex, resume_text = _assemble(
             template, original_sections, drafts, None, keywords
         )
-        scores = run_reviewer_stable(resume_text, jd, jd_analysis)
-        llm_calls += SCORE_SAMPLES
+        assembled.append((idx, cleaned, full_latex, resume_text, statuses))
+
+    if len(assembled) == 1:
+        score_results = [run_reviewer_stable(assembled[0][3], jd, jd_analysis)]
+    else:
+        with ThreadPoolExecutor(max_workers=len(assembled)) as score_pool:
+            score_futures = [
+                score_pool.submit(run_reviewer_stable, item[3], jd, jd_analysis)
+                for item in assembled
+            ]
+            score_results = []
+            for future in score_futures:
+                try:
+                    score_results.append(future.result())
+                except Exception:
+                    score_results.append(None)
+    llm_calls += SCORE_SAMPLES * len(assembled)
+
+    scored_candidates = []
+    reviewer_ok = False
+    for (idx, cleaned, full_latex, resume_text, statuses), scores in zip(
+        assembled, score_results
+    ):
         if scores is None:
             scores = {}
         else:
@@ -565,6 +681,16 @@ def build_tailored_resume(job_description: str) -> dict:
         "score": score,
         "pass": 1,
     }
+
+    # A complete, usable resume exists right now. Ship it to the client before
+    # spending the next couple of minutes in the serial fix loop.
+    _emit(
+        on_progress,
+        "draft",
+        _result_payload(
+            best, jd_analysis, llm_calls, 0, history, jd_ok, reviewer_ok, final=False
+        ),
+    )
 
     # ---- Stage 4: targeted fix loop ----------------------------------------
     rounds = 0
@@ -661,50 +787,30 @@ def build_tailored_resume(job_description: str) -> dict:
                 "pass": rounds + 1,
             }
             stagnant = 0
+            # A better version exists — push it so the client can swap it in.
+            _emit(
+                on_progress,
+                "draft",
+                _result_payload(
+                    best, jd_analysis, llm_calls, rounds, history,
+                    jd_ok, reviewer_ok, final=False,
+                ),
+            )
         else:
             stagnant += 1
             # keep best scores for next round's fixes; the failed attempt's fixes
             # may chase noise from a worse resume
+        _emit(
+            on_progress,
+            "pass",
+            {"pass": rounds + 1, "score": score, "improved": improved,
+             "best_score": best["score"], "fixed_sections": list(fix_contexts.keys())},
+        )
         if best["score"] >= TARGET_SCORE and _is_clean(best["cleaned"]):
             break
         if stagnant >= 2:
             break
 
-    cleaned = best["cleaned"]
-    scores = best["scores"]
-    return {
-        "latex": best["full_latex"],
-        "sections": {n: cleaned[n] for n in SECTION_NAMES},
-        "jd_analysis": jd_analysis,
-        "meta": {
-            "architecture": "agents-v2",
-            "llm_calls": llm_calls,
-            "score_threshold": SCORE_THRESHOLD,
-            "target_score": TARGET_SCORE,
-            "final_score": best["score"],
-            "passed_threshold": best["score"] >= SCORE_THRESHOLD,
-            "hit_target": best["score"] >= TARGET_SCORE,
-            "remake_attempts": rounds,
-            "best_pass": best["pass"],
-            "history": history,
-            "jd_agent_ok": jd_ok,
-            "reviewer_ok": reviewer_ok,
-            "incomplete_bullets": find_incomplete_bullets(cleaned["experience"])
-            + find_incomplete_bullets(cleaned["projects"]),
-            "bullet_counts_expected": {
-                "experience": cleaned["expected_experience_bullets"],
-                "projects": cleaned["expected_project_bullets"],
-            },
-            "bullet_counts_actual": {
-                "experience": cleaned["actual_experience_bullets"],
-                "projects": cleaned["actual_project_bullets"],
-            },
-            "summary_words": word_count(latex_to_plain(cleaned["summary"])),
-            "approx_body_words": word_count(best["resume_text"]),
-        },
-        "scores": {
-            "ats_scorer": scores.get("ats_scorer", {}),
-            "ats_reviewer": scores.get("ats_reviewer", {}),
-            "human_reviewer": scores.get("human_reviewer", {}),
-        },
-    }
+    return _result_payload(
+        best, jd_analysis, llm_calls, rounds, history, jd_ok, reviewer_ok, final=True
+    )

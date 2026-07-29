@@ -1,4 +1,6 @@
 import json
+import queue
+import threading
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -7,7 +9,7 @@ load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -70,3 +72,49 @@ def build_resume(request: BuildRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Resume generation failed: {exc}") from exc
+
+
+_STREAM_DONE = object()
+
+
+# Same pipeline, streamed as Server-Sent Events. The fix loop is serial and can't
+# be shortened, so this makes the wait usable instead: a complete resume arrives
+# at roughly a third of total wall-clock, then better versions replace it.
+# Events: jd -> draft -> pass -> (draft -> pass)* -> final | error
+@app.post("/api/build/stream")
+def build_resume_stream(request: BuildRequest):
+    events: queue.Queue = queue.Queue()
+
+    def run():
+        try:
+            result = build_tailored_resume(
+                request.job_description,
+                on_progress=lambda event, payload: events.put((event, payload)),
+            )
+            events.put(("final", result))
+        except ValueError as exc:
+            events.put(("error", {"detail": str(exc)}))
+        except Exception as exc:
+            events.put(("error", {"detail": f"Resume generation failed: {exc}"}))
+        finally:
+            events.put(_STREAM_DONE)
+
+    threading.Thread(target=run, daemon=True).start()
+
+    def stream():
+        while True:
+            item = events.get()
+            if item is _STREAM_DONE:
+                break
+            event, payload = item
+            yield f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # stop proxy buffering from defeating the point
+        },
+    )
