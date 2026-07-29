@@ -1,0 +1,9 @@
+# Railway: https://railway.app — connect GitHub repo, set env vars below
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"

@@ -1,0 +1,164 @@
+
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\begin{document}
+
+\begin{center}
+    \textbf{\Huge \scshape Dhrumit Savaliya} \\ \vspace{1pt}
+    \small 562-515-5080 $|$ \href{dhrumitsavaliyar@gmail.com}{\underline{dhrumitsavaliyar@gmail.com}} $|$ 
+    \href{https://linkedin.com/in/dhrumit-savaliya}{\underline{linkedin.com/in/dhrumit-savaliya/}} $|$
+    \href{https://github.com/dhrumit26}{\underline{github.com/dhrumit26}}
+\end{center}
+
+%-----------Summary-----------
+
+\begin{center}
+\textit{Backend and full-stack engineer building distributed APIs, retrieval services, and agent orchestration systems on cloud infrastructure. Designs scalable, reliable backends, ships production services, and collaborates across engineering and product to solve real customer problems.}
+\end{center}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {California State University, Long Beach}{Long Beach, CA}
+      {Bachelor of Science in Computer Science}{Graduated: Dec. 2025}
+  \resumeSubHeadingListEnd
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {AI Engineer}{May. 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Built \textbf{Python} backend retrieval services on AWS for a distributed multi-agent system, applying \textbf{OOP} and \textbf{algorithmic design} to architect scalable, service-oriented APIs integrating semantic reranking of technical documents.}
+        \resumeItem{Cut multi-agent query latency by 45\% by re-engineering \textbf{core data structures} and retrieval \textbf{algorithms}, with \textbf{systems monitoring} of live production services throughout to preserve accuracy at scale.}
+        \resumeItem{Reduced infrastructure and inference costs by 40\% via semantic caching, dynamic top-k sizing, and embedding-dimension tuning across a large-scale distributed vector search backend, improving overall system efficiency.}
+        \resumeItem{Deployed a containerized API server for stateful agent orchestration using \textbf{Docker} and DevOps practices, securely exposing internal ERP and project-management systems for end-to-end read/write automation.}
+        \resumeItem{Collaborated with engineering and product teams across the full SDLC, from API contract definition through deployment and production support, shipping reliable, scalable agent infrastructure on time.}
+      \resumeItemListEnd
+
+    \resumeSubheading
+      {Software Engineer Intern}{Jun. 2025 -- Aug. 2025}
+      {Intuit}{San Diego, CA}
+      \resumeItemListStart
+        \resumeItem{Cut flaky CI failures by 65\% and pipeline runtime from 45 to 28 minutes by migrating end-to-end tests from Cypress to Playwright, speeding releases by 2 days per sprint.}
+        \resumeItem{Tripled iteration speed and shortened deployment cycles from 2 weeks to 4 days by refactoring \textbf{TypeScript} and \textbf{JavaScript} platform services powering low-code features across teams.}
+        \resumeItem{Raised unit and integration \textbf{test coverage} from 42\% to 78\% with \textbf{Jest} and React Testing Library, reducing production defects by 40\% and catching regressions earlier in development.}
+        \resumeItem{Built React pre-selection logic that cut form completion time by 35\% and dropped configuration-related support tickets by 50\%, simplifying onboarding for a large user base.}
+        \resumeItem{Defined and maintained API contracts across service boundaries, enabling cleaner cross-team handoffs and reducing integration breaks during multi-sprint release cycles.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+\section{Projects}
+  \resumeSubHeadingListStart
+
+    \resumeProjectHeading
+      {\textbf{AutoFixee} $|$ \emph{AI self-healing CI platform} \href{https://auto-fix-dashboard.vercel.app/}{(Live)}}{Jan. 2026}
+      \resumeItemListStart
+        \resumeItem{Built an AI self-healing CI platform monitoring failed \textbf{GitHub Actions} and GitLab CI runs in real time, identifying root causes and opening verified fix PRs automatically, cutting manual debug time by 70\%.}
+        \resumeItem{Engineered \textbf{Python}/FastAPI webhook and REST services backed by \textbf{PostgreSQL} and AWS, slashing inference costs by 80\%+ with a three-tier rule-based and multi-agent remediation strategy for \textbf{scalability}.}
+      \resumeItemListEnd
+
+    \resumeProjectHeading
+      {\textbf{Beach Bank} $|$ \emph{Full-stack banking application} \href{https://beachbank.netlify.app}{(Live)}}{Dec. 2025}
+      \resumeItemListStart
+        \resumeItem{Built a \textbf{full-stack} banking app supporting multi-account linking, real-time balances, transaction history, and secure fund transfers via Plaid and Dwolla REST API integrations.}
+        \resumeItem{Implemented with \textbf{Next.js} 14, React, \textbf{TypeScript}, \textbf{PostgreSQL}, OAuth 2.0, and \textbf{GitHub Actions} \textbf{CI/CD}, adding pagination and spending analytics to surface actionable account insights.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------PROGRAMMING SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Python, SQL, TypeScript, JavaScript, Java, C, C++} \\
+     \vspace{1pt}
+     \textbf{Backend \& AI}{: FastAPI, REST APIs, PostgreSQL, Redis, Docker, AWS, LLMs, Multi-Agent Systems, Vector Search, Semantic Caching} \\
+     \vspace{1pt}
+     \textbf{Testing \& CI/CD}{: Jest, Playwright, React Testing Library, GitHub Actions, Jenkins} \\
+     \vspace{1pt}
+     \textbf{Frontend}{: React, Next.js} \\
+    }}
+ \end{itemize}
+
+%-------------------------------------------
+\end{document}

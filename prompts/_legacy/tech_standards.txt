@@ -1,0 +1,61 @@
+# GOLD STANDARD TECH RESUME STANDARDS
+# Used by all generation and review prompts. Target: top 5% of applicants, not average.
+
+## Philosophy
+- Recruiters spend 6-10 seconds on first scan. Lead with impact, not duties.
+- ATS passes you. Humans hire you. Optimize for BOTH.
+- Every line must earn its place on ONE page. No filler.
+- Truth only — reframe and emphasize, never fabricate.
+
+## Bullet Formula (Google XYZ — mandatory for experience & projects)
+"Accomplished [X — metric/impact] by [Y — action/tech] resulting in [Z — business outcome]"
+Examples:
+- "Reduced API p99 latency 40% (800ms→480ms) by redesigning caching layer in Redis, saving $12K/mo infra costs"
+- "Shipped payment microservice handling 50K daily transactions using Python/FastAPI and PostgreSQL with 99.95% uptime"
+- "Led migration of 3 monolith services to Kubernetes, cutting deploy time from 45min to 8min for 12-engineer team"
+
+## Tech-Specific Impact Metrics (use when truthful)
+- Latency (ms, p50/p99), throughput (req/s, events/s), uptime (%), error rate
+- Users/DAU, revenue, cost savings, infra cost reduction
+- Code: PRs merged, test coverage %, bugs reduced, deploy frequency
+- Team: engineers mentored, cross-team projects led
+- Scale: data volume (GB/TB), queue depth, concurrent users
+
+## Action Verbs (rotate — never repeat in adjacent bullets)
+Architected, Built, Deployed, Designed, Drove, Engineered, Implemented, Improved,
+Launched, Led, Migrated, Optimized, Owned, Reduced, Refactored, Scaled, Shipped, Spearheaded
+
+## Weak vs Strong (eliminate all weak patterns)
+WEAK: "Responsible for maintaining backend services"
+STRONG: "Owned 4 production microservices serving 2M daily requests with 99.9% uptime"
+
+WEAK: "Worked with team on React frontend"
+STRONG: "Built React/TypeScript dashboard used by 500+ internal users, cutting report time 60%"
+
+WEAK: "Experience with AWS and Docker"
+STRONG: "Deployed fault-tolerant services on AWS (ECS, RDS, S3) using Docker and Terraform"
+
+## Section Rules
+SUMMARY: 2 lines max. Role title + years + 2-3 core tech stacks + 1 signature achievement.
+EXPERIENCE: Most recent role gets 4 bullets, older roles 2-3. Tech stack in at least 50% of bullets.
+PROJECTS: 2 projects max. Treat like production work — stack, scale, outcome.
+SKILLS: Mirror JD terminology exactly. Order: Languages → Frameworks → Cloud/Infra → Tools → Concepts.
+EDUCATION: One line unless recent grad (<2 yrs).
+
+## ATS Rules for Tech
+- Spell out acronyms once: "Amazon Web Services (AWS)" then "AWS" is fine
+- Use exact JD keywords: if JD says "Node.js" don't write "Node"
+- No tables, columns, graphics, or fancy LaTeX that breaks parsers
+- Standard headers: Summary, Experience, Projects, Skills, Education
+
+## Seniority Calibration
+Junior (0-2 yr): Emphasize projects, internships, learning velocity, specific tech.
+Mid (2-5 yr): Emphasize ownership, shipped features, measurable impact, cross-team work.
+Senior (5+ yr): Emphasize architecture, system design, mentoring, technical leadership, business impact.
+Staff+: Emphasize org-wide impact, strategy, multi-team initiatives, technical direction.
+
+## Competitive Edge (beat typical applicants)
+Typical applicants list responsibilities. You list OUTCOMES with NUMBERS.
+Typical applicants say "various technologies." You name EXACT stacks from the JD.
+Typical applicants have generic summaries. Yours mirrors the EXACT role title and level.
+Typical applicants bury relevant experience. Your most relevant bullets are FIRST.

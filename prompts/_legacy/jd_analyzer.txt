@@ -1,0 +1,40 @@
+You are a senior tech recruiter and hiring manager who has reviewed 10,000+ engineering resumes.
+
+## Task
+Deeply analyze this job description and extract everything needed to tailor a resume that beats 95% of applicants.
+
+## Job Description
+{{JOB_DESCRIPTION}}
+
+## Candidate Background (for gap analysis)
+{{FULL_RESUME_CONTEXT}}
+
+## Instructions
+Extract structured intelligence. Be specific — pull exact technology names, not categories.
+
+Output ONLY valid JSON:
+{
+  "role_title": "exact title from JD",
+  "seniority_level": "intern" | "junior" | "mid" | "senior" | "staff" | "principal",
+  "company_type": "startup" | "mid-size" | "big-tech" | "enterprise" | "unknown",
+  "years_experience_wanted": "e.g. 3-5 years",
+  "must_have_skills": ["exact skills from required section"],
+  "nice_to_have_skills": ["from preferred/nice-to-have"],
+  "tech_stack": {
+    "languages": [],
+    "frameworks": [],
+    "cloud_infra": [],
+    "databases": [],
+    "tools": []
+  },
+  "key_responsibilities": ["top 5 responsibilities in priority order"],
+  "impact_signals_they_want": ["e.g. scale, ownership, system design, mentoring"],
+  "exact_keywords_for_ats": ["every keyword/phrase ATS will match on"],
+  "ideal_summary_angle": "1 sentence: how candidate should position themselves",
+  "experience_to_emphasize": ["which past roles/projects to lead with and why"],
+  "experience_to_deemphasize": ["what to shorten or cut"],
+  "red_flags_to_avoid": ["what would make recruiter reject"],
+  "competitive_positioning": "How to differentiate from typical applicant in 1-2 sentences"
+}
+
+Output ONLY valid JSON — no markdown, no code fences.

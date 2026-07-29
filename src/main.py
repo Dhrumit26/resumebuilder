@@ -1,0 +1,72 @@
+import json
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from .pipeline import build_tailored_resume
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "static"
+
+app = FastAPI(title="Resume Builder", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+class BuildRequest(BaseModel):
+    job_description: str = Field(..., min_length=20, description="Target job description")
+
+
+class BuildResponse(BaseModel):
+    latex: str
+    sections: dict
+    jd_analysis: dict
+    scores: dict
+    meta: dict = {}
+
+
+@app.get("/")
+async def root():
+    index = STATIC_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index)
+    return {"message": "Resume Builder API", "docs": "/docs"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+# Sync endpoint on purpose: FastAPI runs it in a worker thread, so the
+# 40s+ pipeline doesn't block the event loop (health checks, static files).
+@app.post("/api/build", response_model=BuildResponse)
+def build_resume(request: BuildRequest):
+    try:
+        result = build_tailored_resume(request.job_description)
+        return result
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Model returned invalid JSON. Try again. ({exc})",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Resume generation failed: {exc}") from exc

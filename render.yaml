@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: resumebuilder
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: LLM_PROVIDER
+        value: grok
+      - key: GROK_MODEL
+        value: grok-4.5
+      - key: GROK_WRITER_MODEL
+        value: grok-4.5
+      - key: GROK_JUDGE_MODEL
+        value: grok-4.20-0309-non-reasoning
+      - key: SCORE_THRESHOLD
+        value: "90"
+      - key: TARGET_SCORE
+        value: "95"
+      - key: MAX_REMAKE_ATTEMPTS
+        value: "4"
+      - key: BEST_OF_N
+        value: "2"
+      - key: SCORE_SAMPLES
+        value: "2"
+      - key: GROK_API_KEY
+        sync: false
