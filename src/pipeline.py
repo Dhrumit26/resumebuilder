@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .config import (
     BEST_OF_N as CFG_BEST_OF_N,
+    FLEXIBLE_EXPERIENCE_COMPANIES,
     MAX_REMAKE_ATTEMPTS,
     SCORE_SAMPLES as CFG_SCORE_SAMPLES,
     SCORE_THRESHOLD,
@@ -234,6 +235,7 @@ def _build_section_prompt(
         PLACEMENT_KEYWORDS=_placement_keywords(jd_analysis, name, banned),
         JD_TOOLS=", ".join(jd_analysis.get("tools") or []) or "(none identified)",
         BANNED_TOOLS=", ".join(banned) or "(none — all JD tools are evidenced)",
+        FLEXIBLE_COMPANY=", ".join(FLEXIBLE_EXPERIENCE_COMPANIES) or "(none)",
         FIX_BLOCK=fix_block,
     )
 

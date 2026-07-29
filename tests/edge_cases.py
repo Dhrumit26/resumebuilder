@@ -277,15 +277,47 @@ def t08_fix_makes_worse_best_kept():
 
 
 def t09_fabricated_tools_reverted():
+    """Fixed-history job (Intuit): unevidenced JD tools must be reverted.
+
+    The previous version of this test targeted text that TAILORED had already
+    replaced, so the injection silently no-oped and it passed against input that
+    never contained the fabrication. The fixture assert below prevents that.
+    """
     fabricated = TAILORED["experience"].replace(
-        "applying \\textbf{OOP} and \\textbf{algorithmic design}",
-        "using \\textbf{Kubernetes} and gRPC with Datadog monitoring",
+        "Wrote and maintained service API contracts",
+        "Wrote Kubernetes-backed service API contracts with gRPC and Datadog",
     )
+    assert "Kubernetes" in fabricated, "fixture failed to inject the fabrication"
     m = MockLLM(section_behavior={"experience": [fabricated, fabricated]})
     with_mock(m)
     out = pl.build_tailored_resume(JD)
     exp = out["sections"]["experience"].lower()
-    assert "kubernetes" not in exp and "grpc" not in exp and "datadog" not in exp
+    assert "kubernetes" not in exp and "grpc" not in exp and "datadog" not in exp, exp
+
+
+def t24_flexible_company_keeps_jd_tools():
+    """Clerxi AI is flexible: it MAY adopt JD tools. Intuit may not, same section."""
+    exp = TAILORED["experience"].replace(
+        "using clean APIs and semantic reranking",
+        "using Kubernetes and semantic reranking",
+    ).replace(
+        "Wrote and maintained service API contracts",
+        "Wrote Datadog-backed service API contracts",
+    )
+    assert "Kubernetes" in exp and "Datadog" in exp, "fixture failed to inject"
+    m = MockLLM(section_behavior={"experience": [exp, exp]})
+    with_mock(m)
+    out = pl.build_tailored_resume(JD)
+    got = out["sections"]["experience"]
+    assert "Kubernetes" in got, "Clerxi AI is flexible — JD tool should survive"
+    assert "Datadog" not in got, "Intuit is fixed history — JD tool must be reverted"
+
+
+def t25_flexible_item_indices_splits_by_company():
+    idx = rb.flexible_item_indices(ORIG["experience"], ["Clerxi AI"])
+    assert idx == {0, 1, 2, 3, 4}, idx  # 5 Clerxi bullets, then 5 Intuit
+    assert rb.flexible_item_indices(ORIG["experience"], []) == set()
+    assert rb.flexible_item_indices(ORIG["experience"], ["Nonexistent Co"]) == set()
 
 
 def t10_concepts_stripped_parens_kept():

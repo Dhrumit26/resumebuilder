@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from .config import LATEX_DIR, PROMPTS_DIR
+from .config import FLEXIBLE_EXPERIENCE_COMPANIES, LATEX_DIR, PROMPTS_DIR
 
 # Jake's Resume template section markers (comment markers in the .tex files)
 SECTION_MARKERS = {
@@ -601,11 +601,64 @@ def _strip_concept_bolds(section: str) -> str:
     return re.sub(r"\\textbf\{([^{}]+)\}", repl, section)
 
 
+_SUBHEADING_RE = re.compile(r"\\resumeSubheading\s*((?:\{[^{}]*\}\s*){4})", re.DOTALL)
+
+
+def flexible_item_indices(section: str, companies: list[str]) -> set[int]:
+    """Global \\resumeItem indices belonging to an exempt company's block.
+
+    Indices are counted across the whole section so they line up with
+    _extract_resume_items, which the revert/repair passes index into.
+    """
+    wanted = {c.strip().lower() for c in (companies or []) if c.strip()}
+    if not wanted:
+        return set()
+    items = _extract_resume_items(section)
+    if not items:
+        return set()
+
+    positions = []
+    cursor = 0
+    for item in items:
+        at = section.find(item, cursor)
+        if at == -1:
+            at = section.find(item)
+        positions.append(at)
+        cursor = (at if at != -1 else cursor) + len(item)
+
+    # (offset, is_flexible) for each job block, in document order
+    blocks: list[tuple[int, bool]] = []
+    for m in _SUBHEADING_RE.finditer(section):
+        args = re.findall(r"\{([^{}]*)\}", m.group(1))
+        company = args[2].strip().lower() if len(args) >= 3 else ""
+        flexible = bool(company) and any(
+            w == company or w in company or company in w for w in wanted
+        )
+        blocks.append((m.start(), flexible))
+    if not blocks:
+        return set()
+
+    out: set[int] = set()
+    for idx, pos in enumerate(positions):
+        if pos == -1:
+            continue
+        current = False
+        for start, flexible in blocks:
+            if start < pos:
+                current = flexible
+            else:
+                break
+        if current:
+            out.add(idx)
+    return out
+
+
 def _revert_bullets_with_unevidenced_tools(
     section: str,
     fallback_section: str,
     jd_keywords: list[str],
     evidence_lower: str,
+    flexible_companies: list[str] | None = None,
 ) -> tuple[str, list[str]]:
     """Truthfulness gate for bullets: a JD TOOL keyword that never appears in the
     user's original resume must not appear in an experience/project bullet.
@@ -628,9 +681,14 @@ def _revert_bullets_with_unevidenced_tools(
         for kw in banned
     }
 
+    # Bullets under a flexible company are allowed to adopt JD tools.
+    exempt = flexible_item_indices(section, flexible_companies or [])
+
     out = section
     offenders: list[str] = []
     for i in range(len(gen_items) - 1, -1, -1):
+        if i in exempt:
+            continue
         item = gen_items[i]
         hits = [kw for kw, p in patterns.items() if p.search(item)]
         if not hits:
@@ -931,7 +989,11 @@ def clean_generated_sections(
             "\n".join(original_sections[k] for k in ("summary", "experience", "projects", "skills"))
         ).lower()
         experience, gate_reverts["experience"] = _revert_bullets_with_unevidenced_tools(
-            experience, fallback["experience"], jd_keywords, evidence_lower
+            experience,
+            fallback["experience"],
+            jd_keywords,
+            evidence_lower,
+            flexible_companies=FLEXIBLE_EXPERIENCE_COMPANIES,
         )
         projects, gate_reverts["projects"] = _revert_bullets_with_unevidenced_tools(
             projects, fallback["projects"], jd_keywords, evidence_lower
