@@ -85,6 +85,7 @@ _DEFAULT_JD_ANALYSIS = {
     "company_type": "unknown",
     "years_experience_wanted": "",
     "domain": "",
+    "industry": "",
     "domain_practices": [],
     "must_have_skills": [],
     "nice_to_have_skills": [],

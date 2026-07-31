@@ -44,6 +44,19 @@ writers; a tool misfiled as a concept merely loses one keyword.
    "AI/LLM platform", "data engineering", "frontend web", "mobile", "DevOps/platform",
    "test infrastructure". A "Software Engineer, CPU" posting is "systems programming"
    even though the title says Software Engineer.
+   The domain is the KIND OF SOFTWARE WORK, never the employer's business sector.
+   HARD RULE: no sector word may appear in `domain` — not energy, oil, banking,
+   fintech, healthcare, insurance, retail, logistics, or any other industry name.
+   Sector words go ONLY in `industry`. An oil-and-gas software company hiring
+   generalist engineers for cloud products is "cloud SaaS and data services", NOT
+   "energy software platforms". A bank hiring React developers is "frontend web",
+   NOT "banking". Putting the industry here makes the writers dress the candidate's
+   past employers in the wrong industry's clothes and makes the reviewer score
+   against the wrong yardstick.
+2d. industry — the employer's business sector in 1-3 words ("energy", "fintech",
+   "healthcare", "e-commerce", ""). This exists so the writers know which vocabulary
+   belongs to the EMPLOYER's world and must NOT be claimed as the candidate's own
+   work history.
 2c. domain_practices — 4 to 8 short phrases naming what engineers in THIS domain
    actually do day to day. These drive how the writers frame the candidate's work and
    how the reviewer scores domain fit, so pick practices a hiring manager in this
@@ -88,6 +101,7 @@ writers; a tool misfiled as a concept merely loses one keyword.
   "company_type": "startup|mid-size|big-tech|enterprise|unknown",
   "years_experience_wanted": "",
   "domain": "",
+  "industry": "",
   "domain_practices": [],
   "must_have_skills": [],
   "nice_to_have_skills": [],

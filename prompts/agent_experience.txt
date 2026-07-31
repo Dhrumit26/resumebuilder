@@ -27,10 +27,33 @@ This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
    system with a purpose you could state in a sentence, ONE primary programming
    language, and a stack of at most 5-6 technologies total. This invented role is
    the spine of the whole job — decide it first, then never leave it.
-3. Write every bullet as a different facet of THAT ONE system's life: shipping a
-   feature on it, making it faster or cheaper, testing it, deploying it, working
-   with others on it. A reader must be able to reconstruct "this person spent the
-   year building X" from the five bullets together.
+3. THE COMPANY STAYS REAL. The system you invent must be one the actual employer
+   could plausibly have built. {{FLEXIBLE_COMPANY}} is an AI startup — data and ML
+   platforms, APIs and retrieval services, analytics, automation, and developer
+   tooling are all believable there. What is NEVER believable: the employer
+   suddenly operating in the JD's industry. Adopt the JD's ENGINEERING domain
+   (its practices, its stack); NEVER adopt its `industry`. Industry vocabulary
+   from the JD — well data, drilling, reservoirs, energy operators, patients,
+   claims, trading desks — belongs to the EMPLOYER's world and must not appear
+   in the candidate's bullets. Anyone who reads "Clerxi AI" next to "well-data
+   service for energy operators" knows the resume is fake in one glance.
+4. Write every bullet as a different facet of THAT ONE system's life — and pick the
+   facets from `domain_practices`, covering as many of the JD's practices as the
+   bullet count allows. If the JD centres on delivery-team work, that means: ship a
+   feature on the system, debug a live production defect in it, raise its automated
+   test coverage, deploy or harden it, document and review it with the team. Each
+   bullet demonstrates a DIFFERENT practice; together they read as one engineer's
+   year on one system, doing exactly the work the JD describes.
+
+Example of the industry trap, for an energy-industry JD asking for cloud data
+services in TypeScript:
+  WRONG — industry cosplay at an AI startup:
+    \resumeItem{Delivered 14 TypeScript API features on a production well-data
+    service, giving energy operators reliable access to live operational datasets.}
+  RIGHT — same engineering domain, same stack, believable employer:
+    \resumeItem{Delivered 14 TypeScript API features on a production data-ingestion
+    service, giving customers reliable search over live operational datasets.}
+The JD's engineering needs are fully served; the employer is still itself.
 
 The ORIGINAL bullets for this role are only a fallback: reuse their facts ONLY when
 the JD's domain already matches the original work (e.g., an AI/LLM or backend JD).

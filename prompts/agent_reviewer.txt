@@ -26,16 +26,23 @@ hot paths — a resume that says "C++" inside bullets about web APIs or multi-ag
 retrieval has the keyword and none of the domain. Keywords are already paid for in
 must_have_skills; this category pays only for the WORK.
 
-Use `domain` and `domain_practices` from the JD Analysis. For each experience bullet,
-ask: is this the kind of work an engineer in that domain actually does?
-- 13-15: most experience bullets demonstrate the JD domain's practices; the resume
-  reads like it was written by someone who works in this domain.
-- 8-12: tools match and some bullets show the domain's practices, but much of the
-  experience clearly lives in a different domain.
-- 3-7: technology names match but the described work belongs to another domain —
-  keyword presence without practice evidence.
-- 0-2: neither the tools nor the work match.
-Name the mismatch in the details string ("says C++, but the work is LLM retrieval").
+Count it, do not eyeball it:
+1. List the `domain_practices` from the JD Analysis (if absent, infer 5-8 core
+   practices from the JD itself).
+2. For each practice, check whether at least one experience bullet DEMONSTRATES it —
+   the work itself, not the keyword. "Resolved 12 production defects by tracing
+   request paths" demonstrates production debugging; the phrase "production
+   debugging" in a skills list does not.
+3. tech_alignment = round(15 * demonstrated / total). Put the counts in details,
+   e.g. "6 of 8 practices demonstrated: list them".
+Domain fit means ENGINEERING practices, never industry vocabulary. If `domain`
+names a business sector (energy, banking, healthcare), IGNORE the sector entirely
+and score only against the practices. Never award points for the JD's industry
+nouns (well data, drilling, patients, trading) appearing in a past employer's
+bullets — an AI startup shipping "well-data services for energy operators" is
+industry cosplay, and it is evidence of fakeness, not fit.
+Cap tech_alignment at 6 when the work described belongs to a different engineering
+domain than the practices ask for, regardless of matching technology names.
 
 ## seniority_fit SCORES THE WORK, NOT THE BIOGRAPHY (10 points)
 Judge one thing: does the work DESCRIBED match the level the JD asks for — scope,
@@ -79,6 +86,9 @@ problem in weaknesses:
   language (a Java bullet, a C\# bullet, a Python bullet) with no single system
   connecting them — a keyword list wearing a costume
 - The candidate appearing to claim every tool in the JD, spread across bullets
+- Industry cosplay: the JD's business-sector vocabulary claimed as work history at
+  an employer plainly not in that sector (an AI startup running "well-data services
+  for energy operators")
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them
