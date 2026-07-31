@@ -173,6 +173,36 @@ def _normalize_str_list(value) -> list[str]:
     return [str(v).strip() for v in value if v and str(v).strip()]
 
 
+# When a JD names a core stack language/framework, ATS still expects ecosystem
+# companions (Swift without Xcode reads as keyword stuffing). Expand tools so the
+# skills agent may add them within its max-new budget.
+_ECOSYSTEM_COMPANIONS = {
+    "swift": ["Xcode", "XCTest", "Foundation"],
+    "swiftui": ["Xcode", "XCTest", "Foundation"],
+    "uikit": ["Xcode", "XCTest"],
+    "kotlin": ["Android Studio", "JUnit"],
+    "react native": ["Jest", "Xcode"],
+}
+
+
+def _expand_ecosystem_tools(analysis: dict) -> None:
+    tools = list(analysis.get("tools") or [])
+    lower = {t.lower() for t in tools}
+    blob = " ".join(
+        str(x)
+        for key in ("tools", "must_have_skills", "exact_keywords_for_ats", "research_topics")
+        for x in (analysis.get(key) or [])
+    ).lower()
+    for trigger, companions in _ECOSYSTEM_COMPANIONS.items():
+        if trigger not in blob:
+            continue
+        for c in companions:
+            if c.lower() not in lower:
+                tools.append(c)
+                lower.add(c.lower())
+    analysis["tools"] = tools
+
+
 def run_jd_agent(jd: str) -> tuple[dict, bool]:
     """Analyze the JD once. Never fails the pipeline: degrades to a minimal analysis."""
     prompt = fill_prompt(load_prompt("agent_jd.txt"), JOB_DESCRIPTION=jd)
@@ -204,6 +234,7 @@ def run_jd_agent(jd: str) -> tuple[dict, bool]:
     analysis["keyword_placement"] = {
         name: _normalize_str_list(placement.get(name)) for name in SECTION_NAMES
     }
+    _expand_ecosystem_tools(analysis)
     # Web-ground specialized products (Microsoft Fabric, Snowflake, …) so writers
     # don't invent the wrong architecture from a thin model prior. Still runs when
     # the JD agent fails — product names are scraped from the raw JD text.

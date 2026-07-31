@@ -44,6 +44,14 @@ This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
    work on one system during the tenure printed on the resume — not a greatest-hits
    reel of every software-engineering activity.
 
+CRITICAL — do NOT reverse-engineer the JD into five keyword costumes. If the posting
+mentions SwiftUI, configurable models, performance, ambiguous requirements, design
+collaboration, agentic tooling, accessibility, snapshot tests, CI, and code review,
+you may NOT give each its own bullet. That reads as ten JD keywords hiding in five
+lines. Pick ONE system and at most 2-3 of those practices as the spine; leave the
+rest for Skills or omit them. A short tenure (months, not years) can hold a few deep
+wins — not an inventory of every Apple-ecosystem duty.
+
 Example of the industry trap, for an energy-industry JD asking for cloud data
 services in TypeScript:
   WRONG — industry cosplay at an AI startup:
@@ -211,6 +219,19 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
   specifically?". "Live operational datasets" fails it; "customer order events"
   passes. "Internal systems stayed locked down" fails; "kept write access scoped to
   the sync worker's service account" passes. Vague nouns are how fake bullets hide.
+- Bare "model" / "model-based" is banned. Name WHICH model: SwiftUI view model,
+  Observable/@Observable state, Core Data model, ML model, JSON schema, or backend
+  DTO. "Model-based SwiftUI user features" is nearly meaningless — rewrite it.
+- SHOW tradeoffs; never announce them. Ban "after weighing X against Y" /
+  "balancing freshness and responsiveness" as the achievement. Put the mechanism
+  on the page instead: TTL expiry, versioned cache key, pull-to-refresh,
+  invalidate-on-write, immutable snapshot, stale-while-revalidate. The
+  implementation proves you considered the tradeoff; the phrase does not.
+- Latency/performance claims need a measurable scene, not a naked number. Say what
+  was timed (Xcode Preview of the detail screen, cold first paint of the list,
+  Instruments Time Profiler on scroll). Do NOT invent a Mac model or lab setup you
+  cannot defend — but do name the surface and whether it was cold/warm when you
+  invent a from->to time.
 
 ## RULE 5c — NAME THE REAL PRODUCT, EVERY TIME
 SQL is a LANGUAGE, not a destination. Never write "ingest into SQL", "SQL store",

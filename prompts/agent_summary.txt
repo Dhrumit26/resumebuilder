@@ -24,8 +24,8 @@ specific engineer — a system they own, a problem they solve, a way they work t
 matches this JD. If what remains is "building services / owns features end to end /
 debugging and code review", rewrite. That is nothing.
 
-## BANNED — empty process and generic filler
-These phrases make a summary forgettable. Never use them:
+## BANNED — empty process, scorecard voice, and JD-glue
+These phrases make a summary forgettable or fake. Never use them:
 - owns features end to end / end-to-end / full SDLC
 - from X through Y (as a process tour: tests through debugging through review)
 - cloud infrastructure / analytics stores / data stores (name the real system)
@@ -36,6 +36,18 @@ These phrases make a summary forgettable. Never use them:
   Database, SQL Server, etc. Bare "Azure"/"AWS" without a service is also fog.
 - Truncated product names: "Data Factory" alone (write Azure Data Factory);
   "Git-based CI/CD" (name GitHub Actions / Azure DevOps / Jenkins).
+
+SCORECARD / JD-GLUE — nobody describes themselves this way. Ban it:
+- "turns ambiguous problems into scoped X"
+- "after latency and quality tradeoffs" (also grammatically broken)
+- "critically reviewing … code" / "agentic AI" stuffed into the summary
+- Gluing unusual JD phrases together. If a posting says "agentic AI" and
+  "latency tradeoffs", do NOT paste both into one sentence. Pick ONE concrete
+  claim the evidence supports and say it like an engineer talking to another
+  engineer — not like a hiring-manager scorecard.
+
+Bare "model" / "model-based" is meaningless. Say which: SwiftUI view model,
+  Observable state, ML model, schema/config model, or backend data model.
 
 ## SENIORITY
 State the role flatly. Never invent years.
@@ -100,6 +112,16 @@ Strong — identity + specific system + named storage, no process tour or fog:
   \textit{Software engineer building TypeScript data-ingestion services that keep
   live device telemetry searchable under production load. Turns broken production
   behavior into lasting fixes on shared codebases backed by PostgreSQL.}
+
+Weak — hiring-manager scorecard glue (ban this shape forever):
+  \textit{Software engineer who turns ambiguous problems into scoped Swift
+  implementations after latency and quality tradeoffs, critically reviewing
+  agentic AI code.}
+
+Strong for a Swift/UI JD — natural voice, one claim, no scorecard glue:
+  \textit{Software engineer building SwiftUI tools that keep internal workflows
+  fast under real project data. Ships view updates with measured preview latency
+  and clear state ownership in Xcode.}
 
 ## WEB RESEARCH — ground truth for specialized products
 Use real product names and components from this research when the JD centres on them.

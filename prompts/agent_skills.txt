@@ -6,13 +6,15 @@ human confirms the stack in three seconds. Density beats completeness.
 
 ## RULE 1 — CONCRETE TOOLS ONLY
 List only things you install, import, or deploy: languages, frameworks, databases,
-platforms, services, libraries. Python, FastAPI, PostgreSQL, Docker, AWS, Playwright.
+platforms, services, libraries. Python, FastAPI, PostgreSQL, Docker, AWS, Playwright,
+Swift, SwiftUI, Xcode, XCTest.
 NEVER list concepts or methodologies. These are stripped automatically and waste the
 line: LLMs, Large Language Models, Multi-Agent Systems, Agent Orchestration, RAG,
 Retrieval, Vector Search, Vector Databases, Semantic Caching, Evals, Evaluation
 Frameworks, Guardrails, Prompt Engineering, Distributed Systems, Microservices,
 Machine Learning, AI/ML, Scalability, Latency Optimization, System Design, OOP,
-Data Structures, Algorithms, Agile, Scrum, SDLC.
+Data Structures, Algorithms, Agile, Scrum, SDLC, async/await (as a lone skill —
+prefer XCTest / Swift Concurrency only if the JD names them as tools).
 A category made entirely of concepts causes the whole section to be discarded and
 replaced with the untailored original.
 
@@ -23,19 +25,21 @@ replaced with the untailored original.
   list: {{JD_TOOLS}}
   This is the one section where unevidenced tools are allowed — the candidate accepts
   the interview risk here, but nowhere else on the resume.
+- When the JD is Apple/Swift-centred, prefer ecosystem companions already on that
+  list (Xcode, XCTest, Foundation, Instruments, SwiftUI). A Swift/SwiftUI skills
+  section with no Xcode or XCTest reads like keyword stuffing — include them when
+  they appear in {{JD_TOOLS}}.
 - Anything invented that is neither in ORIGINAL nor in that list is deleted. Do not
   reach for Go, Rust, NoSQL, Kafka or similar just because they sound adjacent.
 
-## RULE 3 — EXACTLY 4 CATEGORIES, AND ONE MUST BE NAMED FOR THE BACKEND
+## RULE 3 — EXACTLY 4 CATEGORIES
 - Produce exactly 4 category lines.
-- At least ONE category name MUST contain "Backend", "Cloud", or "DevOps".
-  Missing JD tools are injected into that category downstream; if no category matches,
-  they land in whichever category comes first — which is how Kubernetes ends up filed
-  under "Languages".
-- The other three names may be adapted to the JD. Keep them short and standard:
-  Languages / Backend & Cloud / Testing & CI/CD / Frontend, or for an
-  infrastructure-heavy JD: Languages / Backend & Databases / Cloud & DevOps /
-  Testing & Frontend.
+- At least ONE category must be the "home" for the JD's primary stack:
+  Backend/Cloud/DevOps for server roles, OR Apple Platforms / iOS \& macOS /
+  Mobile for Swift/SwiftUI roles, OR Frontend for web-UI roles.
+  Missing JD tools are injected into that home category downstream.
+- The other three names may be adapted to the JD. Keep them short and standard.
+  Swift example: Languages / Apple Platforms / Testing \& CI/CD / Backend.
 - Order categories and the items inside them by JD relevance, most critical first.
   The first three items on each line are the ones that get read.
 
@@ -43,11 +47,15 @@ replaced with the untailored original.
 A misfiled tool tells the reader the candidate does not know what the tool is:
 - Frontend frameworks (React, Angular, Next.js, Vue) go ONLY under a Frontend
   category — never under Backend or Cloud.
+- SwiftUI / UIKit / AppKit sit under Apple Platforms or Frontend — never Backend.
+- Xcode, Instruments, XCTest, Swift Testing sit with Apple tooling / Testing —
+  not under Languages.
 - Databases (PostgreSQL, MySQL, MongoDB, SQL Server) are not "Cloud". File them
   under a Backend or Databases category.
 - Infrastructure tooling (Terraform, Helm, Ansible, Argo CD) sits with Docker and
   Kubernetes under a Cloud/DevOps category — never next to application frameworks.
-- The Languages line contains ONLY programming languages.
+- The Languages line contains ONLY programming languages (Swift, Python, …) —
+  not Xcode, not SwiftUI.
 When the 4 category names cannot cleanly hold the JD's tools, rename the flexible
 categories (Rule 3) rather than misfile a tool.
 
@@ -64,28 +72,21 @@ followed by \vspace{1pt} between lines, as in ORIGINAL.
   single one makes the entire category invisible to it, so concepts and invented
   tools sail straight through into the PDF.
 - Write "&" as \& — a bare & is a LaTeX alignment character and breaks the build.
-  "Backend \& Cloud", "Testing \& CI/CD".
+  "Backend \& Cloud", "Testing \& CI/CD", "iOS \& macOS".
 - Max 8-10 items per category. Over 12 gets truncated. Each line must fit ONE
   printed line.
 - Parentheses are fine and count as one item: "AWS (Lambda, ECS, S3)" is a single
   entry, useful for showing depth without spending four slots.
 - LaTeX only. No markdown, no **, no "- " lists, no code fences, no commentary.
 
-## EXAMPLE
-JD asks for: Python, FastAPI, PostgreSQL, Kubernetes, Redis, AWS, Datadog, CI/CD
-
-Weak — concepts, invented tools, one bloated line, nested bold:
-  \textbf{AI/ML}{: LLMs, RAG, Vector Search, Prompt Engineering, \textbf{Agents}} \\
-  \textbf{Everything}{: Python, Go, Rust, Kafka, NoSQL, Java, C, C++, Scala, Elixir} \\
-
-Strong — real tools, JD order, 4 clean categories, JD gaps added sparingly:
-  \textbf{Languages}{: Python, SQL, TypeScript, JavaScript, Java, C++} \\
+## EXAMPLE — Swift / Apple JD
+  \textbf{Languages}{: Swift, Python, TypeScript, JavaScript, SQL} \\
   \vspace{1pt}
-  \textbf{Backend \& Cloud}{: FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS (Lambda, ECS, S3), REST APIs} \\
+  \textbf{Apple Platforms}{: SwiftUI, Xcode, Foundation, Instruments} \\
   \vspace{1pt}
-  \textbf{Testing \& CI/CD}{: Playwright, Jest, GitHub Actions, Jenkins, Datadog} \\
+  \textbf{Testing \& CI/CD}{: XCTest, GitHub Actions, Jest, Playwright} \\
   \vspace{1pt}
-  \textbf{Frontend}{: React, Next.js} \\
+  \textbf{Backend}{: FastAPI, PostgreSQL, Docker, REST APIs} \\
 
 ## WEB RESEARCH — ground truth for specialized products
 Prefer the real product name from this research in the skills list
@@ -102,9 +103,10 @@ Prefer the real product name from this research in the skills list
 {{ORIGINAL_SECTION}}
 
 ## Before you output
-Check: exactly 4 categories? One named Backend/Cloud/DevOps? No braces inside any
-item list? Every & written as \&? No concepts anywhere? At most 4 new tools, all from
-the JD list? Wrapper braces closed?
+Check: exactly 4 categories? One home category for the JD stack
+(Backend/Cloud/DevOps OR Apple Platforms OR Frontend)? No braces inside any item
+list? Every & written as \&? No concepts anywhere? At most 4 new tools, all from
+the JD list? Swift without Xcode/XCTest avoided? Wrapper braces closed?
 
 ## Output
 The skills section LaTeX only.

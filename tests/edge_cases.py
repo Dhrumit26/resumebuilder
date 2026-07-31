@@ -559,6 +559,18 @@ def t26_language_scatter_detected_in_flexible_bullets():
     assert langs == ["JavaScript"], langs
 
 
+def t29_ecosystem_companions_expand_swift_tools():
+    analysis = {
+        "tools": ["Swift", "SwiftUI"],
+        "must_have_skills": ["Swift"],
+        "exact_keywords_for_ats": [],
+        "research_topics": [],
+    }
+    pl._expand_ecosystem_tools(analysis)
+    lower = {t.lower() for t in analysis["tools"]}
+    assert "xcode" in lower and "xctest" in lower and "foundation" in lower, analysis["tools"]
+
+
 def t28_web_context_research_topics_and_fabric():
     from src import web_context as wc
 

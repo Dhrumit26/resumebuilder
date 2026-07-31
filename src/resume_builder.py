@@ -583,9 +583,10 @@ def _whitelist_skills(skills: str, original_skills: str, jd_tools: list[str], ma
                 other_missing = lang_missing + other_missing
         if other_missing:
             pattern = re.compile(
-                r"(\\textbf\{(?:Backend[^}]*|Cloud[^}]*|DevOps[^}]*)\}\{\s*:\s*)([^}]*?)(\})",
-                re.IGNORECASE,
-            )
+            r"(\\textbf\{(?:Backend[^}]*|Cloud[^}]*|DevOps[^}]*|Apple[^}]*|"
+            r"iOS[^}]*|macOS[^}]*|Mobile[^}]*|Frontend[^}]*)\}\{\s*:\s*)([^}]*?)(\})",
+            re.IGNORECASE,
+        )
             if pattern.search(out):
                 out = pattern.sub(make_inject(other_missing), out, count=1)
             else:
