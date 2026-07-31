@@ -22,6 +22,7 @@ from .config import (
     TARGET_SCORE,
 )
 from .llm import TruncatedCompletion, call_llm, call_llm_json
+from .web_context import build_tech_context
 from .resume_builder import (
     _debug_dump,
     assemble_full_resume,
@@ -89,6 +90,7 @@ _DEFAULT_JD_ANALYSIS = {
     "domain": "",
     "industry": "",
     "domain_practices": [],
+    "research_topics": [],
     "must_have_skills": [],
     "nice_to_have_skills": [],
     "exact_keywords_for_ats": [],
@@ -97,6 +99,7 @@ _DEFAULT_JD_ANALYSIS = {
     "keyword_placement": {name: [] for name in SECTION_NAMES},
     "ideal_summary_angle": "",
     "competitive_positioning": "",
+    "tech_context": "",
 }
 
 
@@ -173,11 +176,13 @@ def _normalize_str_list(value) -> list[str]:
 def run_jd_agent(jd: str) -> tuple[dict, bool]:
     """Analyze the JD once. Never fails the pipeline: degrades to a minimal analysis."""
     prompt = fill_prompt(load_prompt("agent_jd.txt"), JOB_DESCRIPTION=jd)
+    ok = True
     try:
         raw = call_llm_json(prompt, temperature=0.0, max_tokens=2000)
     except Exception:
         _debug_dump("agent_jd_error", "JD agent failed twice; using default analysis")
-        return dict(_DEFAULT_JD_ANALYSIS), False
+        raw = {}
+        ok = False
 
     analysis = dict(_DEFAULT_JD_ANALYSIS)
     for key in analysis:
@@ -190,6 +195,7 @@ def run_jd_agent(jd: str) -> tuple[dict, bool]:
         "tools",
         "concepts",
         "domain_practices",
+        "research_topics",
     ):
         analysis[key] = _normalize_str_list(analysis.get(key))
     placement = analysis.get("keyword_placement")
@@ -198,8 +204,16 @@ def run_jd_agent(jd: str) -> tuple[dict, bool]:
     analysis["keyword_placement"] = {
         name: _normalize_str_list(placement.get(name)) for name in SECTION_NAMES
     }
+    # Web-ground specialized products (Microsoft Fabric, Snowflake, …) so writers
+    # don't invent the wrong architecture from a thin model prior. Still runs when
+    # the JD agent fails — product names are scraped from the raw JD text.
+    try:
+        analysis["tech_context"] = build_tech_context(analysis, jd)
+    except Exception as exc:
+        _debug_dump("web_context_failed", str(exc))
+        analysis["tech_context"] = ""
     _debug_dump("agent_jd_analysis", json.dumps(analysis, indent=2))
-    return analysis, True
+    return analysis, ok
 
 
 def jd_keywords_of(analysis: dict) -> list[str]:
@@ -239,9 +253,14 @@ def _build_section_prompt(
             + fixes
         )
     banned = unevidenced_tools(jd_keywords_of(jd_analysis), evidence.lower())
+    tech_context = (jd_analysis.get("tech_context") or "").strip()
+    if not tech_context:
+        tech_context = "(no specialized web research — use only well-known product facts)"
     return fill_prompt(
         load_prompt(SECTION_PROMPTS[name]),
-        JD_ANALYSIS=json.dumps(jd_analysis, indent=1),
+        JD_ANALYSIS=json.dumps(
+            {k: v for k, v in jd_analysis.items() if k != "tech_context"}, indent=1
+        ),
         JOB_DESCRIPTION=jd,
         ORIGINAL_SECTION=original_section,
         EVIDENCE=evidence,
@@ -249,6 +268,7 @@ def _build_section_prompt(
         JD_TOOLS=", ".join(jd_analysis.get("tools") or []) or "(none identified)",
         BANNED_TOOLS=", ".join(banned) or "(none — all JD tools are evidenced)",
         FLEXIBLE_COMPANY=", ".join(FLEXIBLE_EXPERIENCE_COMPANIES) or "(none)",
+        TECH_CONTEXT=tech_context,
         FIX_BLOCK=fix_block,
     )
 

@@ -87,6 +87,11 @@ Strong — real tools, JD order, 4 clean categories, JD gaps added sparingly:
   \vspace{1pt}
   \textbf{Frontend}{: React, Next.js} \\
 
+## WEB RESEARCH — ground truth for specialized products
+Prefer the real product name from this research in the skills list
+(e.g. "Microsoft Fabric", not a vague "analytics platform").
+{{TECH_CONTEXT}}
+
 ## JD Analysis
 {{JD_ANALYSIS}}
 

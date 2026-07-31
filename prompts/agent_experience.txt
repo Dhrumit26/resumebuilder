@@ -224,12 +224,16 @@ Azure Blob Storage, Azure SQL Database, AWS Lambda, Amazon S3, Amazon RDS, ECS,
 EKS, CloudWatch.
 
 Never truncate a product name on first mention (or at all if space allows):
-- "Data Factory" alone is fog — write Azure Data Factory. Same for Functions ->
-  Azure Functions, Blob Storage -> Azure Blob Storage, when the cloud is Azure.
+- "Data Factory" alone is fog — write Azure Data Factory (or Microsoft Fabric Data
+  Factory / pipelines if TECH_CONTEXT says the work is inside Fabric). Same for
+  Functions -> Azure Functions, Blob Storage -> Azure Blob Storage.
 - "Git-based CI/CD" / "Git CI" is wrong. Git is source control, not the CI runner.
   Name the system that runs the pipeline: GitHub Actions, Azure DevOps Pipelines,
   Jenkins, GitLab CI. "Wired Git-based CI/CD" is banned; "Wired GitHub Actions so
   every merge deploys to Azure Data Factory staging" is the real sentence.
+- When TECH_CONTEXT describes a platform (Microsoft Fabric, Snowflake, …), build
+  the invented role ON that platform's real pieces — not a guess from a similar
+  product the model remembers better.
 - Prefer plain verbs: Built, Cut, Raised, Shipped, Migrated, Rewrote, Fixed, Dropped,
   Reduced, Launched, Wrote, Partnered.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}
@@ -284,6 +288,14 @@ RIGHT — same frozen facts, re-angled toward what a systems team values (fast,
 reliable pipelines), sentence rebuilt with each object getting its own verb:
   \resumeItem{Dropped CI pipeline time from 45 to 28 minutes and cut flaky test
   failures by 65\% by moving end-to-end suites from Cypress to Playwright.}
+
+## WEB RESEARCH — ground truth for specialized products (do not invent past this)
+When the JD names a product you only vaguely know, use THESE facts — not memory.
+Name real components from this research (e.g. Microsoft Fabric → OneLake,
+Lakehouse, warehouse, Data Factory pipelines / Dataflows inside Fabric, Power BI).
+Never substitute a wrong adjacent product (do not invent "Azure SQL + Data Factory"
+when the JD said Microsoft Fabric, unless the research says Fabric uses them).
+{{TECH_CONTEXT}}
 
 ## JD Analysis
 {{JD_ANALYSIS}}

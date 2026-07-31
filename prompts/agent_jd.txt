@@ -84,6 +84,12 @@ writers; a tool misfiled as a concept merely loses one keyword.
    Confident and specific. Never junior, early-career, or aspiring.
 10. competitive_positioning — one sentence on what separates a strong applicant from
     an average one for this posting.
+11. research_topics — 1 to 5 specialized products/platforms in the posting that a
+    writer should NOT invent from memory: vendor platforms and uncommon stacks
+    (Microsoft Fabric, Snowflake, Databricks, SAP, Salesforce Lightning, Azure
+    Data Factory, Looker, …). Skip everyday tools the model already knows
+    (Python, Java, React, Docker, PostgreSQL, AWS as a bare word). These topics
+    get looked up on the web before writing.
 
 ## OUTPUT CONTRACT
 - Return ONLY the raw JSON object below. No markdown fences, no prose, no trailing text.
@@ -103,6 +109,7 @@ writers; a tool misfiled as a concept merely loses one keyword.
   "domain": "",
   "industry": "",
   "domain_practices": [],
+  "research_topics": [],
   "must_have_skills": [],
   "nice_to_have_skills": [],
   "exact_keywords_for_ats": [],

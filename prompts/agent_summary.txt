@@ -101,6 +101,11 @@ Strong — identity + specific system + named storage, no process tour or fog:
   live device telemetry searchable under production load. Turns broken production
   behavior into lasting fixes on shared codebases backed by PostgreSQL.}
 
+## WEB RESEARCH — ground truth for specialized products
+Use real product names and components from this research when the JD centres on them.
+Do not invent adjacent stacks from memory.
+{{TECH_CONTEXT}}
+
 ## JD Analysis
 {{JD_ANALYSIS}}
 

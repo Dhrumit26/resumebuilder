@@ -173,6 +173,8 @@ def with_mock(mock, best_of_n=1, score_samples=1):
     pl.call_llm_json = mock.call_llm_json
     pl.BEST_OF_N = best_of_n
     pl.SCORE_SAMPLES = score_samples
+    # Offline tests must not hit Microsoft Learn / Wikipedia.
+    pl.build_tech_context = lambda *_a, **_k: ""
 
 
 PASS = []
@@ -555,6 +557,54 @@ def t26_language_scatter_detected_in_flexible_bullets():
     ).replace("core Python and Java modules", "core JavaScript modules")
     langs = rb.languages_in_flexible_bullets(js_only, ["Clerxi AI"])
     assert langs == ["JavaScript"], langs
+
+
+def t28_web_context_research_topics_and_fabric():
+    from src import web_context as wc
+
+    topics = wc.select_research_topics(
+        {"research_topics": ["Microsoft Fabric"], "tools": ["Python", "Docker"]},
+        "We use Microsoft Fabric for analytics pipelines.",
+    )
+    assert "Microsoft Fabric" in topics, topics
+    assert "Python" not in topics and "Docker" not in topics
+
+    # Stub Microsoft Learn so the test stays offline
+    def fake_json(url: str):
+        if "learn.microsoft.com/api/search" in url:
+            return {
+                "results": [{
+                    "title": "What is Microsoft Fabric?",
+                    "url": "https://learn.microsoft.com/en-us/fabric/",
+                    "description": (
+                        "Microsoft Fabric is an all-in-one analytics solution for enterprises "
+                        "that covers data movement, lakehouse, real-time analytics, and Power BI."
+                    ),
+                }]
+            }
+        return None
+
+    orig_json, orig_research = wc._http_json, wc.research_topic
+    wc._http_json = fake_json
+    try:
+        blurb = wc.research_topic("Microsoft Fabric")
+        assert blurb and "Fabric" in blurb and "analytics" in blurb.lower(), blurb
+        assert "Microsoft Learn" in blurb
+
+        wc.research_topic = lambda topic: (
+            "Microsoft Fabric: unified analytics with Lakehouse and OneLake. "
+            "(source: Microsoft Learn)"
+            if "Fabric" in topic
+            else None
+        )
+        ctx = wc.build_tech_context(
+            {"research_topics": ["Microsoft Fabric"], "tools": []},
+            "Microsoft Fabric role",
+        )
+        assert "Lakehouse" in ctx or "Fabric" in ctx, ctx
+    finally:
+        wc._http_json = orig_json
+        wc.research_topic = orig_research
 
 
 def t27_architecture_fog_detection():
