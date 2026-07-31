@@ -82,9 +82,16 @@ LANGUAGE SCATTER: a Java bullet, then a C\# bullet, then a Python bullet, inside
 same job. No real engineer's year looks like that, and it reads as a bot claiming
 every tool in the posting.
 
+The opposite failure is just as fake: the SAME name on every bullet.
+"SwiftUI … SwiftUI … SwiftUI … Swift … SwiftUI" across five lines is keyword
+stuffing, not proof. Once the stack is established, stop repeating it.
+
 - Pick ONE primary language — the one the JD's domain centres on — and every bullet
   that names a language names THAT one. (A second language is allowed only in the
   realistic tooling role: e.g. Python scripts around a C++ service.)
+- Name the primary language or main framework in AT MOST TWO bullets of the current
+  role. The other bullets assume it: lead with the outcome, the practice, or a
+  companion tool (XCTest, Instruments, Combine, Foundation) — not another "SwiftUI".
 - Across ALL current-role bullets combined: at most 5-6 distinct technologies,
   drawn from the front of {{JD_TOOLS}}. Covering the JD's full tool list is the
   Skills section's job, NEVER this section's.
@@ -94,6 +101,8 @@ every tool in the posting.
   year)? If any bullet could not have happened on the system in bullet 1, rewrite
   it. If the five bullets together claim more work than one engineer ships in that
   tenure, cut scope — fewer big wins, not a longer inventory.
+- Count occurrences of the primary language/framework across the job. If the same
+  name appears in 3+ bullets, delete it from the extras — keep the substance.
 
 If the JD names no tool for a capability, use the domain-standard choice. Two to
 three technologies per bullet, never more.
@@ -330,12 +339,12 @@ only a fallback when the JD's domain already matches them)
 
 ## Before you output
 Check: bullet count per job matches ORIGINAL? Order preserved? Current-role bullets
-tell ONE story — one system, ONE primary language, 5-6 technologies total, no
-language scatter? Scope fits the printed tenure (no feature-count theater, no
-inventory of every duty)? At most 2-3 hard invented metrics in the current role?
-No tech-name swaps? Fixed-history metrics unchanged and free of banned tools?
-Frozen tool pairings intact? No \textbf? Every bullet a complete sentence under
-28 words?
+tell ONE story — one system, ONE primary language named in at most TWO bullets,
+5-6 technologies total, no language scatter, no SwiftUI/Swift spam? Scope fits
+the printed tenure (no feature-count theater, no inventory of every duty)? At most
+2-3 hard invented metrics in the current role? No tech-name swaps? Fixed-history
+metrics unchanged and free of banned tools? Frozen tool pairings intact? No \textbf?
+Every bullet a complete sentence under 28 words?
 
 ## Output
 The experience section LaTeX only.

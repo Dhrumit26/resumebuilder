@@ -691,6 +691,14 @@ _BULLET_LANGUAGES = (
     "Ruby", "PHP", "Kotlin", "Swift", "Scala",
 )
 
+# Framework/product names that get stuffed into every bullet the same way.
+_BULLET_STACK_TERMS = _BULLET_LANGUAGES + (
+    "SwiftUI", "UIKit", "AppKit", "React", "Next.js", "Angular", "Vue",
+    "FastAPI", "Django", "Flask", "Spring", "Node.js",
+    "PostgreSQL", "MongoDB", "Redis", "Kubernetes", "Docker",
+    "Azure", "AWS", "GCP",
+)
+
 
 def languages_in_flexible_bullets(section: str, companies: list[str]) -> list[str]:
     """Distinct programming languages named across the flexible company's bullets.
@@ -710,6 +718,42 @@ def languages_in_flexible_bullets(section: str, companies: list[str]) -> list[st
         if re.search(r"(?<![A-Za-z0-9_])" + re.escape(lang) + r"(?![A-Za-z_+#])", text):
             found.append(lang)
     return found
+
+
+def stack_name_overuse_in_flexible_bullets(
+    section: str, companies: list[str], max_bullets: int = 2
+) -> list[str]:
+    """Stack terms that appear in too many bullets of the flexible role.
+
+    "SwiftUI" in 4 of 5 bullets is keyword stuffing — the opposite of language
+    scatter, and just as fake. Returns labels like "SwiftUI in 4 bullets".
+    """
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    flex_items = [latex_to_plain(items[i]) for i in sorted(idx) if i < len(items)]
+    if not flex_items:
+        return []
+
+    # Longer names first so SwiftUI is matched before Swift
+    terms = sorted(set(_BULLET_STACK_TERMS), key=len, reverse=True)
+    offenders: list[str] = []
+    for term in terms:
+        if term == "Go":
+            pat = re.compile(r"(?<![A-Za-z0-9_])Go(?![A-Za-z0-9_+#])")
+        elif term == "Swift":
+            # Do not count the "Swift" inside "SwiftUI"
+            pat = re.compile(r"(?<![A-Za-z0-9_])Swift(?!UI)")
+        else:
+            pat = re.compile(
+                r"(?<![A-Za-z0-9_])" + re.escape(term) + r"(?![A-Za-z0-9_+#])",
+                re.IGNORECASE,
+            )
+        hit_bullets = sum(1 for text in flex_items if pat.search(text))
+        if hit_bullets > max_bullets:
+            offenders.append(f"{term} in {hit_bullets} bullets")
+    return offenders
 
 
 # Architecture fog: SQL-as-destination, vague "stores", bare/truncated products.

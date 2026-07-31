@@ -122,6 +122,8 @@ problem in weaknesses:
 - JD keyword laundry list in experience: five bullets that each costume a different
   JD duty (SwiftUI + models + perf + accessibility + snapshots + CI + reviews) for
   a short tenure — reverse-engineered posting, not a real job
+- Stack-name stuffing: the same language/framework (SwiftUI, Swift, React, …)
+  named in 3+ bullets of one job — keyword spray, not proof
 - Tradeoff-telling without a mechanism: "after weighing freshness against
   responsiveness" with no TTL, invalidation, version key, or refresh action
 - Architecture fog: "SQL" used as a destination/product (SQL is a language —

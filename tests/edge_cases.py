@@ -559,6 +559,32 @@ def t26_language_scatter_detected_in_flexible_bullets():
     assert langs == ["JavaScript"], langs
 
 
+def t31_stack_name_overuse_detects_swiftui_spam():
+    spam = r"""
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{May 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Built SwiftUI tools for internal developer workflows.}
+        \resumeItem{Cut launch time by optimizing SwiftUI rendering paths.}
+        \resumeItem{Added accessibility labels across SwiftUI screens.}
+        \resumeItem{Covered regressions with XCTest on the shared suite.}
+        \resumeItem{Grew the SwiftUI component library for consistent UI.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+"""
+    hits = rb.stack_name_overuse_in_flexible_bullets(spam, ["Clerxi AI"], max_bullets=2)
+    assert any(h.startswith("SwiftUI") for h in hits), hits
+
+    ok = spam.replace("SwiftUI rendering", "list rendering").replace(
+        "SwiftUI screens", "detail screens"
+    ).replace("SwiftUI component", "shared component")
+    # Only first bullet still says SwiftUI
+    assert rb.stack_name_overuse_in_flexible_bullets(ok, ["Clerxi AI"]) == []
+
+
 def t30_apple_frameworks_placeholder_stripped():
     fog = ORIG["skills"].replace(
         "Frontend}{: React, Next.js}",

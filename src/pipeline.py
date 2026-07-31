@@ -41,6 +41,7 @@ from .resume_builder import (
     architecture_fog_in_text,
     languages_in_flexible_bullets,
     latex_to_plain,
+    stack_name_overuse_in_flexible_bullets,
     load_full_template,
     load_original_sections,
     load_prompt,
@@ -363,6 +364,20 @@ def write_section(
                     "fake resume. Rewrite the current-role bullets around ONE system and ONE "
                     "primary language (plus at most one scripting language in a tooling role). "
                     "The JD's other languages belong in the Skills section only."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            overuse = stack_name_overuse_in_flexible_bullets(
+                latex, FLEXIBLE_EXPERIENCE_COMPANIES, max_bullets=2
+            )
+            if overuse and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_stack_overuse", ", ".join(overuse))
+                prompt += (
+                    "\n\nWARNING: Keyword stuffing — the same stack name appears in too many "
+                    f"current-role bullets ({'; '.join(overuse)}). Name the primary language/"
+                    "framework in AT MOST TWO bullets. The other bullets should lead with the "
+                    "outcome or a companion tool (XCTest, Instruments, Combine, Foundation) — "
+                    "not another 'SwiftUI'/'Swift'/'React' repetition. Rewrite."
                 )
                 temperature = min(temperature, 0.2)
                 continue
