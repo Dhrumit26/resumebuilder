@@ -699,7 +699,7 @@ def languages_in_flexible_bullets(section: str, companies: list[str]) -> list[st
     return found
 
 
-# Architecture fog: SQL-as-destination, vague "stores", bare cloud with no service.
+# Architecture fog: SQL-as-destination, vague "stores", bare/truncated products.
 # Do NOT match product names like "Azure SQL Database" or "SQL Server".
 _ARCH_FOG_PATTERNS = [
     (re.compile(r"\binto\s+SQL\b", re.I), "into SQL"),
@@ -710,6 +710,12 @@ _ARCH_FOG_PATTERNS = [
     (re.compile(r"\banalytics\s+stores?\b", re.I), "analytics store(s)"),
     (re.compile(r"\bdata\s+stores?\b", re.I), "data store(s)"),
     (re.compile(r"\bcloud\s+infrastructure\b", re.I), "cloud infrastructure"),
+    # Truncated Azure product names (must say Azure Data Factory, etc.)
+    (re.compile(r"(?<!Azure\s)(?<!azure\s)\bData\s+Factory\b", re.I), "Data Factory (missing Azure)"),
+    (re.compile(r"(?<!Azure\s)(?<!azure\s)\bBlob\s+Storage\b", re.I), "Blob Storage (missing Azure)"),
+    # Git is source control, not CI
+    (re.compile(r"\bGit[- ]based\s+CI(?:/?CD)?\b", re.I), "Git-based CI/CD"),
+    (re.compile(r"\bGit\s+CI(?:/?CD)?\b", re.I), "Git CI/CD"),
 ]
 
 _CLOUD_PLATFORM_RE = re.compile(
@@ -718,11 +724,12 @@ _CLOUD_PLATFORM_RE = re.compile(
 )
 # Concrete services that make a cloud claim real. Keep short; false negatives retry.
 _CLOUD_SERVICE_RE = re.compile(
-    r"\b(?:Data\s+Factory|Functions?|Blob\s+Storage|Cosmos\s+DB|SQL\s+Database|"
-    r"Synapse|Event\s+Hubs?|Service\s+Bus|App\s+Service|AKS|Key\s+Vault|"
+    r"\b(?:Azure\s+Data\s+Factory|Azure\s+Functions?|Azure\s+Blob\s+Storage|"
+    r"Azure\s+SQL\s+Database|Azure\s+DevOps|Cosmos\s+DB|Synapse|"
+    r"Event\s+Hubs?|Service\s+Bus|App\s+Service|AKS|Key\s+Vault|"
     r"Lambda|S3|RDS|ECS|EKS|EC2|DynamoDB|SQS|SNS|CloudWatch|CloudFormation|"
     r"BigQuery|Cloud\s+Run|Cloud\s+Functions?|Pub/?Sub|Cloud\s+Storage|"
-    r"Kubernetes|Terraform|Docker)\b",
+    r"Kubernetes|Terraform|Docker|GitHub\s+Actions|GitLab\s+CI|Jenkins)\b",
     re.I,
 )
 

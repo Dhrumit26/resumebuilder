@@ -567,9 +567,17 @@ def t27_architecture_fog_detection():
     assert "analytics store(s)" in hits, hits
     assert "bare cloud platform (no service named)" in hits, hits
 
+    truncated = (
+        "Built Python pipelines in Data Factory and wired Git-based CI/CD so every "
+        "merge deploys to staging."
+    )
+    hits = rb.architecture_fog_in_text(truncated)
+    assert "Data Factory (missing Azure)" in hits, hits
+    assert "Git-based CI/CD" in hits, hits
+
     clear = (
         "Shipped Python pipelines on Azure Data Factory that load usage events into "
-        "Azure SQL Database, cutting prep before each dashboard refresh."
+        "Azure SQL Database, with GitHub Actions deploying every merged pull request."
     )
     assert rb.architecture_fog_in_text(clear) == [], rb.architecture_fog_in_text(clear)
 

@@ -117,8 +117,9 @@ problem in weaknesses:
   no distinctive system or problem claim
 - Architecture fog: "SQL" used as a destination/product (SQL is a language —
   demand PostgreSQL / Azure SQL Database / etc.); "analytics stores" / "data stores"
-  with no named system; bare "Azure"/"AWS"/"GCP" with no service name when cloud
-  work is the claim
+  with no named system; bare "Azure"/"AWS"/"GCP" with no service name; truncated
+  products ("Data Factory" without Azure); "Git-based CI/CD" instead of GitHub
+  Actions / Azure DevOps / Jenkins / GitLab CI
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them

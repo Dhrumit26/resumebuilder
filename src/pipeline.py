@@ -323,8 +323,10 @@ def write_section(
                     + ", ".join(fog)
                     + ". SQL is a LANGUAGE, not a destination — name PostgreSQL, Azure SQL "
                     "Database, SQL Server, etc. Never write 'analytics stores' or 'data stores'. "
-                    "Never leave Azure/AWS bare — name the service (Azure Data Factory, Azure "
-                    "SQL Database, S3, Lambda, RDS, ...). Rewrite those bullets."
+                    "Never leave Azure/AWS bare — name the full service (Azure Data Factory, "
+                    "not bare 'Data Factory'; Azure SQL Database; S3; Lambda; RDS). "
+                    "Never write 'Git-based CI/CD' — name GitHub Actions, Azure DevOps, "
+                    "Jenkins, or GitLab CI. Rewrite those bullets."
                 )
                 temperature = min(temperature, 0.2)
                 continue

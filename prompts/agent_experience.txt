@@ -212,16 +212,24 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
   passes. "Internal systems stayed locked down" fails; "kept write access scoped to
   the sync worker's service account" passes. Vague nouns are how fake bullets hide.
 
-## RULE 5c — NAME THE REAL STORAGE AND THE REAL CLOUD SERVICE
+## RULE 5c — NAME THE REAL PRODUCT, EVERY TIME
 SQL is a LANGUAGE, not a destination. Never write "ingest into SQL", "SQL store",
-"backed by SQL", or "SQL database" as if SQL were a product. Name the actual system:
-PostgreSQL, Azure SQL Database, SQL Server, MySQL, MongoDB, Snowflake, BigQuery,
-Redshift, Cosmos DB — whichever fits the invented role and the JD's tools.
-Same rule for cloud: never leave "Azure", "AWS", or "GCP" sitting alone as the
-architecture. Pair the platform with the service that did the work — Azure Data
-Factory, Azure Functions, Azure Blob Storage, Azure SQL Database, AWS Lambda,
-Amazon S3, Amazon RDS, ECS, EKS, CloudWatch. "On Microsoft Azure" with no service
-is résumé fog. If the stack is one database and one compute path, name both.
+"backed by SQL", or bare "SQL database" as if SQL were a product. Name the actual
+system: PostgreSQL, Azure SQL Database, SQL Server, MySQL, MongoDB, Snowflake,
+BigQuery, Redshift, Cosmos DB — whichever fits the invented role and the JD's tools.
+
+Never leave "Azure", "AWS", or "GCP" sitting alone as the architecture. Pair the
+platform with the service that did the work — Azure Data Factory, Azure Functions,
+Azure Blob Storage, Azure SQL Database, AWS Lambda, Amazon S3, Amazon RDS, ECS,
+EKS, CloudWatch.
+
+Never truncate a product name on first mention (or at all if space allows):
+- "Data Factory" alone is fog — write Azure Data Factory. Same for Functions ->
+  Azure Functions, Blob Storage -> Azure Blob Storage, when the cloud is Azure.
+- "Git-based CI/CD" / "Git CI" is wrong. Git is source control, not the CI runner.
+  Name the system that runs the pipeline: GitHub Actions, Azure DevOps Pipelines,
+  Jenkins, GitLab CI. "Wired Git-based CI/CD" is banned; "Wired GitHub Actions so
+  every merge deploys to Azure Data Factory staging" is the real sentence.
 - Prefer plain verbs: Built, Cut, Raised, Shipped, Migrated, Rewrote, Fixed, Dropped,
   Reduced, Launched, Wrote, Partnered.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}

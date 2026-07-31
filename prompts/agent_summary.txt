@@ -34,6 +34,8 @@ These phrases make a summary forgettable. Never use them:
 - delivers features / ships features (with no WHAT or WHY)
 - "SQL" as a destination or product — SQL is a language. Say PostgreSQL, Azure SQL
   Database, SQL Server, etc. Bare "Azure"/"AWS" without a service is also fog.
+- Truncated product names: "Data Factory" alone (write Azure Data Factory);
+  "Git-based CI/CD" (name GitHub Actions / Azure DevOps / Jenkins).
 
 ## SENIORITY
 State the role flatly. Never invent years.
