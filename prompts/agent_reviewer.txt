@@ -112,6 +112,9 @@ problem in weaknesses:
   failures 65%"), or wrong constructions ("services running on PostgreSQL")
 - The summary repeating the experience bullets' numbers — the page's most valuable
   lines saying everything twice
+- Empty summary: after stripping tool names, only process filler remains ("owns
+  features end to end", "cloud infrastructure", "debugging and code review") with
+  no distinctive system or problem claim
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them
@@ -127,8 +130,10 @@ For each section needing work, give AT MOST 3 concrete, executable edits:
 - "experience: bullet 3 at Intuit has no metric — surface the coverage increase"
 - "skills: add 'Kubernetes' to the Backend & Cloud line (JD must-have, absent)"
 - "summary: mirror the JD title 'Platform Engineer' in the first sentence"
-- "summary: repeats the bullets' 38% and 81% numbers — replace with scope, keep at
-  most one number the bullets don't already use"
+- "summary: repeats the bullets' 38% and 81% numbers — replace with a distinctive
+  positioning claim, keep at most one number the bullets don't already use"
+- "summary: empty after stripping tools — replace process tour with one specific
+  system/problem claim for this JD"
 - "experience: bullet 1 reads AI-generated — cut buzzwords, keep 2 tools max"
 - "experience: bullet 1 'delivered 14 features' is feature-counting theater —
   replace with one capability and its outcome"
