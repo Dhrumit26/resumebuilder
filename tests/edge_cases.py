@@ -23,23 +23,23 @@ TAILORED = {
         ORIG["experience"]
         .replace(
             "Built \\textbf{Python} backend retrieval services on AWS for a distributed multi-agent system, applying \\textbf{OOP} and \\textbf{algorithmic design} to architect scalable, service-oriented APIs integrating semantic reranking of technical documents.",
-            "Shipped tailored \\textbf{Python} retrieval microservices on AWS that power a multi-agent pipeline, using clean APIs and semantic reranking over technical docs.",
+            "Shipped tailored \\textbf{Python} retrieval microservices on AWS that power a multi-agent document platform, using clean APIs and semantic reranking over technical docs.",
         )
         .replace(
             "Cut multi-agent query latency by 45\\% by re-engineering \\textbf{core data structures} and retrieval \\textbf{algorithms}, with \\textbf{systems monitoring} of live production services throughout to preserve accuracy at scale.",
-            "Dropped multi-agent query latency 45\\% after rewriting retrieval paths and watching live production accuracy under load.",
+            "Dropped query latency 45\\% on that document platform after rewriting retrieval paths and watching live production accuracy under load.",
         )
         .replace(
             "Reduced infrastructure and inference costs by 40\\% via semantic caching, dynamic top-k sizing, and embedding-dimension tuning across a large-scale distributed vector search backend, improving overall system efficiency.",
-            "Lowered infra and inference spend 40\\% with semantic caching plus tighter top-k and embedding settings on the vector search backend.",
+            "Lowered infra and inference spend 40\\% on the same platform with semantic caching plus tighter top-k and embedding settings on the vector search backend.",
         )
         .replace(
             "Deployed a containerized API server for stateful agent orchestration using \\textbf{Docker} and DevOps practices, securely exposing internal ERP and project-management systems for end-to-end read/write automation.",
-            "Launched a \\textbf{Docker} API server for stateful agent orchestration that safely wires internal ERP and project systems for automation.",
+            "Launched a \\textbf{Docker} API server for that platform's agent orchestration that safely wires internal ERP and project systems for automation.",
         )
         .replace(
             "Collaborated with engineering and product teams across the full SDLC, from API contract definition through deployment and production support, shipping reliable, scalable agent infrastructure on time.",
-            "Partnered with eng and product from API contracts through production support, shipping agent infrastructure on schedule.",
+            "Partnered with eng and product from API contracts through production support, shipping the platform's agent infrastructure on schedule.",
         )
         .replace(
             "Cut flaky CI failures by 65\\% and pipeline runtime from 45 to 28 minutes by migrating end-to-end tests from Cypress to Playwright, speeding releases by 2 days per sprint.",
@@ -456,19 +456,56 @@ def t21_keyword_bolding():
         "\\resumeItemListEnd\n"
     )
     out = rb.bold_keywords_in_bullets(sec, ["Python", "FastAPI", "PostgreSQL", "Docker", "CI/CD", "C++", "AWS"])
-    # bullet 1: at most 1 new bold under the human-voice cap
+    # bullet 1: up to 2 new bolds under the highlight budget
     b1 = rb._extract_resume_items(out)[0]
-    assert b1.count("\\textbf{") == 1, b1
+    assert 1 <= b1.count("\\textbf{") <= 2, b1
     # bullet 2: existing bold Python not double-bolded; href untouched
     b2 = rb._extract_resume_items(out)[1]
     assert "\\textbf{\\textbf{" not in b2
     assert "\\href{https://x.com/Python}{Python link}" in b2
-    assert b2.count("\\textbf{") <= 2
+    assert b2.count("\\textbf{") <= 3
 
     summ = "%-----------Summary-----------\n\\textit{Backend engineer building AI platforms with Python and FastAPI at scale.}\n"
     sout = rb.bold_keywords_in_summary(summ, ["Python", "FastAPI", "AWS"], max_new=1)
     assert sout.count("\\textbf{") == 1, sout
     assert sout.count("{") == sout.count("}")
+
+
+def t34_story_thin_detects_floating_duty_bullets():
+    thin = r"""
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{May 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Developed Java backend services using Spring Boot and Hibernate.}
+        \resumeItem{Optimized SQL queries reducing execution time from 120ms to 80ms.}
+        \resumeItem{Implemented unit testing with JUnit increasing coverage to 85\%.}
+        \resumeItem{Participated in Agile sprints to deliver REST APIs on schedule.}
+        \resumeItem{Integrated Angular front-end components with backend services.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+"""
+    issues = rb.story_thin_in_flexible_bullets(thin, ["Clerxi AI"])
+    assert issues, issues
+
+    rich = r"""
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{May 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Built Spring Boot APIs for an internal Angular console that lets ops review vendor feed errors before customers see them.}
+        \resumeItem{Cut the slowest SQL lookups on that console's feed store from 120ms to 80ms with Hibernate fetch fixes.}
+        \resumeItem{Covered those API handlers with JUnit from 50\% to 85\% so bad feed fixes stopped regressing in CI.}
+        \resumeItem{Shipped the console's Angular screens against the same REST contracts during two-week Agile sprints.}
+        \resumeItem{Documented the ingestion API paths on the team wiki so platform owners could deploy without guesswork.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+"""
+    assert rb.story_thin_in_flexible_bullets(rich, ["Clerxi AI"]) == []
 
 
 def t23_skills_whitelist_and_go_false_positive():

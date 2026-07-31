@@ -935,6 +935,61 @@ def senior_theater_in_flexible_bullets(section: str, companies: list[str]) -> li
     return hits
 
 
+_STORY_SETTING_RE = re.compile(
+    r"\b(?:platform|service|console|dashboard|portal|application|pipeline|"
+    r"tool|website|site|storefront|workspace|module|feed)\b",
+    re.I,
+)
+_STORY_BACKREF_RE = re.compile(
+    r"\b(?:that|the|those|this)\s+"
+    r"(?:platform|service|console|dashboard|portal|application|app|API|apis|"
+    r"pipeline|tool|website|site|module|feed|handlers?|endpoints?|screens?|"
+    r"mappings?|queries)\b"
+    r"|\b(?:for|on|in)\s+(?:the|an?|our)\s+\w[\w\-]*(?:\s+\w[\w\-]*){0,3}\s+"
+    r"(?:platform|service|console|dashboard|portal|application|app|pipeline|"
+    r"tool|website|site)\b",
+    re.I,
+)
+_FLOATING_DUTY_RE = re.compile(
+    r"(?i)^(participated in agile|collaborated with (?:cross-functional )?teams|"
+    r"worked with product owners?|attended (?:sprint|standup)|"
+    r"contributed to (?:sprint|wiki|documentation))\b"
+)
+
+
+def story_thin_in_flexible_bullets(section: str, companies: list[str]) -> list[str]:
+    """Current-role bullets that lack a shared WHERE/WHAT product story."""
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    flex = [latex_to_plain(items[i]) for i in sorted(idx) if i < len(items)]
+    if len(flex) < 2:
+        return []
+
+    issues: list[str] = []
+    if not _STORY_SETTING_RE.search(flex[0]) and not _STORY_BACKREF_RE.search(flex[0]):
+        issues.append(
+            "bullet 1 missing product setting (name the system/console/API and who it is for)"
+        )
+
+    anchored = sum(
+        1 for t in flex if _STORY_SETTING_RE.search(t) or _STORY_BACKREF_RE.search(t)
+    )
+    if anchored < max(2, (len(flex) + 1) // 2):
+        issues.append(
+            f"only {anchored}/{len(flex)} bullets mention the system — "
+            "refer back to the same product in later bullets"
+        )
+
+    floating = [t[:48] for t in flex if _FLOATING_DUTY_RE.search(t.strip())]
+    if floating:
+        issues.append(
+            "duty-only bullet(s) with no product hook: " + "; ".join(floating)
+        )
+    return issues
+
+
 # Architecture fog: SQL-as-destination, vague "stores", bare/truncated products.
 # Do NOT match product names like "Azure SQL Database" or "SQL Server".
 _ARCH_FOG_PATTERNS = [
@@ -1071,9 +1126,9 @@ def _remove_concept_skills(skills: str) -> str:
 # Spans we must never bold inside: existing bold/href/any LaTeX command token
 _PROTECTED_SPAN_RE = re.compile(r"\\textbf\{[^{}]*\}|\\href\{[^{}]*\}\{[^{}]*\}|\\[a-zA-Z]+\*?")
 
-MAX_BOLD_PER_BULLET = 2      # total \textbf per bullet (existing + new) — less bold = less "AI resume"
-MAX_NEW_BOLD_PER_BULLET = 1  # new bolds this pass may add to one bullet
-MAX_BOLD_PER_KEYWORD = 2     # times one keyword may be bolded across a section
+MAX_BOLD_PER_BULLET = 3      # total \textbf per bullet (existing + new)
+MAX_NEW_BOLD_PER_BULLET = 2  # new bolds this pass may add to one bullet
+MAX_BOLD_PER_KEYWORD = 3     # times one keyword may be bolded across a section
 
 
 def _boldable_keywords(keywords: list[str]) -> list[str]:
@@ -1118,8 +1173,8 @@ def _bold_first_occurrence(text: str, keyword: str) -> tuple[str, bool]:
 def bold_keywords_in_bullets(section: str, keywords: list[str]) -> str:
     """Guarantee JD keywords appearing in \\resumeItem bullets are bolded.
 
-    Caps keep the page readable: max 2 bolds per bullet, max 1 new per bullet,
-    each keyword bolded at most twice per section. Longest keywords first so
+    Caps keep the page readable: max 3 bolds per bullet, max 2 new per bullet,
+    each keyword bolded at most three times per section. Longest keywords first so
     "React Testing Library" wins over "React".
     """
     ordered = _boldable_keywords(keywords)

@@ -32,6 +32,11 @@ NEVER invent a number, a user count, or a scale figure. If an ORIGINAL bullet ha
 no metric, write the strongest concrete outcome instead — a capability that clearly
 worked — and leave it unnumbered.
 
+Name the concrete tools that already exist in ORIGINAL (and that the JD cares
+about) so automatic keyword bolding can highlight them — React, TypeScript,
+PostgreSQL, GitHub Actions, FastAPI, etc. Do not invent Spring/Java/Angular into
+a project that never used them.
+
 ## RULE 4 — NO TECHNOLOGY INVENTORIES
 Some ORIGINAL bullets are lists of tools with no achievement in them
 ("Implemented with A, B, C, D, E, and F, adding X and Y"). Those score badly: 4+

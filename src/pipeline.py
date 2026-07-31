@@ -46,6 +46,7 @@ from .resume_builder import (
     senior_theater_in_flexible_bullets,
     stack_family_underuse_in_flexible_bullets,
     stack_name_overuse_in_flexible_bullets,
+    story_thin_in_flexible_bullets,
     load_full_template,
     load_original_sections,
     load_prompt,
@@ -201,22 +202,30 @@ _JD_NAMED_TOOL_PATTERNS = (
     (re.compile(r"\bHTML5\b", re.I), "HTML5"),
     (re.compile(r"\bCSS3\b", re.I), "CSS3"),
     (re.compile(r"\bAJAX\b", re.I), "AJAX"),
+    (re.compile(r"\bAngular\b", re.I), "Angular"),
+    (re.compile(r"\bSpring\s+Boot\b", re.I), "Spring Boot"),
+    (re.compile(r"\bHibernate\b", re.I), "Hibernate"),
+    (re.compile(r"\bJUnit\b", re.I), "JUnit"),
 )
+
+
+def _normalize_tool_label(name: str) -> str:
+    key = (name or "").strip().lower()
+    if key in ("twitter bootstrap", "twitter-bootstrap"):
+        return "Bootstrap"
+    if key in ("spring frameworks", "spring framework", "spring frameworks"):
+        return "Spring Boot"
+    if key.startswith("java ") or key in ("java 21+", "java21+", "java 21"):
+        return "Java"
+    return name.strip()
 
 
 def _seed_named_tools_from_jd(analysis: dict, jd: str) -> None:
     """Ensure Preferred frameworks named in the posting land in tools/nice_to_have."""
-    tools = list(analysis.get("tools") or [])
-    nice = list(analysis.get("nice_to_have_skills") or [])
-    # Normalize "Twitter Bootstrap" -> Bootstrap so whitelist/injection match bullets
-    tools = [
-        "Bootstrap" if t.strip().lower() in ("twitter bootstrap", "twitter-bootstrap") else t
-        for t in tools
-    ]
-    nice = [
-        "Bootstrap" if t.strip().lower() in ("twitter bootstrap", "twitter-bootstrap") else t
-        for t in nice
-    ]
+    tools = [_normalize_tool_label(t) for t in (analysis.get("tools") or [])]
+    nice = [_normalize_tool_label(t) for t in (analysis.get("nice_to_have_skills") or [])]
+    must = [_normalize_tool_label(t) for t in (analysis.get("must_have_skills") or [])]
+    ats = [_normalize_tool_label(t) for t in (analysis.get("exact_keywords_for_ats") or [])]
     lower = {t.lower() for t in tools}
     nice_lower = {t.lower() for t in nice}
     for pat, name in _JD_NAMED_TOOL_PATTERNS:
@@ -225,23 +234,33 @@ def _seed_named_tools_from_jd(analysis: dict, jd: str) -> None:
         if name.lower() not in lower:
             tools.append(name)
             lower.add(name.lower())
-        if name.lower() not in nice_lower and name.lower() not in {
-            t.lower() for t in (analysis.get("must_have_skills") or [])
-        }:
-            if name in ("jQuery", "Bootstrap", "Foundation", "PHP", "ColdFusion", "HTML5", "CSS3"):
+        if name.lower() not in nice_lower and name.lower() not in {t.lower() for t in must}:
+            if name in (
+                "jQuery", "Bootstrap", "Foundation", "PHP", "ColdFusion",
+                "HTML5", "CSS3", "Angular", "Spring Boot", "Hibernate", "JUnit",
+            ):
                 nice.append(name)
                 nice_lower.add(name.lower())
-    # Dedupe preserving order
-    seen: set[str] = set()
-    deduped = []
-    for t in tools:
-        k = t.lower()
-        if k in seen:
-            continue
-        seen.add(k)
-        deduped.append(t)
-    analysis["tools"] = deduped
-    analysis["nice_to_have_skills"] = nice
+    # Also catch "Spring Frameworks" phrasing in the raw JD
+    if re.search(r"\bSpring\s+Frameworks?\b", jd or "", re.I) and "spring boot" not in lower:
+        tools.append("Spring Boot")
+        lower.add("spring boot")
+
+    def _dedupe(seq: list[str]) -> list[str]:
+        seen: set[str] = set()
+        out = []
+        for t in seq:
+            k = t.lower()
+            if not t or k in seen:
+                continue
+            seen.add(k)
+            out.append(t)
+        return out
+
+    analysis["tools"] = _dedupe(tools)
+    analysis["nice_to_have_skills"] = _dedupe(nice)
+    analysis["must_have_skills"] = _dedupe(must)
+    analysis["exact_keywords_for_ats"] = _dedupe(ats)
 
 
 def _expand_ecosystem_tools(analysis: dict) -> None:
@@ -498,6 +517,18 @@ def write_section(
                     + ", ".join(senior)
                     + ". Use mid-level verbs (Built / Shipped / Implemented / Cut); do not "
                     "'Led the adoption' of frameworks. Rewrite."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            thin = story_thin_in_flexible_bullets(latex, FLEXIBLE_EXPERIENCE_COMPANIES)
+            if thin and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_story_thin", "; ".join(thin))
+                prompt += (
+                    "\n\nWARNING: Story-thin current role — "
+                    + "; ".join(thin)
+                    + ". Plant WHERE/WHAT in bullet 1 (system + users + purpose) and refer "
+                    "back to that same product in later bullets. No floating Agile/duty "
+                    "lines and no bare technique+metric with no setting. Rewrite."
                 )
                 temperature = min(temperature, 0.2)
                 continue

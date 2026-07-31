@@ -47,6 +47,35 @@ This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
    work on one system during the tenure printed on the resume — not a greatest-hits
    reel of every software-engineering activity.
 
+## RULE 0d — THE SMALL STORY (WHERE / WHAT) — load-bearing
+Action + outcome alone is not enough. Recruiters ask: WHERE did this happen, and
+WHAT was the thing? Every current-role job needs a SMALL STORY that threads the
+bullets:
+
+1. Before writing, name it in one private sentence: WHO uses it, WHAT it does,
+   WHERE it lives (internal ops console, customer-facing Angular app, Spring Boot
+   API behind a dashboard, client marketing sites, …).
+2. Bullet 1 PLANTS the story — system + purpose + setting in plain words
+   ("…for the ops team's Angular console that reviews ingested vendor feeds").
+3. Bullets 2–5 REFER BACK — short anchors like "that console", "the ingestion
+   API", "those Hibernate mappings", "the same Spring Boot service". The reader
+   must never wonder which product a metric belongs to.
+4. Ban floating technique bullets: "Optimized SQL queries, cutting latency 20\%"
+   with no system, and ban duty lists ("Participated in Agile…") with no product
+   hook.
+
+WRONG — outcomes with no setting:
+  \resumeItem{Optimized SQL queries, resulting in a 20\% reduction in data retrieval.}
+  \resumeItem{Collaborated in Agile sprints to refine technical designs.}
+
+RIGHT — same stack, small story carried through:
+  \resumeItem{Built Spring Boot REST APIs for an internal Angular console that lets
+  ops review vendor feed errors before they hit customers.}
+  \resumeItem{Cut the slowest SQL lookups on that console's feed store from 120ms
+  to 80ms by adding indexes and rewriting Hibernate fetch paths.}
+  \resumeItem{Covered those API handlers with JUnit from 50\% to 85\% so bad feed
+  fixes stopped regressing in CI.}
+
 CRITICAL — do NOT reverse-engineer the JD into five keyword costumes. If the posting
 mentions SwiftUI, configurable models, performance, ambiguous requirements, design
 collaboration, agentic tooling, accessibility, snapshot tests, CI, and code review,
@@ -369,13 +398,14 @@ only a fallback when the JD's domain already matches them)
 
 ## Before you output
 Check: bullet count per job matches ORIGINAL? Order preserved? Current-role bullets
-tell ONE story — one system, ONE primary language named in at most TWO bullets,
-companions (UIKit / Combine / XCTest / …) on the rest, 5-6 technologies total, no
-language scatter, no SwiftUI/Swift spam, no tech-empty process bullets? Scope fits
-the printed tenure (no feature-count theater, no inventory of every duty)? At most
-2-3 hard invented metrics in the current role? No tech-name swaps? Fixed-history
-metrics unchanged and free of banned tools? Frozen tool pairings intact? No \textbf?
-Every bullet a complete sentence under 28 words?
+tell ONE story — bullet 1 plants WHERE/WHAT (system + users + purpose), later
+bullets refer back to that same system; ONE primary language named in at most TWO
+bullets, companions on the rest, 5-6 technologies total, no language scatter, no
+SwiftUI/Swift spam, no tech-empty process bullets? Scope fits the printed tenure
+(no feature-count theater, no inventory of every duty)? At most 2-3 hard invented
+metrics in the current role? No tech-name swaps? Fixed-history metrics unchanged
+and free of banned tools? Frozen tool pairings intact? No \textbf? Every bullet a
+complete sentence under 28 words?
 
 ## Output
 The experience section LaTeX only.
