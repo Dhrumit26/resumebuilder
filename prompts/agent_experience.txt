@@ -3,48 +3,87 @@ Jake's Resume LaTeX resume, rewritten for a specific job description.
 
 This section carries more scoring weight than the rest of the resume combined.
 
-## RULE 0 — THE CURRENT ROLE RE-ANGLES TO THE JD'S DOMAIN
+## THE ONE FAILURE THAT DESTROYS EVERYTHING: TECH-NAME SWAPPING
+Taking an existing bullet and substituting the technology name is the single worst
+thing you can do. A recruiter in the JD's domain spots it instantly:
+
+  ORIGINAL: "Built Python backend retrieval services ... multi-agent system"
+  SWAPPED:  "Built C++ backend retrieval services ... multi-agent system"   <- REJECTED
+
+Nobody builds multi-agent LLM retrieval in C++ at a startup, and the bullet's shape
+gives the lie away. Same failure class: turning "migrated tests from Cypress to
+Playwright" into "migrated tests from Python to Playwright" — Python is a language,
+not a test framework being replaced. One incoherent swap and the whole resume reads
+fake. Every technology you name must be doing the job that technology actually does,
+inside work that engineers in that domain actually perform.
+
+## RULE 0 — THE CURRENT ROLE IS WRITTEN NATIVELY IN THE JD'S DOMAIN
 Current role: {{FLEXIBLE_COMPANY}}
 
-Its bullets are not a fixed record — they are the candidate's most recent and widest
-work, and they must be rewritten to speak the JD's domain, not merely sprinkle its
-keywords. Every other job on the resume is FIXED HISTORY and stays strict.
+This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
 
-Read the JD's domain and lead with the matching face of the same real work:
+1. Read `domain` and `domain_practices` in the JD Analysis.
+2. Ask: what would a strong engineer in THIS domain have spent the last several
+   months doing?
+3. Write that engineer's bullets from scratch — real practices, matching toolchain,
+   believable outcomes stated with full confidence.
 
-- Backend / platform / infra -> distributed services, API design, latency, throughput,
-  caching, containerization, cost per request
-- AI / LLM / agents -> retrieval quality, multi-agent orchestration, reranking,
-  embedding and top-k tuning, inference cost, eval-driven iteration
-- ML / data -> pipelines, feature and embedding work, offline/online measurement,
-  model-serving latency
-- Payments / fintech -> idempotent write paths, transactional integrity, reconciliation,
-  secure integration with systems of record, audit trails
-- Frontend -> API contracts consumed by clients, integration surfaces, payload shape,
-  perceived latency
-- Business logic / internal tools / automation -> workflow automation across systems of
-  record, read/write integration, hours saved, manual steps removed
+The ORIGINAL bullets for this role are only a fallback: reuse their facts ONLY when
+the JD's domain already matches the original work (e.g., an AI/LLM or backend JD).
+When the domain differs, the original bullets are the wrong story — replace the
+story, don't re-skin it.
 
-For the current role you MAY name JD technologies that do not appear in ORIGINAL —
-draw them from: {{JD_TOOLS}}
-If the JD names no technology for a capability, use the domain-standard choice
-(Postgres for relational, Redis for cache, Docker/Kubernetes for containers, Kafka
-for streaming, PyTorch for models, Stripe for payments). Two to three per bullet.
+What "native" means, by example. For a systems programming / CPU software JD:
+- An engineer there profiles hot paths, fixes cache misses, reduces allocations,
+  tunes lock contention, benchmarks before/after, writes C++ or Rust services.
+- They do NOT "orchestrate multi-agent retrieval" or "tune embedding dimensions".
+So the current role's bullets become memory/latency/throughput work on a concrete
+service, with the practices from domain_practices, written like that engineer talks.
 
-## RULE 0b — WHAT RE-ANGLING MAY NEVER DO
-This is the line between a resume that survives an interview and one that collapses.
+Technologies for the current role: draw from {{JD_TOOLS}} (front of list first).
+If the JD names no tool for a capability, use the domain-standard choice. Two to
+three per bullet, never more.
 
-You MAY change: which aspect of the work leads, which technologies are named, and
-what the outcome is framed as serving.
+Metrics for the current role: when writing in a new domain you MAY use new numbers,
+under two conditions:
+- Believable and defensible — a number the candidate could explain in an interview
+  without flinching. Strong improvements are fine: 2x throughput, 55\% faster,
+  hours of toil removed. What is NOT fine is SCALE the candidate has never touched:
+  billions of requests, petabytes of data, org-wide platforms, systems serving
+  hundreds of millions of users. Claim strong work at the true scale of the role —
+  a mid-level engineer's real scale, stated with full confidence.
+- Internally consistent across bullets — the same system, the same order of
+  magnitude, one coherent story. And concrete about what was measured:
+  "cut p99 allocation stalls 35\%" not "improved performance significantly".
+When the domain matches the original work, keep the original metrics attached to
+what they actually measured.
 
-You may NEVER change what a metric measured. If ORIGINAL says query latency dropped
-45%, that 45% stays attached to query latency on a retrieval service — for every JD,
-forever. Re-labelling it "payment authorization latency" for a payments role is a
-fabrication and the first interview question destroys it.
+What never changes, even for the current role: job title, company, dates, location,
+and bullet count.
 
-If the JD's domain genuinely does not exist in this role, do NOT invent it. Lead with
-the adjacent real work — the integration surface, the API contract, the reliability
-engineering — and let the resume's other job carry that domain if it has it.
+## RULE 0b — FIXED HISTORY: DECIDE PER BULLET, THEN ACT
+Every job that is not {{FLEXIBLE_COMPANY}} is FIXED HISTORY. For each of its bullets,
+run this decision before writing:
+
+1. CAN this bullet be truthfully re-angled toward the JD's domain?
+   Transferable work re-angles honestly: testing, CI/CD, code review, API contracts,
+   refactoring, coverage, cross-team delivery exist in every domain. A test-migration
+   bullet is relevant to a systems role AS test infrastructure work — frame it as
+   pipeline reliability and speed, not as systems programming.
+2. If YES — re-angle the emphasis and vocabulary, keeping every fact intact:
+   - Lead with the aspect the JD cares about (reliability, speed, contracts, quality).
+   - You may name a technology from elsewhere in the candidate's ORIGINAL resume only
+     if it plays the SAME role in a sentence that stays true.
+   - Named tool pairings are FROZEN FACTS: "Cypress to Playwright" may be reframed or
+     re-emphasized but its members are never replaced. Ever.
+3. If NO — keep the bullet's original story and simply rewrite the sentence: new
+   verb, new structure, outcome first. An honest off-domain bullet with a hard number
+   scores far better than a fake on-domain one, and the interview confirms it.
+
+For fixed history: NEVER invent a metric, a tool, a feature, or a scope. BANNED IN
+BULLETS for these jobs: {{BANNED_TOOLS}} — naming one causes that bullet to be thrown
+away and replaced with the old version. State the real work at full strength — never
+downscale or hedge an achievement because the title says intern.
 
 ## RULE 1 — XYZ FORMULA + METRIC COVERAGE
 Every bullet follows XYZ: accomplished [X], measured by [Y], by doing [Z].
@@ -53,13 +92,11 @@ Put Y early. "Cut X 45% by doing Z" beats "Did Z, which cut X 45%".
 At least 80% of bullets MUST contain a hard number — percentage, time, dollar, count,
 or scale. Count them before finishing. 5 bullets -> at least 4 carry a number.
 Below 80% the resume loses points in proportion; below 40% it loses most of them.
-NEVER invent a number. Every metric must already exist in ORIGINAL.
 
 ## RULE 2 — REWRITE, DON'T PARAPHRASE
 Copy-paste or synonym-swapping an ORIGINAL bullet is a FAILURE and gets rejected.
-- Same underlying achievement and metric
-- New sentence: different verb, different structure, outcome first where it lands harder
-- At least half the words differ from the ORIGINAL bullet
+For fixed-history bullets: same underlying achievement and metric, new sentence —
+different verb, different structure, at least half the words changed.
 
 ## RULE 3 — STRUCTURE (absolute, mechanical)
 - Copy the LaTeX skeleton from ORIGINAL exactly: \resumeSubheading,
@@ -72,26 +109,14 @@ Copy-paste or synonym-swapping an ORIGINAL bullet is a FAILURE and gets rejected
   spliced in when a repair fires.
 - Same job titles, companies, dates, and locations. Never touch them.
 
-## RULE 4 — TRUTHFULNESS
-For FIXED HISTORY jobs (every job that is not {{FLEXIBLE_COMPANY}}):
-- A bullet may ONLY name tools that appear in that job's ORIGINAL bullets.
-- BANNED IN BULLETS: {{BANNED_TOOLS}}
-  Naming one causes that bullet to be thrown away and replaced with the old version.
-- Keep internship work at internship scale. Never promote it.
-
-For ALL jobs including the current role:
-- Never invent a metric, a team size, a headcount, a user count, or a seniority claim.
-- Never invent a feature, product, or integration that did not exist.
-- Re-angle real facts. Do not manufacture new ones.
-
-## RULE 5 — LENGTH
+## RULE 4 — LENGTH
 ONE complete sentence per bullet, 22-28 words. That is two printed lines.
 - Never exceed 38 words: longer bullets get machine-shortened and may be discarded.
 - Never end mid-thought. A bullet ending on "by", "to", "with", "using", "and",
   or a bare number is treated as truncated and reverted to the old version.
 - End on a concrete outcome, not a trailing clause.
 
-## RULE 6 — HUMAN VOICE (recruiters reject AI-sounding resumes)
+## RULE 5 — HUMAN VOICE (recruiters reject AI-sounding resumes)
 - Max 2-3 tech names per bullet. Stacking 4+ triggers a scoring penalty.
 - Vary how bullets open. Do not start consecutive bullets the same way.
 - BANNED words and phrases: leverage, leveraging, utilize, spearheaded, orchestrated,
@@ -102,7 +127,7 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
   Reduced, Launched, Wrote, Partnered.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}
 
-## RULE 7 — FORMATTING
+## RULE 6 — FORMATTING
 - Do NOT use \textbf anywhere. Keyword bolding is applied automatically after you,
   targeted at the exact JD keywords that earn ATS points.
 - Escape every percent sign as \% — a bare % comments out the rest of the line and
@@ -110,28 +135,34 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
 - LaTeX only. No markdown, no **, no "- " lists, no code fences, no commentary,
   no delimiters.
 
-## EXAMPLE — one real achievement, three JD domains
-ORIGINAL bullet (current role):
+## WORKED EXAMPLE — systems programming JD ("Software Engineer, CPU", C++)
+
+Current role, ORIGINAL bullet:
   \resumeItem{Cut multi-agent query latency by 45\% by re-engineering core data
   structures and retrieval algorithms, with systems monitoring of live production
   services throughout to preserve accuracy at scale.}
 
-Backend JD:
-  \resumeItem{Cut p95 service latency 45\% by reworking the data structures behind a
-  distributed retrieval API, monitoring live traffic to hold accuracy steady.}
+WRONG — tech-name swap, incoherent domain (multi-agent retrieval is not C++ work):
+  \resumeItem{Cut multi-agent query latency by 45\% by re-engineering core C++ data
+  structures and retrieval algorithms across live production services.}
 
-AI / LLM JD:
-  \resumeItem{Cut multi-agent retrieval latency 45\% by rebuilding ranking and
-  reranking paths, tracking answer accuracy in production throughout the migration.}
+RIGHT — written natively in the systems domain, new coherent story and metric:
+  \resumeItem{Cut p99 request latency 38\% in a C++ ingestion service by replacing
+  hash-heavy lookups with cache-friendly flat structures, verified with before and
+  after benchmarks.}
 
-Payments JD — note the metric stays attached to query latency, and the payments angle
-comes from the real integration work rather than invented payment rails:
-  \resumeItem{Cut query latency 45\% on a service backing internal financial systems,
-  holding data accuracy steady across live production traffic.}
+Fixed history (internship), ORIGINAL bullet:
+  \resumeItem{Reduced flaky CI failures by 65\% and pipeline runtime from 45 to 28
+  minutes by migrating end-to-end tests from Cypress to Playwright.}
 
-FABRICATION — never do this. The 45\% never measured authorization:
-  \resumeItem{Cut payment authorization latency 45\% across a high-volume Stripe
-  processing pipeline handling millions of transactions.}
+WRONG — broke a frozen pairing, Python was never the test framework:
+  \resumeItem{Reduced flaky CI failures by 65\% by migrating end-to-end tests from
+  Python to Playwright, cutting pipeline runtime to 28 minutes.}
+
+RIGHT — same frozen facts, re-angled toward what a systems team values (fast,
+reliable pipelines), sentence rebuilt:
+  \resumeItem{Dropped CI pipeline time from 45 to 28 minutes and flaky failures 65\%
+  by moving end-to-end suites from Cypress to Playwright with parallel execution.}
 
 ## JD Analysis
 {{JD_ANALYSIS}}
@@ -139,13 +170,15 @@ FABRICATION — never do this. The 45\% never measured authorization:
 ## Job Description (excerpt)
 {{JOB_DESCRIPTION}}
 
-## ORIGINAL EXPERIENCE (facts + skeleton ONLY — do not reuse bullet wording)
+## ORIGINAL EXPERIENCE (skeleton + fixed-history facts; current-role bullets are
+only a fallback when the JD's domain already matches them)
 {{ORIGINAL_SECTION}}
 
 ## Before you output
 Check: bullet count per job matches ORIGINAL? Order preserved? At least 80% carry a
-number? Every metric still measuring what it originally measured? Fixed-history jobs
-free of banned tools? No \textbf? Every bullet a complete sentence under 28 words?
+number? Current-role bullets read like a real engineer in the JD's domain — no
+tech-name swaps? Fixed-history metrics unchanged and free of banned tools? Frozen
+tool pairings intact? No \textbf? Every bullet a complete sentence under 28 words?
 
 ## Output
 The experience section LaTeX only.

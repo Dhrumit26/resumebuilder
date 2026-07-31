@@ -39,6 +39,22 @@ writers; a tool misfiled as a concept merely loses one keyword.
 1. role_title — the exact title as written in the posting.
 2. seniority_level, company_type, years_experience_wanted — read them off the posting;
    use "unknown"/"" rather than guessing.
+2b. domain — a 2-5 word label for the ENGINEERING DOMAIN this role practices, not its
+   title. Examples: "backend web services", "systems programming", "embedded firmware",
+   "AI/LLM platform", "data engineering", "frontend web", "mobile", "DevOps/platform",
+   "test infrastructure". A "Software Engineer, CPU" posting is "systems programming"
+   even though the title says Software Engineer.
+2c. domain_practices — 4 to 8 short phrases naming what engineers in THIS domain
+   actually do day to day. These drive how the writers frame the candidate's work and
+   how the reviewer scores domain fit, so pick practices a hiring manager in this
+   domain would recognize instantly. Examples by domain:
+   - systems programming: memory profiling, lock contention analysis, cache-aware data
+     structures, SIMD/vectorization, benchmarking hot paths, cross-platform builds
+   - backend web services: API design, horizontal scaling, query optimization, caching
+     layers, rate limiting, service observability
+   - test infrastructure: flaky test triage, CI pipeline speed, test parallelization,
+     coverage gating, hermetic environments
+   Do NOT restate tools here — practices only.
 3. must_have_skills — 8-14 hard requirements, as an ATS would string-match them:
    "GitHub Actions" not "CI tooling"; "PostgreSQL" not "SQL databases".
 4. nice_to_have_skills — up to 6.
@@ -71,6 +87,8 @@ writers; a tool misfiled as a concept merely loses one keyword.
   "seniority_level": "junior|mid|senior|staff",
   "company_type": "startup|mid-size|big-tech|enterprise|unknown",
   "years_experience_wanted": "",
+  "domain": "",
+  "domain_practices": [],
   "must_have_skills": [],
   "nice_to_have_skills": [],
   "exact_keywords_for_ats": [],

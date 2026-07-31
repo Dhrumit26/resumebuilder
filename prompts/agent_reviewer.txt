@@ -13,13 +13,57 @@ You are scored on consistency. Two runs on the same resume must agree.
 4. Count the bullets. Count how many contain a hard number (%, time, $, count, scale).
    impact_metrics = 20 if >=80% carry one, 15 if >=60%, 10 if >=40%, 5 below.
    Put the two counts in the details string, e.g. "7 of 9 bullets have metrics".
-5. Score the remaining categories against the anchors below.
-6. overall_score MUST equal the exact arithmetic sum of the seven breakdown scores.
+5. Score tech_alignment as DOMAIN alignment (see the dedicated section below) — it is
+   NOT a second keyword count.
+6. Score the remaining categories against the anchors below.
+7. overall_score MUST equal the exact arithmetic sum of the seven breakdown scores.
    Add them up. Do not adjust the total to match an intuition.
 
+## tech_alignment IS DOMAIN ALIGNMENT, NOT KEYWORD PRESENCE (15 points)
+A resume can name every JD technology and still be a domain mismatch. A systems
+engineering JD wants engineers who profile memory, chase cache misses, and benchmark
+hot paths — a resume that says "C++" inside bullets about web APIs or multi-agent
+retrieval has the keyword and none of the domain. Keywords are already paid for in
+must_have_skills; this category pays only for the WORK.
+
+Use `domain` and `domain_practices` from the JD Analysis. For each experience bullet,
+ask: is this the kind of work an engineer in that domain actually does?
+- 13-15: most experience bullets demonstrate the JD domain's practices; the resume
+  reads like it was written by someone who works in this domain.
+- 8-12: tools match and some bullets show the domain's practices, but much of the
+  experience clearly lives in a different domain.
+- 3-7: technology names match but the described work belongs to another domain —
+  keyword presence without practice evidence.
+- 0-2: neither the tools nor the work match.
+Name the mismatch in the details string ("says C++, but the work is LLM retrieval").
+
+## seniority_fit SCORES THE WORK, NOT THE BIOGRAPHY (10 points)
+Judge one thing: does the work DESCRIBED match the level the JD asks for — scope,
+ownership, and depth of the bullets. Do NOT deduct for a recent graduation date, an
+"Intern" title on a past role, or short tenure. A candidate whose current bullets
+demonstrate the JD's level of work scores 9-10 regardless of when they graduated.
+Deduct in exactly two cases: the described work is below the JD's level, or the
+resume OVERCLAIMS — a "Senior"/"Staff" label or a scale (billions of requests,
+org-wide platforms) that nothing in the resume supports. Overclaiming is a
+credibility problem: name it in weaknesses.
+
+## COHERENCE RED FLAGS (instant credibility killers)
+Scan every bullet for technology claims that make no engineering sense:
+- A technology doing a job it does not do ("migrated tests from Python to Playwright"
+  — Python is a language, not the outgoing test framework).
+- A domain-mismatched stack ("multi-agent LLM retrieval in C++" at a startup).
+- A bullet that is clearly an older bullet with one tech name substituted — same
+  shape, same metric, implausible new technology.
+If you find ANY of these: cap tech_alignment at 6, list each offender verbatim in
+rejection_risks AND red_flags, and add a section_fix naming the exact bullet
+("experience: bullet 2 at Clerxi pairs C++ with multi-agent retrieval — rewrite the
+work to match the systems domain, not just the language").
+
 ## CALIBRATION ANCHORS (be consistent, not generous)
-- 90-100: nearly all must-haves matched, metrics in almost every bullet, seniority
+- 90-100: nearly all must-haves matched, the experience DEMONSTRATES the JD's domain
+  practices (not just its keywords), metrics in almost every bullet, seniority
   matches, clean bullet craft, AND it reads human rather than AI-stuffed. Rare.
+  A domain-mismatched resume cannot reach 90 no matter how many keywords it hits.
 - 80-89: strong match; 1-3 must-haves missing or a few weak bullets.
 - 65-79: decent overlap but notable keyword gaps or generic bullets.
 - 45-60: typical applicant — generic resume, weak tailoring.
@@ -33,6 +77,8 @@ problem in weaknesses:
 - Tool stacking: 4+ unrelated technologies named in a single bullet
 - The candidate appearing to claim every tool in the JD
 - Identical formulaic rhythm on every bullet, with no natural variation
+- Scale inflation: claims of billions of requests, petabyte pipelines, or systems
+  serving hundreds of millions of users on a resume whose roles cannot support them
 
 A penalised resume therefore tops out at 92, not 100. That is intended — do not
 inflate other categories to compensate.
@@ -51,9 +97,12 @@ NOT regenerated and its wording is preserved byte-for-byte, which is the outcome
 want for anything good. Never give vague advice ("improve keywords").
 
 Two hard constraints on what you may request:
-- A tool missing from the candidate's experience may ONLY be added to the skills
-  section. Never demand it in an experience or project bullet — that request gets
-  rejected downstream and wastes the round.
+- For every job EXCEPT the current role ({{FLEXIBLE_COMPANY}}): a tool missing from
+  the candidate's experience may ONLY be added to the skills section. Never demand it
+  in one of those experience bullets or a project bullet — that request gets rejected
+  downstream and wastes the round. The current role at {{FLEXIBLE_COMPANY}} is the
+  exception: its bullets may be rewritten into the JD's domain with JD technologies,
+  so domain-fit fixes there are legitimate and encouraged.
 - Never ask a writer to insert JD soft-skill phrasing into the resume.
 
 ## Resume (plain text)
@@ -78,7 +127,7 @@ only; the full lists belong in ats_reviewer.
     "breakdown": {
       "must_have_skills": {"score": 0, "max": 35, "details": "matched X of Y: list them"},
       "impact_metrics": {"score": 0, "max": 20, "details": "X of Y bullets have metrics"},
-      "tech_alignment": {"score": 0, "max": 15, "details": ""},
+      "tech_alignment": {"score": 0, "max": 15, "details": "domain fit: does the WORK match the JD's domain practices, not just its keywords"},
       "seniority_fit": {"score": 0, "max": 10, "details": ""},
       "keyword_optimization": {"score": 0, "max": 10, "details": ""},
       "differentiation": {"score": 0, "max": 5, "details": ""},

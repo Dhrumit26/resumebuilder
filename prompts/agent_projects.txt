@@ -59,6 +59,10 @@ Copy-paste or synonym-swapping an ORIGINAL bullet is a FAILURE and gets rejected
 - BANNED IN BULLETS — the candidate has never used these: {{BANNED_TOOLS}}
   Naming one causes that bullet to be thrown away and replaced with the old version.
 - Never invent features, integrations, or scale.
+- Every technology must keep the job it actually did. Never substitute one tool for
+  a different KIND of tool ("Next.js" is not swappable with "PostgreSQL"), and named
+  pairings or integrations in ORIGINAL (e.g. "Plaid and Dwolla") are frozen facts.
+  One incoherent swap makes the whole resume read fake.
 
 ## RULE 8 — LENGTH
 ONE complete sentence per bullet, 22-28 words. That is two printed lines.

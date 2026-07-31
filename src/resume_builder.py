@@ -999,6 +999,23 @@ def clean_generated_sections(
             projects, fallback["projects"], jd_keywords, evidence_lower
         )
         banned = unevidenced_tools(jd_keywords, evidence_lower)
+        # A JD tool the flexible current role legitimately adopted (it survived the
+        # bullet gate above) is claimable in the summary too — the summary describes
+        # the current role, and reverting it would contradict the experience section.
+        flex_idx = flexible_item_indices(experience, FLEXIBLE_EXPERIENCE_COMPANIES)
+        if flex_idx:
+            items = _extract_resume_items(experience)
+            flex_text = latex_to_plain(
+                " ".join(items[i] for i in flex_idx if i < len(items))
+            )
+            banned = [
+                kw for kw in banned
+                if not re.search(
+                    r"(?<![A-Za-z0-9])" + re.escape(kw) + r"(?![A-Za-z0-9])",
+                    flex_text,
+                    re.IGNORECASE,
+                )
+            ]
         summary_plain = latex_to_plain(summary)
         hit = [
             kw for kw in banned

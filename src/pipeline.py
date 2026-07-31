@@ -83,6 +83,8 @@ _DEFAULT_JD_ANALYSIS = {
     "seniority_level": "mid",
     "company_type": "unknown",
     "years_experience_wanted": "",
+    "domain": "",
+    "domain_practices": [],
     "must_have_skills": [],
     "nice_to_have_skills": [],
     "exact_keywords_for_ats": [],
@@ -177,7 +179,14 @@ def run_jd_agent(jd: str) -> tuple[dict, bool]:
     for key in analysis:
         if key in raw:
             analysis[key] = raw[key]
-    for key in ("must_have_skills", "nice_to_have_skills", "exact_keywords_for_ats", "tools", "concepts"):
+    for key in (
+        "must_have_skills",
+        "nice_to_have_skills",
+        "exact_keywords_for_ats",
+        "tools",
+        "concepts",
+        "domain_practices",
+    ):
         analysis[key] = _normalize_str_list(analysis.get(key))
     placement = analysis.get("keyword_placement")
     if not isinstance(placement, dict):
@@ -293,7 +302,8 @@ def write_section(
                 prompt += (
                     "\n\nWARNING: Your bullets were too close to ORIGINAL (copy/paraphrase). "
                     "REWRITE every \\resumeItem with different wording and a JD angle. "
-                    "Keep the same facts/metrics/tools — change the sentences. "
+                    "For the flexible current role, write natively in the JD's domain. "
+                    "For fixed-history jobs keep the same facts and metrics — change the sentences. "
                     "At least half the words in each bullet must differ from ORIGINAL."
                 )
                 temperature = min(0.55, max(temperature, 0.4))
@@ -306,6 +316,23 @@ def write_section(
     return None, status
 
 
+def _summary_evidence(evidence: str, experience_latex: str | None) -> str:
+    """Evidence for the Summary agent, extended with the resume's OWN tailored
+    experience section. The summary is written to agree with the story the
+    experience tells (same domain, same technologies) — without this, a flexible
+    current role rewritten into the JD's domain contradicts a summary that only
+    ever saw the original resume."""
+    if not experience_latex:
+        return evidence
+    return (
+        evidence
+        + "\n\nTAILORED CURRENT-ROLE EXPERIENCE (the experience section appearing on"
+        " THIS resume, already rewritten for this JD — the summary MUST tell the same"
+        " story: same domain, same technologies, no contradicting metrics):\n"
+        + latex_to_plain(experience_latex)
+    )
+
+
 def write_sections_parallel(
     names: list[str],
     jd: str,
@@ -315,6 +342,7 @@ def write_sections_parallel(
     fix_contexts: dict[str, dict] | None = None,
     base_temperature: float | None = None,
     pool: ThreadPoolExecutor | None = None,
+    current_experience: str | None = None,
 ) -> tuple[dict[str, str | None], dict[str, str]]:
     fix_contexts = fix_contexts or {}
 
@@ -326,7 +354,7 @@ def write_sections_parallel(
                 jd,
                 jd_analysis,
                 original_sections[name],
-                evidence,
+                _summary_evidence(evidence, current_experience) if name == "summary" else evidence,
                 fix_contexts.get(name),
                 base_temperature,
             )
@@ -360,6 +388,7 @@ def run_reviewer(resume_text: str, jd: str, jd_analysis: dict) -> dict | None:
         RESUME_TEXT=resume_text[:6000],
         JOB_DESCRIPTION=jd,
         JD_ANALYSIS=json.dumps(jd_analysis, indent=1),
+        FLEXIBLE_COMPANY=", ".join(FLEXIBLE_EXPERIENCE_COMPANIES) or "(none)",
     )
     try:
         bundle = call_llm_json(prompt, temperature=0.0, max_tokens=3000)
@@ -580,8 +609,12 @@ def build_tailored_resume(job_description: str, on_progress=None) -> dict:
     keywords = jd_keywords_of(jd_analysis)
     _emit(on_progress, "jd", {"jd_analysis": jd_analysis, "jd_agent_ok": jd_ok})
 
-    # ---- Stage 2: best-of-N candidate resumes, all section agents parallel --
+    # ---- Stage 2: best-of-N candidate resumes, section agents parallel ------
+    # The summary is written AFTER its candidate's experience so it can tell the
+    # same story: the flexible current role may be rewritten into the JD's domain,
+    # and a summary drafted from the original resume alone would contradict it.
     n = BEST_OF_N
+    body_sections = [name for name in SECTION_NAMES if name != "summary"]
     with ThreadPoolExecutor(max_workers=max(1, len(SECTION_NAMES) * n)) as pool:
         candidate_futures = []
         for c in range(n):
@@ -591,12 +624,14 @@ def build_tailored_resume(job_description: str, on_progress=None) -> dict:
                     write_section, name, jd, jd_analysis,
                     original_sections[name], evidence, None, temp,
                 )
-                for name in SECTION_NAMES
+                for name in body_sections
             }
-            candidate_futures.append(futures)
+            candidate_futures.append((temp, futures))
 
-        candidates = []
-        for futures in candidate_futures:
+        # Collect body sections; launch each candidate's summary as soon as its
+        # experience is known. Later candidates' bodies keep running meanwhile.
+        partials = []
+        for temp, futures in candidate_futures:
             drafts: dict[str, str | None] = {}
             statuses: dict[str, str] = {}
             for name, future in futures.items():
@@ -606,6 +641,22 @@ def build_tailored_resume(job_description: str, on_progress=None) -> dict:
                     latex, status = None, "error"
                 drafts[name] = latex
                 statuses[name] = status
+            summary_future = pool.submit(
+                write_section, "summary", jd, jd_analysis,
+                original_sections["summary"],
+                _summary_evidence(evidence, drafts.get("experience")),
+                None, temp,
+            )
+            partials.append((drafts, statuses, summary_future))
+
+        candidates = []
+        for drafts, statuses, summary_future in partials:
+            try:
+                latex, status = summary_future.result()
+            except Exception:
+                latex, status = None, "error"
+            drafts["summary"] = latex
+            statuses["summary"] = status
             candidates.append((drafts, statuses))
     llm_calls += len(SECTION_NAMES) * n
 
@@ -739,7 +790,8 @@ def build_tailored_resume(job_description: str, on_progress=None) -> dict:
                 fix_contexts[name] = {"previous": prev_sections[name], "fixes": [warning]}
 
         fixed_drafts, fix_statuses = write_sections_parallel(
-            list(fix_contexts.keys()), jd, jd_analysis, original_sections, evidence, fix_contexts
+            list(fix_contexts.keys()), jd, jd_analysis, original_sections, evidence,
+            fix_contexts, current_experience=prev_sections["experience"],
         )
         llm_calls += len(fix_contexts)
 
