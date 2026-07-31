@@ -529,21 +529,45 @@ def _skill_entries_from_section(skills: str) -> set[str]:
     return found
 
 
+# Prefer injecting these over ubiquitous HTML/CSS/JS when the budget is only 4.
+_SKILL_INJECT_PRIORITY = (
+    "jquery", "bootstrap", "foundation", "php", "coldfusion", "ajax",
+    "swiftui", "uikit", "xctest", "xcode", "combine", "instruments",
+    "fastapi", "postgresql", "kubernetes", "grpc", "datadog",
+)
+_SKILL_INJECT_DEPRIORITIZE = {"html", "css", "javascript", "html5", "css3", "sql"}
+
+
+def _skill_inject_rank(tool: str) -> int:
+    key = tool.lower().strip()
+    for i, p in enumerate(_SKILL_INJECT_PRIORITY):
+        if key == p or key.endswith(" " + p):
+            return i
+    if key in _SKILL_INJECT_DEPRIORITIZE:
+        return 200
+    return 100
+
+
 def _whitelist_skills(skills: str, original_skills: str, jd_tools: list[str], max_new: int = 4) -> str:
     """Keep ORIGINAL skills + up to max_new JD tools. Drop invented tools (Go/Rust/etc.)."""
     allowed = _skill_entries_from_section(original_skills)
-    to_inject: list[str] = []
+    candidates: list[str] = []
+    seen_cand: set[str] = set()
     for tool in jd_tools or []:
         tool = (tool or "").strip()
         if not tool or _matches_concept(tool) or _ROLE_TITLE_RE.search(tool):
             continue
         key = tool.lower()
-        if key in allowed:
+        if key in ("twitter bootstrap", "twitter-bootstrap"):
+            tool, key = "Bootstrap", "bootstrap"
+        if key in allowed or key in seen_cand:
             continue
-        if len(to_inject) >= max_new:
-            break
-        allowed.add(key)
-        to_inject.append(tool)
+        seen_cand.add(key)
+        candidates.append(tool)
+    candidates.sort(key=_skill_inject_rank)
+    to_inject = candidates[:max_new]
+    for tool in to_inject:
+        allowed.add(tool.lower())
 
     emptied: list[str] = []
 

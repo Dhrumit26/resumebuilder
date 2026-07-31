@@ -208,6 +208,15 @@ def _seed_named_tools_from_jd(analysis: dict, jd: str) -> None:
     """Ensure Preferred frameworks named in the posting land in tools/nice_to_have."""
     tools = list(analysis.get("tools") or [])
     nice = list(analysis.get("nice_to_have_skills") or [])
+    # Normalize "Twitter Bootstrap" -> Bootstrap so whitelist/injection match bullets
+    tools = [
+        "Bootstrap" if t.strip().lower() in ("twitter bootstrap", "twitter-bootstrap") else t
+        for t in tools
+    ]
+    nice = [
+        "Bootstrap" if t.strip().lower() in ("twitter bootstrap", "twitter-bootstrap") else t
+        for t in nice
+    ]
     lower = {t.lower() for t in tools}
     nice_lower = {t.lower() for t in nice}
     for pat, name in _JD_NAMED_TOOL_PATTERNS:
@@ -219,11 +228,19 @@ def _seed_named_tools_from_jd(analysis: dict, jd: str) -> None:
         if name.lower() not in nice_lower and name.lower() not in {
             t.lower() for t in (analysis.get("must_have_skills") or [])
         }:
-            # Preferred-tier names: keep must-haves clean; mirror into nice_to_have
             if name in ("jQuery", "Bootstrap", "Foundation", "PHP", "ColdFusion", "HTML5", "CSS3"):
                 nice.append(name)
                 nice_lower.add(name.lower())
-    analysis["tools"] = tools
+    # Dedupe preserving order
+    seen: set[str] = set()
+    deduped = []
+    for t in tools:
+        k = t.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        deduped.append(t)
+    analysis["tools"] = deduped
     analysis["nice_to_have_skills"] = nice
 
 
