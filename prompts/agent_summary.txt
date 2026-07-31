@@ -76,6 +76,10 @@ State the role flatly. Never invent years.
 - Never claim the JD's business sector as the candidate's history. Industry nouns
   from the posting (energy operators, well data, patients, trading) describe the
   EMPLOYER's world — do not dress the candidate's companies in that industry.
+- Never invent an AI/ML product story from an employer brand token ("Clerxi AI")
+  when `domain` is frontend web, backend web, DevOps, etc. "AI-driven data
+  visualization" on an HTML/CSS/JavaScript consulting JD is brand bleed — ban it.
+  Match the tailored experience's system and stack instead.
 - NEVER mention these: {{BANNED_TOOLS}}
   ONE of these words causes your ENTIRE summary to be discarded and replaced.
 - Mirror at most 2 of these, and only where the evidence supports them:

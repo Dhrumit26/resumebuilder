@@ -39,8 +39,11 @@ from .resume_builder import (
     is_valid_jake_summary,
     architecture_fog_in_flexible_bullets,
     architecture_fog_in_text,
+    bare_percent_overuse_in_flexible_bullets,
+    brand_bleed_in_text,
     languages_in_flexible_bullets,
     latex_to_plain,
+    senior_theater_in_flexible_bullets,
     stack_family_underuse_in_flexible_bullets,
     stack_name_overuse_in_flexible_bullets,
     load_full_template,
@@ -182,9 +185,46 @@ _ECOSYSTEM_COMPANIONS = {
     "swift": ["Xcode", "XCTest", "Foundation", "UIKit", "Combine", "Instruments"],
     "swiftui": ["Xcode", "XCTest", "Foundation", "UIKit", "Combine", "Instruments"],
     "uikit": ["Xcode", "XCTest", "Foundation", "Combine"],
+    "jquery": ["JavaScript", "HTML", "CSS"],
+    "bootstrap": ["JavaScript", "HTML", "CSS", "jQuery"],
     "kotlin": ["Android Studio", "JUnit"],
     "react native": ["Jest", "Xcode"],
 }
+
+# Named frameworks the JD agent sometimes drops from Preferred — seed from raw JD text.
+_JD_NAMED_TOOL_PATTERNS = (
+    (re.compile(r"\bjQuery\b", re.I), "jQuery"),
+    (re.compile(r"\bTwitter\s+Bootstrap\b|\bBootstrap\b", re.I), "Bootstrap"),
+    (re.compile(r"\bFoundation\s+UI\b|\bUI\s+Frameworks?\s+Foundation\b", re.I), "Foundation"),
+    (re.compile(r"\bColdFusion\b|\bCFML\b", re.I), "ColdFusion"),
+    (re.compile(r"\bPHP\b"), "PHP"),
+    (re.compile(r"\bHTML5\b", re.I), "HTML5"),
+    (re.compile(r"\bCSS3\b", re.I), "CSS3"),
+    (re.compile(r"\bAJAX\b", re.I), "AJAX"),
+)
+
+
+def _seed_named_tools_from_jd(analysis: dict, jd: str) -> None:
+    """Ensure Preferred frameworks named in the posting land in tools/nice_to_have."""
+    tools = list(analysis.get("tools") or [])
+    nice = list(analysis.get("nice_to_have_skills") or [])
+    lower = {t.lower() for t in tools}
+    nice_lower = {t.lower() for t in nice}
+    for pat, name in _JD_NAMED_TOOL_PATTERNS:
+        if not pat.search(jd or ""):
+            continue
+        if name.lower() not in lower:
+            tools.append(name)
+            lower.add(name.lower())
+        if name.lower() not in nice_lower and name.lower() not in {
+            t.lower() for t in (analysis.get("must_have_skills") or [])
+        }:
+            # Preferred-tier names: keep must-haves clean; mirror into nice_to_have
+            if name in ("jQuery", "Bootstrap", "Foundation", "PHP", "ColdFusion", "HTML5", "CSS3"):
+                nice.append(name)
+                nice_lower.add(name.lower())
+    analysis["tools"] = tools
+    analysis["nice_to_have_skills"] = nice
 
 
 def _expand_ecosystem_tools(analysis: dict) -> None:
@@ -236,6 +276,7 @@ def run_jd_agent(jd: str) -> tuple[dict, bool]:
     analysis["keyword_placement"] = {
         name: _normalize_str_list(placement.get(name)) for name in SECTION_NAMES
     }
+    _seed_named_tools_from_jd(analysis, jd)
     _expand_ecosystem_tools(analysis)
     # Web-ground specialized products (Microsoft Fabric, Snowflake, …) so writers
     # don't invent the wrong architecture from a thin model prior. Still runs when
@@ -397,8 +438,49 @@ def write_section(
                     "\n\nWARNING: Stack underuse — current-role bullets name too few "
                     f"companions for this JD ({'; '.join(underuse)}). Keep the primary "
                     "framework (e.g. SwiftUI) in at most TWO bullets, and put UIKit, "
-                    "Combine, XCTest, Instruments, or Foundation on the others. Do not "
-                    "pad with tech-empty process lines and invented percentages. Rewrite."
+                    "Combine, XCTest, Instruments, or Foundation on the others — or for "
+                    "frontend JDs, jQuery / Bootstrap / Foundation. Do not pad with "
+                    "tech-empty process lines and invented percentages. Rewrite."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            bleed = brand_bleed_in_text(
+                latex_to_plain(latex), str(jd_analysis.get("domain") or "")
+            )
+            if bleed and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_brand_bleed", ", ".join(bleed))
+                prompt += (
+                    "\n\nWARNING: Brand-token bleed — current-role bullets invent AI/ML "
+                    f"product language ({', '.join(bleed)}) from the employer name, but "
+                    f"the JD domain is '{jd_analysis.get('domain')}'. Rewrite as that "
+                    "domain's work (e.g. client websites / HTML-CSS-JS / jQuery / "
+                    "Bootstrap) with NO AI-driven / ML / multi-agent story."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            perc = bare_percent_overuse_in_flexible_bullets(
+                latex, FLEXIBLE_EXPERIENCE_COMPANIES, max_bare=2
+            )
+            if perc and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_bare_percent", ", ".join(perc))
+                prompt += (
+                    "\n\nWARNING: Manufactured scoreboard — "
+                    + ", ".join(perc)
+                    + ". Keep at most TWO bare percentages in the current role; prefer "
+                    "from→to measurements or describe the work without another %. Rewrite."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            senior = senior_theater_in_flexible_bullets(
+                latex, FLEXIBLE_EXPERIENCE_COMPANIES
+            )
+            if senior and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_senior_theater", ", ".join(senior))
+                prompt += (
+                    "\n\nWARNING: Senior theater — "
+                    + ", ".join(senior)
+                    + ". Use mid-level verbs (Built / Shipped / Implemented / Cut); do not "
+                    "'Led the adoption' of frameworks. Rewrite."
                 )
                 temperature = min(temperature, 0.2)
                 continue
@@ -427,6 +509,19 @@ def write_section(
                     + ", ".join(fog)
                     + ". Name the real database/warehouse and the real cloud service. "
                     "SQL is a language, not a product. Rewrite."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            bleed = brand_bleed_in_text(
+                latex_to_plain(latex), str(jd_analysis.get("domain") or "")
+            )
+            if bleed and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_summary_brand_bleed", ", ".join(bleed))
+                prompt += (
+                    "\n\nWARNING: Brand-token bleed — summary invents AI/ML product "
+                    f"language ({', '.join(bleed)}) but JD domain is "
+                    f"'{jd_analysis.get('domain')}'. Match the tailored experience "
+                    "(frontend websites / HTML-CSS-JS stack) with no AI-driven story."
                 )
                 temperature = min(temperature, 0.2)
                 continue

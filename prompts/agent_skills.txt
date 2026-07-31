@@ -32,6 +32,9 @@ replaced with the untailored original.
   list (SwiftUI, UIKit, Combine, Xcode, XCTest, Foundation, Instruments). A
   Swift/SwiftUI skills section with no UIKit or Xcode/XCTest reads incomplete —
   include them when they appear in {{JD_TOOLS}} or as natural companions.
+- When the JD is frontend / HTML-CSS-JavaScript, spend your max-new budget on the
+  preferred named frameworks first (jQuery, Bootstrap, Foundation, PHP) before
+  inventing React/Next.js padding the candidate already has.
 - Anything invented that is neither in ORIGINAL nor in that list is deleted. Do not
   reach for Go, Rust, NoSQL, Kafka or similar just because they sound adjacent.
 

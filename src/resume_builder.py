@@ -767,6 +767,17 @@ _STACK_FAMILIES = (
             "Instruments", "Foundation", "Swift",
         ),
         "min_distinct": 3,
+        "prefer_any": (),
+    },
+    {
+        "name": "Frontend web",
+        "triggers": ("jquery", "bootstrap", "html5", "css3"),
+        "terms": (
+            "jQuery", "Bootstrap", "Foundation", "JavaScript", "HTML5", "CSS3",
+            "HTML", "CSS", "AJAX", "PHP",
+        ),
+        "min_distinct": 3,
+        "prefer_any": ("jQuery", "Bootstrap", "Foundation"),
     },
 )
 
@@ -777,11 +788,7 @@ def stack_family_underuse_in_flexible_bullets(
     jd_tools_blob: str,
     min_distinct: int | None = None,
 ) -> list[str]:
-    """Return underuse labels when an Apple (etc.) JD has too few named companions.
-
-    Example: JD is Swift/SwiftUI but Clerxi bullets only say SwiftUI once — missing
-    UIKit / Combine / XCTest variety that a real Apple role would show.
-    """
+    """Return underuse labels when an Apple/frontend JD has too few named companions."""
     blob = (jd_tools_blob or "").lower()
     if not blob:
         return []
@@ -801,7 +808,6 @@ def stack_family_underuse_in_flexible_bullets(
             continue
         need = min_distinct if min_distinct is not None else family["min_distinct"]
         found: list[str] = []
-        # Longer first so SwiftUI before Swift
         for term in sorted(family["terms"], key=len, reverse=True):
             if term == "Swift":
                 pat = re.compile(r"(?<![A-Za-z0-9_])Swift(?!UI)")
@@ -817,7 +823,89 @@ def stack_family_underuse_in_flexible_bullets(
                 f"{family['name']} only {len(found)} companion(s) "
                 f"({', '.join(found) or 'none'}; need ≥{need})"
             )
+        prefer = family.get("prefer_any") or ()
+        wanted = [p for p in prefer if p.lower() in blob]
+        if wanted and not any(
+            re.search(
+                r"(?<![A-Za-z0-9_])" + re.escape(p) + r"(?![A-Za-z0-9_+#])",
+                flex_text,
+                re.I,
+            )
+            for p in wanted
+        ):
+            under.append(
+                f"{family['name']} missing preferred tools "
+                f"({', '.join(wanted)} — name at least one in current-role bullets)"
+            )
     return under
+
+
+_AI_BRAND_BLEED_PATTERNS = [
+    (re.compile(r"\bAI[- ]driven\b", re.I), "AI-driven"),
+    (re.compile(r"\bML[- ]driven\b", re.I), "ML-driven"),
+    (re.compile(r"\bmulti[- ]agent\b", re.I), "multi-agent"),
+    (re.compile(r"\bgenerative AI\b", re.I), "generative AI"),
+    (re.compile(r"\blarge language models?\b", re.I), "large language model"),
+    (re.compile(r"\bLLM\b"), "LLM"),
+    (re.compile(r"\bmachine learning\b", re.I), "machine learning"),
+]
+
+# Only flag Clerxi "AI" brand bleed when the JD domain is clearly not AI/ML work.
+_BRAND_BLEED_DOMAINS = (
+    "frontend", "front-end", "front end", "web ui", "html", "css",
+    "mobile", "ios", "android", "embedded", "systems programming",
+    "devops", "test infrastructure",
+)
+
+
+def brand_bleed_in_text(text: str, jd_domain: str) -> list[str]:
+    """AI/ML product vocabulary when the JD domain is clearly non-AI (brand bleed)."""
+    if not text:
+        return []
+    domain = (jd_domain or "").lower()
+    if not any(m in domain for m in _BRAND_BLEED_DOMAINS):
+        return []
+    hits = []
+    for pat, label in _AI_BRAND_BLEED_PATTERNS:
+        if pat.search(text):
+            hits.append(label)
+    return hits
+
+
+def bare_percent_overuse_in_flexible_bullets(
+    section: str, companies: list[str], max_bare: int = 2
+) -> list[str]:
+    """Too many bare X% claims in the flexible role (manufactured scoreboard)."""
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    flex_items = [latex_to_plain(items[i]) for i in sorted(idx) if i < len(items)]
+    bare = sum(1 for t in flex_items if re.search(r"\b\d+\s*%", t))
+    if bare > max_bare:
+        return [f"{bare} bare-% bullets (max {max_bare})"]
+    return []
+
+
+def senior_theater_in_flexible_bullets(section: str, companies: list[str]) -> list[str]:
+    """Leadership openers that overshoot mid-level tenure."""
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    flex_items = [latex_to_plain(items[i]) for i in sorted(idx) if i < len(items)]
+    pat = re.compile(
+        r"^(Led|Owned|Spearheaded|Orchestrated|Championed)\b"
+        r"|\bLed the adoption\b"
+        r"|\bDrove the adoption\b",
+        re.I,
+    )
+    hits = []
+    for t in flex_items:
+        m = pat.search(t.strip())
+        if m:
+            hits.append(m.group(0))
+    return hits
 
 
 # Architecture fog: SQL-as-destination, vague "stores", bare/truncated products.

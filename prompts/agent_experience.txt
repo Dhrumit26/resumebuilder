@@ -27,17 +27,20 @@ This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
    system with a purpose you could state in a sentence, ONE primary programming
    language, and a stack of at most 5-6 technologies total. This invented role is
    the spine of the whole job — decide it first, then never leave it.
-3. THE COMPANY STAYS REAL. The system you invent must be one the actual employer
-   could plausibly have built. {{FLEXIBLE_COMPANY}} is an AI startup — data and ML
-   platforms, APIs and retrieval services, analytics, automation, and developer
-   tooling are all believable there. What is NEVER believable: the employer
-   suddenly operating in the JD's industry. Adopt the JD's ENGINEERING domain
-   (its practices, its stack); NEVER adopt its `industry`. Industry vocabulary
-   from the JD — well data, drilling, reservoirs, energy operators, patients,
-   claims, trading desks — belongs to the EMPLOYER's world and must not appear
-   in the candidate's bullets. Anyone who reads "Clerxi AI" next to "well-data
-   service for energy operators" knows the resume is fake in one glance.
-4. Write every bullet as a different facet of THAT ONE system's life — and pick the
+3. THE COMPANY STAYS REAL; THE PRODUCT FOLLOWS THE JD DOMAIN. {{FLEXIBLE_COMPANY}}
+   is a real employer name on the page — keep it. The system you invent must be
+   work that company could plausibly ship in the JD's ENGINEERING domain (its
+   practices and stack). Do NOT invent the product from brand tokens in the
+   company name ("AI", "Labs", "Health", "Crypto"). "Clerxi AI" on a frontend /
+   HTML-CSS-JavaScript JD means client-facing websites and web UIs built with
+   that stack — NOT "AI-driven data visualization", multi-agent platforms, or ML
+   tooling. Those belong only when `domain` is actually AI/LLM/ML.
+4. NEVER adopt the JD's `industry`. Industry vocabulary from the posting — well
+   data, drilling, reservoirs, energy operators, patients, claims, trading desks —
+   belongs to the EMPLOYER's world and must not appear in the candidate's bullets.
+   Anyone who reads "Clerxi AI" next to "well-data service for energy operators"
+   knows the resume is fake in one glance.
+5. Write every bullet as a different facet of THAT ONE system's life — and pick the
    facets from `domain_practices`. Prefer DEPTH over a checklist of every duty the
    JD lists. Two or three practices shown through real outcomes beat five bullets
    that each claim a different duty. Together they must read as one engineer's
@@ -63,6 +66,13 @@ services in TypeScript:
     seconds.}
 The JD's engineering needs are fully served; the employer is still itself.
 
+Example of the brand-token trap, for a frontend / HTML-CSS-JavaScript consulting JD:
+  WRONG — inventing an AI product because the employer name contains "AI":
+    \resumeItem{Built JavaScript interfaces for AI-driven data visualization tools.}
+  RIGHT — frontend domain, JD stack (jQuery / Bootstrap / HTML / CSS), same employer:
+    \resumeItem{Built responsive client sites in HTML, CSS, and JavaScript with
+    Bootstrap layouts and jQuery handlers wired to REST backends.}
+
 The ORIGINAL bullets for this role are only a fallback: reuse their facts ONLY when
 the JD's domain already matches the original work (e.g., an AI/LLM or backend JD).
 When the domain differs, the original bullets are the wrong story — replace the
@@ -74,6 +84,11 @@ What "native" means, by example. For a systems programming / CPU software JD:
 - They do NOT "orchestrate multi-agent retrieval" or "tune embedding dimensions".
 So the current role's bullets become memory/latency/throughput work on a concrete
 service, with the practices from domain_practices, written like that engineer talks.
+
+For a frontend web JD (HTML / CSS / JavaScript / jQuery / Bootstrap):
+- An engineer there ships page layouts, responsive CSS, form UX, AJAX/REST wiring,
+  cross-browser fixes — often with Bootstrap or Foundation and jQuery.
+- They do NOT invent "AI-driven" product stories from the employer brand.
 
 ## RULE 0a — ONE STORY, ONE STACK (the instant fake-resume tell)
 Five bullets that each name a different technology are not an experience — they are
@@ -100,6 +115,11 @@ word and then said nothing. Companions carry the proof.
   UIKit (SwiftUI↔UIKit interop is normal production work), Combine, Swift Concurrency
   / async-await, XCTest, Instruments, Foundation, Xcode. Prefer UIKit in at least
   one bullet when the JD is UI-centred. Do NOT invent four bare-% process bullets.
+- For frontend / HTML-CSS-JavaScript JDs, spread companions the same way: name
+  JavaScript (or HTML/CSS) in at most TWO bullets; put jQuery, Bootstrap,
+  Foundation, AJAX/REST, or HTML5/CSS3 on the others when those appear in
+  {{JD_TOOLS}}. Prefer jQuery or Bootstrap in at least one bullet when the JD
+  lists them as preferred.
 - Across ALL current-role bullets combined: at most 5-6 distinct technologies,
   drawn from the front of {{JD_TOOLS}} plus natural companions of that stack.
   Covering the JD's full tool list is the Skills section's job, NEVER this section's.
@@ -225,9 +245,11 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
 - Max 2-3 tech names per bullet. Stacking 4+ triggers a scoring penalty.
 - Vary how bullets open. Do not start consecutive bullets the same way.
 - BANNED words and phrases: leverage, leveraging, utilize, spearheaded, orchestrated,
-  robust, seamless, cutting-edge, holistic, customer-minded, impact-driven,
-  high agency, results-driven, detail-oriented, proven track record,
-  navigate ambiguity, responsible for, helped with, worked on.
+  Led, Owned, Championed, drove the adoption, robust, seamless, cutting-edge,
+  holistic, customer-minded, impact-driven, high agency, results-driven,
+  detail-oriented, proven track record, navigate ambiguity, responsible for,
+  helped with, worked on. Prefer Built / Shipped / Implemented / Cut / Raised —
+  mid-level verbs, not org-wide leadership claims.
 - BANNED vague-sophistication phrases — they sound technical while saying nothing:
   built for scale, at scale (as filler), operational datasets, cleaner handoffs,
   locked down, end-to-end automation, mission-critical, enterprise-grade,

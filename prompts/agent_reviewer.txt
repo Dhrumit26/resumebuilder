@@ -97,9 +97,13 @@ problem in weaknesses:
 - Industry cosplay: the JD's business-sector vocabulary claimed as work history at
   an employer plainly not in that sector (an AI startup running "well-data services
   for energy operators")
+- Brand-token bleed: inventing "AI-driven" / ML / multi-agent product work from an
+  employer name containing "AI" when the JD domain is frontend, web UI, DevOps, etc.
 - Manufactured metrics: nearly every bullet ending in a bare percentage with no
   from->to and no scale anywhere — or unanchored comparatives ("two sprints earlier"
   — earlier than what, measured how?)
+- Senior theater on a mid resume: "Led the adoption", "Owned the roadmap",
+  "Spearheaded" for org-wide change a short tenure cannot support
 - Feature-counting theater: "delivered 14 API features", "fixed 12 defects",
   "reviewed 40+ PRs" as the achievement itself, with no weight or outcome — counting
   work items like counting emails

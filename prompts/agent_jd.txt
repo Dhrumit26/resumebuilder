@@ -74,6 +74,10 @@ writers; a tool misfiled as a concept merely loses one keyword.
 5. tools — the concrete technologies the role centres on, ORDERED BY IMPORTANCE.
    The skills writer may add at most 4 of these to the resume, and it takes them from
    the front of your list. Put the true must-haves first.
+   HARD: every named framework or library in Required OR Preferred must appear in
+   tools or nice_to_have_skills — jQuery, Bootstrap / Twitter Bootstrap, Foundation
+   (UI framework), PHP, ColdFusion, React, etc. Do not drop preferred frameworks
+   just because they are labeled Preferred.
 6. concepts — every practice, methodology, architecture style, and soft requirement.
 7. exact_keywords_for_ats — deduplicated, no two variants of the same term
    ("K8s" or "Kubernetes", not both).

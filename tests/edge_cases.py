@@ -619,6 +619,62 @@ def t32_stack_family_underuse_wants_uikit_companions():
     ) == []
 
 
+def t33_frontend_preferred_tools_and_brand_bleed():
+    starved = r"""
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{May 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Built AI-driven JavaScript interfaces for data visualization tools.}
+        \resumeItem{Optimized front-end performance by 30\% with responsive design.}
+        \resumeItem{Integrated REST APIs reducing load times by 40\%.}
+        \resumeItem{Collaborated on web page development and usability standards.}
+        \resumeItem{Led the adoption of modern UI frameworks across projects.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+"""
+    jd_blob = "CSS HTML JavaScript jQuery Bootstrap Foundation HTML5 CSS3"
+    under = rb.stack_family_underuse_in_flexible_bullets(
+        starved, ["Clerxi AI"], jd_blob
+    )
+    assert any("preferred" in u.lower() for u in under), under
+
+    bleed = rb.brand_bleed_in_text(
+        "Built AI-driven JavaScript interfaces for data visualization tools.",
+        "frontend web",
+    )
+    assert "AI-driven" in bleed, bleed
+    assert rb.brand_bleed_in_text("Built AI-driven tools.", "AI/LLM platform") == []
+
+    perc = rb.bare_percent_overuse_in_flexible_bullets(starved, ["Clerxi AI"], max_bare=2)
+    # only 2 bare-% bullets (30 and 40) — should be OK at max_bare=2
+    assert perc == [], perc
+    perc3 = starved.replace(
+        "Collaborated on web page development and usability standards.",
+        "Raised accessibility scores by 15\\% across client sites.",
+    )
+    assert rb.bare_percent_overuse_in_flexible_bullets(perc3, ["Clerxi AI"], max_bare=2)
+
+    senior = rb.senior_theater_in_flexible_bullets(starved, ["Clerxi AI"])
+    assert any("Led" in s for s in senior), senior
+
+    analysis = {
+        "tools": ["CSS", "HTML", "JavaScript"],
+        "must_have_skills": ["CSS", "HTML", "JavaScript"],
+        "nice_to_have_skills": [],
+        "exact_keywords_for_ats": [],
+        "research_topics": [],
+    }
+    jd = (
+        "Preferred: jQuery, Front-End UI Frameworks Foundation & Twitter Bootstrap, PHP"
+    )
+    pl._seed_named_tools_from_jd(analysis, jd)
+    lower = {t.lower() for t in analysis["tools"]}
+    assert "jquery" in lower and "bootstrap" in lower and "foundation" in lower, analysis["tools"]
+
+
 def t30_apple_frameworks_placeholder_stripped():
     fog = ORIG["skills"].replace(
         "Frontend}{: React, Next.js}",
