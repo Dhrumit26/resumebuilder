@@ -36,6 +36,7 @@ from .resume_builder import (
     is_valid_jake_projects,
     is_valid_jake_skills,
     is_valid_jake_summary,
+    languages_in_flexible_bullets,
     latex_to_plain,
     load_full_template,
     load_original_sections,
@@ -295,6 +296,23 @@ def write_section(
             )
             temperature = 0.05
             continue
+        # Language scatter in the flexible role (a Java bullet, a C# bullet, a
+        # Python bullet in one job) is the instant tell of a fake resume. One
+        # retry with a targeted warning; the reviewer penalizes any survivor.
+        if name == "experience":
+            langs = languages_in_flexible_bullets(latex, FLEXIBLE_EXPERIENCE_COMPANIES)
+            if len(langs) > 2 and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_language_scatter", ", ".join(langs))
+                prompt += (
+                    f"\n\nWARNING: Your current-role bullets scatter {len(langs)} programming "
+                    f"languages ({', '.join(langs)}) across ONE job — the instant tell of a "
+                    "fake resume. Rewrite the current-role bullets around ONE system and ONE "
+                    "primary language (plus at most one scripting language in a tooling role). "
+                    "The JD's other languages belong in the Skills section only."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+
         # Experience/projects must be real rewrites, not near-copies of ORIGINAL
         if name in ("experience", "projects") and not fix_context:
             ratio = bullet_rewrite_ratio(latex, original_section)

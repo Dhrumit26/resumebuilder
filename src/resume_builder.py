@@ -194,6 +194,7 @@ def latex_to_plain(text: str) -> str:
     text = re.sub(r"\\[a-zA-Z]+\*?", " ", text)
     text = re.sub(r"[{}]", "", text)
     text = text.replace("\\%", "%").replace("\\|", "|")
+    text = text.replace("\\#", "#").replace("\\&", "&").replace("\\_", "_").replace("\\$", "$")
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
@@ -651,6 +652,34 @@ def flexible_item_indices(section: str, companies: list[str]) -> set[int]:
         if current:
             out.add(idx)
     return out
+
+
+# Case-sensitive on purpose: language names are proper nouns in resume prose, and
+# case-insensitive matching would hit words like "go" and "swift".
+_BULLET_LANGUAGES = (
+    "Python", "Java", "C#", "C++", "Go", "Rust", "TypeScript", "JavaScript",
+    "Ruby", "PHP", "Kotlin", "Swift", "Scala",
+)
+
+
+def languages_in_flexible_bullets(section: str, companies: list[str]) -> list[str]:
+    """Distinct programming languages named across the flexible company's bullets.
+
+    More than two is the language-scatter tell of a fake resume (a Java bullet,
+    a C# bullet, a Python bullet inside one job) — the writer agent gets one
+    retry to rebuild the role around a single primary language.
+    """
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    text = latex_to_plain(" ".join(items[i] for i in sorted(idx) if i < len(items)))
+    found = []
+    for lang in _BULLET_LANGUAGES:
+        # Trailing digits stay allowed so "C++17" and "Python3" still count.
+        if re.search(r"(?<![A-Za-z0-9_])" + re.escape(lang) + r"(?![A-Za-z_+#])", text):
+            found.append(lang)
+    return found
 
 
 def _revert_bullets_with_unevidenced_tools(

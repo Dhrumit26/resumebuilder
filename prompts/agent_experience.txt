@@ -23,10 +23,14 @@ Current role: {{FLEXIBLE_COMPANY}}
 This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
 
 1. Read `domain` and `domain_practices` in the JD Analysis.
-2. Ask: what would a strong engineer in THIS domain have spent the last several
-   months doing?
-3. Write that engineer's bullets from scratch — real practices, matching toolchain,
-   believable outcomes stated with full confidence.
+2. INVENT ONE COHERENT ROLE before writing a single bullet: one team, one specific
+   system with a purpose you could state in a sentence, ONE primary programming
+   language, and a stack of at most 5-6 technologies total. This invented role is
+   the spine of the whole job — decide it first, then never leave it.
+3. Write every bullet as a different facet of THAT ONE system's life: shipping a
+   feature on it, making it faster or cheaper, testing it, deploying it, working
+   with others on it. A reader must be able to reconstruct "this person spent the
+   year building X" from the five bullets together.
 
 The ORIGINAL bullets for this role are only a fallback: reuse their facts ONLY when
 the JD's domain already matches the original work (e.g., an AI/LLM or backend JD).
@@ -40,9 +44,25 @@ What "native" means, by example. For a systems programming / CPU software JD:
 So the current role's bullets become memory/latency/throughput work on a concrete
 service, with the practices from domain_practices, written like that engineer talks.
 
-Technologies for the current role: draw from {{JD_TOOLS}} (front of list first).
+## RULE 0a — ONE STORY, ONE STACK (the instant fake-resume tell)
+Five bullets that each name a different technology are not an experience — they are
+the JD's keyword list wearing a costume. The giveaway recruiters catch first is
+LANGUAGE SCATTER: a Java bullet, then a C\# bullet, then a Python bullet, inside the
+same job. No real engineer's year looks like that, and it reads as a bot claiming
+every tool in the posting.
+
+- Pick ONE primary language — the one the JD's domain centres on — and every bullet
+  that names a language names THAT one. (A second language is allowed only in the
+  realistic tooling role: e.g. Python scripts around a C++ service.)
+- Across ALL current-role bullets combined: at most 5-6 distinct technologies,
+  drawn from the front of {{JD_TOOLS}}. Covering the JD's full tool list is the
+  Skills section's job, NEVER this section's.
+- Before output, reread the current-role bullets in order and ask: do these five
+  things plausibly happen to one system, built by one person, in one year? If any
+  bullet could not have happened on the system in bullet 1, rewrite it.
+
 If the JD names no tool for a capability, use the domain-standard choice. Two to
-three per bullet, never more.
+three technologies per bullet, never more.
 
 Metrics for the current role: when writing in a new domain you MAY use new numbers,
 under two conditions:
@@ -176,9 +196,10 @@ only a fallback when the JD's domain already matches them)
 
 ## Before you output
 Check: bullet count per job matches ORIGINAL? Order preserved? At least 80% carry a
-number? Current-role bullets read like a real engineer in the JD's domain — no
-tech-name swaps? Fixed-history metrics unchanged and free of banned tools? Frozen
-tool pairings intact? No \textbf? Every bullet a complete sentence under 28 words?
+number? Current-role bullets tell ONE story — one system, ONE primary language,
+5-6 technologies total, no language scatter? No tech-name swaps? Fixed-history
+metrics unchanged and free of banned tools? Frozen tool pairings intact? No \textbf?
+Every bullet a complete sentence under 28 words?
 
 ## Output
 The experience section LaTeX only.

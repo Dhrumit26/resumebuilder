@@ -519,6 +519,44 @@ def t20_score_samples_averaged_and_fixes_merged():
     assert out["meta"]["final_score"] == 96
 
 
+def t26_language_scatter_detected_in_flexible_bullets():
+    scatter = r"""
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{May 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Shipped 12 production features in Java on AWS that cut task time 30\%.}
+        \resumeItem{Cut incident resolution 40\% by debugging C\# services in production.}
+        \resumeItem{Raised test coverage to 82\% across core Python and Java modules.}
+      \resumeItemListEnd
+    \resumeSubheading
+      {Software Engineer Intern}{Jun 2025 -- Aug 2025}
+      {Intuit}{San Diego, CA}
+      \resumeItemListStart
+        \resumeItem{Refactored TypeScript and JavaScript platform services for releases.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+"""
+    langs = rb.languages_in_flexible_bullets(scatter, ["Clerxi AI"])
+    # Java/C#/Python scatter detected; Intuit's TypeScript/JavaScript don't count
+    assert set(langs) == {"Java", "C#", "Python"}, langs
+
+    coherent = scatter.replace("Java on AWS", "C++17 on Linux").replace(
+        "C\\# services", "C++ services"
+    ).replace("core Python and Java modules", "hot paths with Python benchmark tooling")
+    langs = rb.languages_in_flexible_bullets(coherent, ["Clerxi AI"])
+    assert set(langs) == {"C++", "Python"}, langs  # primary + tooling language is fine
+
+    # "JavaScript" must never report "Java"
+    js_only = scatter.replace("Java on AWS", "JavaScript on AWS").replace(
+        "C\\# services", "JavaScript services"
+    ).replace("core Python and Java modules", "core JavaScript modules")
+    langs = rb.languages_in_flexible_bullets(js_only, ["Clerxi AI"])
+    assert langs == ["JavaScript"], langs
+
+
 if __name__ == "__main__":
     tests = [(k, v) for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)]
     for name, fn in tests:

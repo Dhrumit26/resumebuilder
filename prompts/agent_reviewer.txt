@@ -75,7 +75,10 @@ problem in weaknesses:
 - Buzzword or soft-skill slogans ("customer-minded", "impact-driven", "high agency",
   "holistic", "navigate ambiguity", "leveraged", "robust", "seamless")
 - Tool stacking: 4+ unrelated technologies named in a single bullet
-- The candidate appearing to claim every tool in the JD
+- Language scatter inside one job: bullets that each name a different programming
+  language (a Java bullet, a C\# bullet, a Python bullet) with no single system
+  connecting them — a keyword list wearing a costume
+- The candidate appearing to claim every tool in the JD, spread across bullets
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them
