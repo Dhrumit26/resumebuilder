@@ -28,10 +28,12 @@ debugging and code review", rewrite. That is nothing.
 These phrases make a summary forgettable. Never use them:
 - owns features end to end / end-to-end / full SDLC
 - from X through Y (as a process tour: tests through debugging through review)
-- cloud infrastructure (name the cloud, or say nothing)
+- cloud infrastructure / analytics stores / data stores (name the real system)
 - production APIs / production services (as filler with no further claim)
 - collaborates with teams / distributed teams / code review (as a summary claim)
 - delivers features / ships features (with no WHAT or WHY)
+- "SQL" as a destination or product — SQL is a language. Say PostgreSQL, Azure SQL
+  Database, SQL Server, etc. Bare "Azure"/"AWS" without a service is also fog.
 
 ## SENIORITY
 State the role flatly. Never invent years.
@@ -92,10 +94,10 @@ Weak — stack inventory + process tour, distinctive after stripping tools = not
   APIs backed by PostgreSQL on cloud infrastructure. Owns features end to end, from
   Docker integration tests through live production debugging and code review.}
 
-Strong — identity + specific system + JD-relevant angle, no process tour:
+Strong — identity + specific system + named storage, no process tour or fog:
   \textit{Software engineer building TypeScript data-ingestion services that keep
   live device telemetry searchable under production load. Turns broken production
-  behavior into lasting fixes on shared codebases with PostgreSQL-backed APIs.}
+  behavior into lasting fixes on shared codebases backed by PostgreSQL.}
 
 ## JD Analysis
 {{JD_ANALYSIS}}

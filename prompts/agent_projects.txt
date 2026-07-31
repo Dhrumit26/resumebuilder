@@ -80,6 +80,8 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
 - Every noun must survive "which one, specifically?". "Three-tier multi-agent
   remediation built for scale" sounds sophisticated and says nothing; "a rules
   pass, then an LLM fix, then a verification run" says what it does.
+- SQL is a language, not a destination. Never "backed by SQL" — name PostgreSQL,
+  MySQL, etc. Bare "AWS"/"Azure" without a service (S3, Lambda, RDS, Azure SQL) is fog.
 - Prefer plain verbs: Built, Shipped, Cut, Added, Integrated, Wired, Launched,
   Dropped, Reduced.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}

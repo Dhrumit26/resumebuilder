@@ -557,6 +557,28 @@ def t26_language_scatter_detected_in_flexible_bullets():
     assert langs == ["JavaScript"], langs
 
 
+def t27_architecture_fog_detection():
+    foggy = (
+        "Shipped pipelines that ingest usage events into SQL on Microsoft Azure, "
+        "cutting prep for analytics stores."
+    )
+    hits = rb.architecture_fog_in_text(foggy)
+    assert "into SQL" in hits, hits
+    assert "analytics store(s)" in hits, hits
+    assert "bare cloud platform (no service named)" in hits, hits
+
+    clear = (
+        "Shipped Python pipelines on Azure Data Factory that load usage events into "
+        "Azure SQL Database, cutting prep before each dashboard refresh."
+    )
+    assert rb.architecture_fog_in_text(clear) == [], rb.architecture_fog_in_text(clear)
+
+    # Product name must not trip the bare "SQL database" fog
+    assert "SQL database" not in rb.architecture_fog_in_text(
+        "Writes aggregates into Azure SQL Database from Azure Functions."
+    )
+
+
 if __name__ == "__main__":
     tests = [(k, v) for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)]
     for name, fn in tests:

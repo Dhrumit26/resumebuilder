@@ -699,6 +699,53 @@ def languages_in_flexible_bullets(section: str, companies: list[str]) -> list[st
     return found
 
 
+# Architecture fog: SQL-as-destination, vague "stores", bare cloud with no service.
+# Do NOT match product names like "Azure SQL Database" or "SQL Server".
+_ARCH_FOG_PATTERNS = [
+    (re.compile(r"\binto\s+SQL\b", re.I), "into SQL"),
+    (re.compile(r"\bbacked\s+by\s+SQL\b", re.I), "backed by SQL"),
+    (re.compile(r"\bSQL\s+store\b", re.I), "SQL store"),
+    # Bare "SQL database" — but not "Azure SQL Database"
+    (re.compile(r"(?<!Azure\s)(?<!azure\s)\bSQL\s+database\b", re.I), "SQL database"),
+    (re.compile(r"\banalytics\s+stores?\b", re.I), "analytics store(s)"),
+    (re.compile(r"\bdata\s+stores?\b", re.I), "data store(s)"),
+    (re.compile(r"\bcloud\s+infrastructure\b", re.I), "cloud infrastructure"),
+]
+
+_CLOUD_PLATFORM_RE = re.compile(
+    r"\b(?:Microsoft\s+)?Azure\b|\bAWS\b|\bAmazon\s+Web\s+Services\b|\bGCP\b|\bGoogle\s+Cloud\b",
+    re.I,
+)
+# Concrete services that make a cloud claim real. Keep short; false negatives retry.
+_CLOUD_SERVICE_RE = re.compile(
+    r"\b(?:Data\s+Factory|Functions?|Blob\s+Storage|Cosmos\s+DB|SQL\s+Database|"
+    r"Synapse|Event\s+Hubs?|Service\s+Bus|App\s+Service|AKS|Key\s+Vault|"
+    r"Lambda|S3|RDS|ECS|EKS|EC2|DynamoDB|SQS|SNS|CloudWatch|CloudFormation|"
+    r"BigQuery|Cloud\s+Run|Cloud\s+Functions?|Pub/?Sub|Cloud\s+Storage|"
+    r"Kubernetes|Terraform|Docker)\b",
+    re.I,
+)
+
+
+def architecture_fog_in_text(text: str) -> list[str]:
+    """Return fog phrases that make storage/cloud claims look fake or wrong."""
+    plain = latex_to_plain(text) if "\\" in text else text
+    hits = [label for pat, label in _ARCH_FOG_PATTERNS if pat.search(plain)]
+    # Bare Azure/AWS/GCP with no concrete service named nearby in the same text.
+    if _CLOUD_PLATFORM_RE.search(plain) and not _CLOUD_SERVICE_RE.search(plain):
+        hits.append("bare cloud platform (no service named)")
+    return hits
+
+
+def architecture_fog_in_flexible_bullets(section: str, companies: list[str]) -> list[str]:
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    text = " ".join(items[i] for i in sorted(idx) if i < len(items))
+    return architecture_fog_in_text(text)
+
+
 def _revert_bullets_with_unevidenced_tools(
     section: str,
     fallback_section: str,

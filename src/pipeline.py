@@ -36,6 +36,8 @@ from .resume_builder import (
     is_valid_jake_projects,
     is_valid_jake_skills,
     is_valid_jake_summary,
+    architecture_fog_in_flexible_bullets,
+    architecture_fog_in_text,
     languages_in_flexible_bullets,
     latex_to_plain,
     load_full_template,
@@ -310,6 +312,32 @@ def write_section(
                     "fake resume. Rewrite the current-role bullets around ONE system and ONE "
                     "primary language (plus at most one scripting language in a tooling role). "
                     "The JD's other languages belong in the Skills section only."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            fog = architecture_fog_in_flexible_bullets(latex, FLEXIBLE_EXPERIENCE_COMPANIES)
+            if fog and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_architecture_fog", ", ".join(fog))
+                prompt += (
+                    "\n\nWARNING: Architecture fog in the current-role bullets: "
+                    + ", ".join(fog)
+                    + ". SQL is a LANGUAGE, not a destination — name PostgreSQL, Azure SQL "
+                    "Database, SQL Server, etc. Never write 'analytics stores' or 'data stores'. "
+                    "Never leave Azure/AWS bare — name the service (Azure Data Factory, Azure "
+                    "SQL Database, S3, Lambda, RDS, ...). Rewrite those bullets."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+
+        if name == "summary":
+            fog = architecture_fog_in_text(latex)
+            if fog and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_summary_architecture_fog", ", ".join(fog))
+                prompt += (
+                    "\n\nWARNING: Architecture fog in the summary: "
+                    + ", ".join(fog)
+                    + ". Name the real database/warehouse and the real cloud service. "
+                    "SQL is a language, not a product. Rewrite."
                 )
                 temperature = min(temperature, 0.2)
                 continue

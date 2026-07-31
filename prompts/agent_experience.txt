@@ -205,11 +205,23 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
   navigate ambiguity, responsible for, helped with, worked on.
 - BANNED vague-sophistication phrases — they sound technical while saying nothing:
   built for scale, at scale (as filler), operational datasets, cleaner handoffs,
-  locked down, end-to-end automation, mission-critical, enterprise-grade.
+  locked down, end-to-end automation, mission-critical, enterprise-grade,
+  analytics stores, data stores, cloud infrastructure, cloud platform (as filler).
 - THE CONCRETE-NOUN TEST: every noun must survive the question "which one,
   specifically?". "Live operational datasets" fails it; "customer order events"
   passes. "Internal systems stayed locked down" fails; "kept write access scoped to
   the sync worker's service account" passes. Vague nouns are how fake bullets hide.
+
+## RULE 5c — NAME THE REAL STORAGE AND THE REAL CLOUD SERVICE
+SQL is a LANGUAGE, not a destination. Never write "ingest into SQL", "SQL store",
+"backed by SQL", or "SQL database" as if SQL were a product. Name the actual system:
+PostgreSQL, Azure SQL Database, SQL Server, MySQL, MongoDB, Snowflake, BigQuery,
+Redshift, Cosmos DB — whichever fits the invented role and the JD's tools.
+Same rule for cloud: never leave "Azure", "AWS", or "GCP" sitting alone as the
+architecture. Pair the platform with the service that did the work — Azure Data
+Factory, Azure Functions, Azure Blob Storage, Azure SQL Database, AWS Lambda,
+Amazon S3, Amazon RDS, ECS, EKS, CloudWatch. "On Microsoft Azure" with no service
+is résumé fog. If the stack is one database and one compute path, name both.
 - Prefer plain verbs: Built, Cut, Raised, Shipped, Migrated, Rewrote, Fixed, Dropped,
   Reduced, Launched, Wrote, Partnered.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}
