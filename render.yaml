@@ -1,5 +1,8 @@
 # Deploy: Render Dashboard → New → Blueprint → select Dhrumit26/resumebuilder
 # Free web service sleeps after ~15 min idle (first request after sleep is slow).
+#
+# After deploy: set OPENAI_API_KEY in Render Dashboard → Environment
+# (sync: false means it is not stored in this file).
 
 services:
   - type: web
@@ -12,13 +15,9 @@ services:
     healthCheckPath: /health
     envVars:
       - key: LLM_PROVIDER
-        value: grok
-      - key: GROK_MODEL
-        value: grok-4.5
-      - key: GROK_WRITER_MODEL
-        value: grok-4.5
-      - key: GROK_JUDGE_MODEL
-        value: grok-4.20-0309-non-reasoning
+        value: openai
+      - key: OPENAI_MODEL
+        value: gpt-4o
       - key: SCORE_THRESHOLD
         value: "90"
       # 92 = the rubric's reachable ceiling once the anti-AI penalty applies.
@@ -31,5 +30,5 @@ services:
         value: "2"
       - key: SCORE_SAMPLES
         value: "2"
-      - key: GROK_API_KEY
+      - key: OPENAI_API_KEY
         sync: false
