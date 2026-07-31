@@ -41,6 +41,7 @@ from .resume_builder import (
     architecture_fog_in_text,
     languages_in_flexible_bullets,
     latex_to_plain,
+    stack_family_underuse_in_flexible_bullets,
     stack_name_overuse_in_flexible_bullets,
     load_full_template,
     load_original_sections,
@@ -178,9 +179,9 @@ def _normalize_str_list(value) -> list[str]:
 # companions (Swift without Xcode reads as keyword stuffing). Expand tools so the
 # skills agent may add them within its max-new budget.
 _ECOSYSTEM_COMPANIONS = {
-    "swift": ["Xcode", "XCTest", "Foundation"],
-    "swiftui": ["Xcode", "XCTest", "Foundation"],
-    "uikit": ["Xcode", "XCTest"],
+    "swift": ["Xcode", "XCTest", "Foundation", "UIKit", "Combine", "Instruments"],
+    "swiftui": ["Xcode", "XCTest", "Foundation", "UIKit", "Combine", "Instruments"],
+    "uikit": ["Xcode", "XCTest", "Foundation", "Combine"],
     "kotlin": ["Android Studio", "JUnit"],
     "react native": ["Jest", "Xcode"],
 }
@@ -376,8 +377,28 @@ def write_section(
                     "\n\nWARNING: Keyword stuffing — the same stack name appears in too many "
                     f"current-role bullets ({'; '.join(overuse)}). Name the primary language/"
                     "framework in AT MOST TWO bullets. The other bullets should lead with the "
-                    "outcome or a companion tool (XCTest, Instruments, Combine, Foundation) — "
-                    "not another 'SwiftUI'/'Swift'/'React' repetition. Rewrite."
+                    "outcome AND a companion tool (UIKit, Combine, XCTest, Instruments, "
+                    "Foundation) — not another 'SwiftUI'/'Swift'/'React' repetition, and not "
+                    "tech-empty process+% lines. Rewrite."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            jd_blob = " ".join(
+                str(x)
+                for key in ("tools", "must_have_skills", "exact_keywords_for_ats")
+                for x in (jd_analysis.get(key) or [])
+            )
+            underuse = stack_family_underuse_in_flexible_bullets(
+                latex, FLEXIBLE_EXPERIENCE_COMPANIES, jd_blob
+            )
+            if underuse and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_stack_underuse", "; ".join(underuse))
+                prompt += (
+                    "\n\nWARNING: Stack underuse — current-role bullets name too few "
+                    f"companions for this JD ({'; '.join(underuse)}). Keep the primary "
+                    "framework (e.g. SwiftUI) in at most TWO bullets, and put UIKit, "
+                    "Combine, XCTest, Instruments, or Foundation on the others. Do not "
+                    "pad with tech-empty process lines and invented percentages. Rewrite."
                 )
                 temperature = min(temperature, 0.2)
                 continue

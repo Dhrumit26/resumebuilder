@@ -29,9 +29,9 @@ replaced with the untailored original.
   This is the one section where unevidenced tools are allowed — the candidate accepts
   the interview risk here, but nowhere else on the resume.
 - When the JD is Apple/Swift-centred, prefer ecosystem companions already on that
-  list (Xcode, XCTest, Foundation, Instruments, SwiftUI). A Swift/SwiftUI skills
-  section with no Xcode or XCTest reads like keyword stuffing — include them when
-  they appear in {{JD_TOOLS}}.
+  list (SwiftUI, UIKit, Combine, Xcode, XCTest, Foundation, Instruments). A
+  Swift/SwiftUI skills section with no UIKit or Xcode/XCTest reads incomplete —
+  include them when they appear in {{JD_TOOLS}} or as natural companions.
 - Anything invented that is neither in ORIGINAL nor in that list is deleted. Do not
   reach for Go, Rust, NoSQL, Kafka or similar just because they sound adjacent.
 

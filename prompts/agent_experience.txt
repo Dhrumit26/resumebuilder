@@ -86,15 +86,23 @@ The opposite failure is just as fake: the SAME name on every bullet.
 "SwiftUI … SwiftUI … SwiftUI … Swift … SwiftUI" across five lines is keyword
 stuffing, not proof. Once the stack is established, stop repeating it.
 
+The third failure is the overcorrection: one "SwiftUI" bullet, then four tech-empty
+process lines ("code review", "UI consistency", "accessibility", "cross-functional")
+padded with invented percentages. That reads as a bot that learned not to spam one
+word and then said nothing. Companions carry the proof.
+
 - Pick ONE primary language — the one the JD's domain centres on — and every bullet
   that names a language names THAT one. (A second language is allowed only in the
   realistic tooling role: e.g. Python scripts around a C++ service.)
 - Name the primary language or main framework in AT MOST TWO bullets of the current
-  role. The other bullets assume it: lead with the outcome, the practice, or a
-  companion tool (XCTest, Instruments, Combine, Foundation) — not another "SwiftUI".
+  role. The OTHER bullets MUST still name real stack companions — not go tool-silent.
+- For Apple / Swift / SwiftUI JDs, spread companions across those remaining bullets:
+  UIKit (SwiftUI↔UIKit interop is normal production work), Combine, Swift Concurrency
+  / async-await, XCTest, Instruments, Foundation, Xcode. Prefer UIKit in at least
+  one bullet when the JD is UI-centred. Do NOT invent four bare-% process bullets.
 - Across ALL current-role bullets combined: at most 5-6 distinct technologies,
-  drawn from the front of {{JD_TOOLS}}. Covering the JD's full tool list is the
-  Skills section's job, NEVER this section's.
+  drawn from the front of {{JD_TOOLS}} plus natural companions of that stack.
+  Covering the JD's full tool list is the Skills section's job, NEVER this section's.
 - Before output, reread the current-role bullets in order and ask: do these five
   things plausibly happen to one system, built by one person, during the TENURE
   printed on the resume (read the dates — "May 2026 -- Present" is months, not a
@@ -340,7 +348,8 @@ only a fallback when the JD's domain already matches them)
 ## Before you output
 Check: bullet count per job matches ORIGINAL? Order preserved? Current-role bullets
 tell ONE story — one system, ONE primary language named in at most TWO bullets,
-5-6 technologies total, no language scatter, no SwiftUI/Swift spam? Scope fits
+companions (UIKit / Combine / XCTest / …) on the rest, 5-6 technologies total, no
+language scatter, no SwiftUI/Swift spam, no tech-empty process bullets? Scope fits
 the printed tenure (no feature-count theater, no inventory of every duty)? At most
 2-3 hard invented metrics in the current role? No tech-name swaps? Fixed-history
 metrics unchanged and free of banned tools? Frozen tool pairings intact? No \textbf?

@@ -585,6 +585,40 @@ def t31_stack_name_overuse_detects_swiftui_spam():
     assert rb.stack_name_overuse_in_flexible_bullets(ok, ["Clerxi AI"]) == []
 
 
+def t32_stack_family_underuse_wants_uikit_companions():
+    starved = r"""
+\section{Experience}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{May 2026 -- Present}
+      {Clerxi AI}{Huntington Beach, CA}
+      \resumeItemListStart
+        \resumeItem{Built a SwiftUI internal tool that cut task time by 30\%.}
+        \resumeItem{Improved code review practices and reduced bugs by 25\%.}
+        \resumeItem{Standardized design components for UI consistency.}
+        \resumeItem{Added accessibility features across existing applications.}
+        \resumeItem{Simplified workflows with cross-functional teammates.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+"""
+    jd_blob = "Swift SwiftUI Xcode XCTest"
+    under = rb.stack_family_underuse_in_flexible_bullets(
+        starved, ["Clerxi AI"], jd_blob
+    )
+    assert under, under
+
+    rich = starved.replace(
+        "Improved code review practices and reduced bugs by 25\\%.",
+        "Bridged legacy UIKit screens into the new navigation flow.",
+    ).replace(
+        "Standardized design components for UI consistency.",
+        "Covered regressions with XCTest snapshot suites on critical paths.",
+    )
+    assert rb.stack_family_underuse_in_flexible_bullets(
+        rich, ["Clerxi AI"], jd_blob
+    ) == []
+
+
 def t30_apple_frameworks_placeholder_stripped():
     fog = ORIG["skills"].replace(
         "Frontend}{: React, Next.js}",
@@ -606,6 +640,7 @@ def t29_ecosystem_companions_expand_swift_tools():
     pl._expand_ecosystem_tools(analysis)
     lower = {t.lower() for t in analysis["tools"]}
     assert "xcode" in lower and "xctest" in lower and "foundation" in lower, analysis["tools"]
+    assert "uikit" in lower and "combine" in lower, analysis["tools"]
 
 
 def t28_web_context_research_topics_and_fabric():

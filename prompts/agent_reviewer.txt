@@ -124,6 +124,9 @@ problem in weaknesses:
   a short tenure — reverse-engineered posting, not a real job
 - Stack-name stuffing: the same language/framework (SwiftUI, Swift, React, …)
   named in 3+ bullets of one job — keyword spray, not proof
+- Stack underuse / tech-empty overcorrection: Apple/Swift role with SwiftUI in one
+  bullet and the rest tool-silent process+% lines — demand UIKit, Combine, XCTest,
+  Instruments, or Foundation on the other bullets instead
 - Tradeoff-telling without a mechanism: "after weighing freshness against
   responsiveness" with no TTL, invalidation, version key, or refresh action
 - Architecture fog: "SQL" used as a destination/product (SQL is a language —

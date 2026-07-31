@@ -756,6 +756,70 @@ def stack_name_overuse_in_flexible_bullets(
     return offenders
 
 
+# When the JD is clearly in a stack family, flexible bullets must name enough
+# distinct companions — not one SwiftUI line and four tech-empty process bullets.
+_STACK_FAMILIES = (
+    {
+        "name": "Apple/Swift",
+        "triggers": ("swift", "swiftui", "uikit", "xcode"),
+        "terms": (
+            "SwiftUI", "UIKit", "AppKit", "Combine", "XCTest", "Xcode",
+            "Instruments", "Foundation", "Swift",
+        ),
+        "min_distinct": 3,
+    },
+)
+
+
+def stack_family_underuse_in_flexible_bullets(
+    section: str,
+    companies: list[str],
+    jd_tools_blob: str,
+    min_distinct: int | None = None,
+) -> list[str]:
+    """Return underuse labels when an Apple (etc.) JD has too few named companions.
+
+    Example: JD is Swift/SwiftUI but Clerxi bullets only say SwiftUI once — missing
+    UIKit / Combine / XCTest variety that a real Apple role would show.
+    """
+    blob = (jd_tools_blob or "").lower()
+    if not blob:
+        return []
+    idx = flexible_item_indices(section, companies)
+    if not idx:
+        return []
+    items = _extract_resume_items(section)
+    flex_text = latex_to_plain(
+        " ".join(items[i] for i in sorted(idx) if i < len(items))
+    )
+    if not flex_text:
+        return []
+
+    under: list[str] = []
+    for family in _STACK_FAMILIES:
+        if not any(t in blob for t in family["triggers"]):
+            continue
+        need = min_distinct if min_distinct is not None else family["min_distinct"]
+        found: list[str] = []
+        # Longer first so SwiftUI before Swift
+        for term in sorted(family["terms"], key=len, reverse=True):
+            if term == "Swift":
+                pat = re.compile(r"(?<![A-Za-z0-9_])Swift(?!UI)")
+            else:
+                pat = re.compile(
+                    r"(?<![A-Za-z0-9_])" + re.escape(term) + r"(?![A-Za-z0-9_+#])",
+                    re.IGNORECASE,
+                )
+            if pat.search(flex_text) and term not in found:
+                found.append(term)
+        if len(found) < need:
+            under.append(
+                f"{family['name']} only {len(found)} companion(s) "
+                f"({', '.join(found) or 'none'}; need ≥{need})"
+            )
+    return under
+
+
 # Architecture fog: SQL-as-destination, vague "stores", bare/truncated products.
 # Do NOT match product names like "Azure SQL Database" or "SQL Server".
 _ARCH_FOG_PATTERNS = [
