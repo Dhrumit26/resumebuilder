@@ -342,6 +342,9 @@ def is_incomplete_plain(plain: str) -> bool:
     text = (plain or "").strip()
     if not text:
         return True
+    # Truncation mid-sentence often leaves a lowercase opener ("using Bootstrap…")
+    if text[0].islower():
+        return True
     core = text.rstrip(".")
     words = core.split()
     if not words:
