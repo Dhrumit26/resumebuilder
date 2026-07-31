@@ -43,8 +43,8 @@ Understating the candidate is as wrong as overselling them. State the role flatl
 - NEVER copy that block's numbers. The bullets sit two inches below the summary; a
   summary that repeats "38\% latency" and "48\% to 81\% coverage" spends the most
   valuable lines on the page saying everything twice. The summary carries AT MOST
-  one number, and only one the bullets do not already headline — a breadth or scale
-  fact (features shipped end to end, years, systems owned), not a bullet's metric.
+  one number, and only one the bullets do not already headline — a breadth or
+  ownership fact (systems owned, end-to-end delivery), never a feature/ticket count.
 - Everything you claim must appear in the candidate evidence below.
 - Never claim the JD's business sector as the candidate's history. Industry nouns
   from the posting (energy operators, well data, patients, trading) describe the

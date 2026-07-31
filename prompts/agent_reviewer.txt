@@ -10,9 +10,16 @@ You are scored on consistency. Two runs on the same resume must agree.
 2. For each, check whether it appears in the resume — exact term or a standard
    synonym ("GitHub Actions" satisfies "CI/CD"). Record matched vs missing.
 3. must_have_skills score = round(35 * matched / total).
-4. Count the bullets. Count how many contain a hard number (%, time, $, count, scale).
-   impact_metrics = 20 if >=80% carry one, 15 if >=60%, 10 if >=40%, 5 below.
-   Put the two counts in the details string, e.g. "7 of 9 bullets have metrics".
+4. Score impact_metrics on QUALITY of numbers, not density. Count bullets with a
+   real measured outcome (from->to time, rate, coverage, cost — or a concrete
+   absolute change). Do NOT reward feature/ticket/PR/defect inventory counts
+   ("delivered 14 features", "reviewed 40 PRs") as impact — those score as zero.
+   Cap at 12/20 when nearly every bullet has a bare percentage with no from->to
+   or when the current role invents more than three hard metrics for a short tenure.
+   impact_metrics = 20 when most substantive bullets have real measured outcomes
+   and the set still fits the tenure; 15 when several do; 10 when sparse; 5 when
+   numbers are missing or are inventory theater.
+   Put the judgment in details, e.g. "4 real outcomes, 1 inventory count ignored".
 5. Score tech_alignment as DOMAIN alignment (see the dedicated section below) — it is
    NOT a second keyword count.
 6. Score the remaining categories against the anchors below.
@@ -30,9 +37,10 @@ Count it, do not eyeball it:
 1. List the `domain_practices` from the JD Analysis (if absent, infer 5-8 core
    practices from the JD itself).
 2. For each practice, check whether at least one experience bullet DEMONSTRATES it —
-   the work itself, not the keyword. "Resolved 12 production defects by tracing
-   request paths" demonstrates production debugging; the phrase "production
-   debugging" in a skills list does not.
+   the work itself, not the keyword. "Traced failed event handlers and cut recovery
+   from four hours to 45 minutes" demonstrates production debugging; the phrase
+   "production debugging" in a skills list does not. "Fixed 12 defects" alone does
+   not — that is inventory, not demonstrated practice.
 3. tech_alignment = round(15 * demonstrated / total). Put the counts in details,
    e.g. "6 of 8 practices demonstrated: list them".
 Domain fit means ENGINEERING practices, never industry vocabulary. If `domain`
@@ -90,8 +98,15 @@ problem in weaknesses:
   an employer plainly not in that sector (an AI startup running "well-data services
   for energy operators")
 - Manufactured metrics: nearly every bullet ending in a bare percentage with no
-  from->to, no absolute count, and no scale anywhere — or unanchored comparatives
-  ("two sprints earlier" — earlier than what, measured how?)
+  from->to and no scale anywhere — or unanchored comparatives ("two sprints earlier"
+  — earlier than what, measured how?)
+- Feature-counting theater: "delivered 14 API features", "fixed 12 defects",
+  "reviewed 40+ PRs" as the achievement itself, with no weight or outcome — counting
+  work items like counting emails
+- Tenure inflation: the current role's bullets, read as a SET, claim more shipping
+  than one engineer finishes in the printed tenure (a few months of "May 2026 --
+  Present" cannot hold fourteen features AND coverage leaps AND infra AND reviews
+  AND docs). Cap tech_alignment and differentiation when the inventory does not fit
 - Broken compression grammar: dropped prepositions ("cut latency 38%", "APIs users
   depend"), one verb stretched over mismatched objects ("dropped time ... and flaky
   failures 65%"), or wrong constructions ("services running on PostgreSQL")
@@ -115,6 +130,10 @@ For each section needing work, give AT MOST 3 concrete, executable edits:
 - "summary: repeats the bullets' 38% and 81% numbers — replace with scope, keep at
   most one number the bullets don't already use"
 - "experience: bullet 1 reads AI-generated — cut buzzwords, keep 2 tools max"
+- "experience: bullet 1 'delivered 14 features' is feature-counting theater —
+  replace with one capability and its outcome"
+- "experience: current role claims too much for its tenure — cut to 2-3 hard
+  outcomes and drop the inventory bullets"
 - "experience: bullet 2 'cut latency 38%' drops the 'by' — fix the grammar"
 - "skills: Angular is filed under Backend & Cloud — move it to Frontend"
 Leave a section's list EMPTY when it is already strong. Empty means that section is

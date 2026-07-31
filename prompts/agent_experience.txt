@@ -38,21 +38,21 @@ This role is FULLY FLEXIBLE. Do not start from its ORIGINAL bullets. Instead:
    in the candidate's bullets. Anyone who reads "Clerxi AI" next to "well-data
    service for energy operators" knows the resume is fake in one glance.
 4. Write every bullet as a different facet of THAT ONE system's life — and pick the
-   facets from `domain_practices`, covering as many of the JD's practices as the
-   bullet count allows. If the JD centres on delivery-team work, that means: ship a
-   feature on the system, debug a live production defect in it, raise its automated
-   test coverage, deploy or harden it, document and review it with the team. Each
-   bullet demonstrates a DIFFERENT practice; together they read as one engineer's
-   year on one system, doing exactly the work the JD describes.
+   facets from `domain_practices`. Prefer DEPTH over a checklist of every duty the
+   JD lists. Two or three practices shown through real outcomes beat five bullets
+   that each claim a different duty. Together they must read as one engineer's
+   work on one system during the tenure printed on the resume — not a greatest-hits
+   reel of every software-engineering activity.
 
 Example of the industry trap, for an energy-industry JD asking for cloud data
 services in TypeScript:
   WRONG — industry cosplay at an AI startup:
-    \resumeItem{Delivered 14 TypeScript API features on a production well-data
-    service, giving energy operators reliable access to live operational datasets.}
+    \resumeItem{Shipped TypeScript APIs on a production well-data service, giving
+    energy operators reliable access to live operational datasets.}
   RIGHT — same engineering domain, same stack, believable employer:
-    \resumeItem{Delivered 14 TypeScript API features on a production data-ingestion
-    service, giving customers reliable search over device telemetry events.}
+    \resumeItem{Shipped a TypeScript search path on a production data-ingestion
+    service, cutting customer query time for device telemetry from minutes to
+    seconds.}
 The JD's engineering needs are fully served; the employer is still itself.
 
 The ORIGINAL bullets for this role are only a fallback: reuse their facts ONLY when
@@ -81,23 +81,48 @@ every tool in the posting.
   drawn from the front of {{JD_TOOLS}}. Covering the JD's full tool list is the
   Skills section's job, NEVER this section's.
 - Before output, reread the current-role bullets in order and ask: do these five
-  things plausibly happen to one system, built by one person, in one year? If any
-  bullet could not have happened on the system in bullet 1, rewrite it.
+  things plausibly happen to one system, built by one person, during the TENURE
+  printed on the resume (read the dates — "May 2026 -- Present" is months, not a
+  year)? If any bullet could not have happened on the system in bullet 1, rewrite
+  it. If the five bullets together claim more work than one engineer ships in that
+  tenure, cut scope — fewer big wins, not a longer inventory.
 
 If the JD names no tool for a capability, use the domain-standard choice. Two to
 three technologies per bullet, never more.
 
+## RULE 0c — NO FEATURE-COUNTING THEATER, NO TENURE INFLATION
+"Delivered 14 API features" is empty. Nobody knows whether those were major customer
+capabilities or fourteen query parameters. Counting features, PRs, tickets, or
+defects without explaining WHAT changed and WHY it mattered is like bragging that
+you wrote 37 emails. Ban it.
+
+- Never open a bullet with a raw count of features / tickets / PRs / defects as the
+  achievement. Lead with the capability or the outcome. A count may appear only as
+  supporting detail AFTER the substance is clear.
+  WRONG: Delivered 14 TypeScript API features on a production data-ingestion service...
+  RIGHT: Shipped a TypeScript search path on the ingestion service that cut customer
+  query time for device telemetry from minutes to seconds.
+- Read the CURRENT ROLE'S DATES. Size the invented work to that tenure. A role that
+  started a few months ago can own a few deep wins on one system — not fourteen
+  features AND twelve defects AND a coverage leap AND infrastructure AND access
+  control AND release automation AND forty code reviews AND docs AND tool evaluations.
+  Across the job as a whole, invent at most 2-3 hard outcome metrics; the remaining
+  bullets carry concrete work without stacking another big number.
+- When the five bullets are read as a SET, they must still fit one engineer in that
+  window. If they don't, the resume fails even if each bullet is fine alone.
+
 Metrics for the current role: when writing in a new domain you MAY use new numbers,
-under two conditions:
+under these conditions:
 - Believable and defensible — a number the candidate could explain in an interview
-  without flinching. Strong improvements are fine: 2x throughput, 55\% faster,
+  without flinching. Strong improvements are fine: 2x throughput, from-to times,
   hours of toil removed. What is NOT fine is SCALE the candidate has never touched:
   billions of requests, petabytes of data, org-wide platforms, systems serving
-  hundreds of millions of users. Claim strong work at the true scale of the role —
-  a mid-level engineer's real scale, stated with full confidence.
+  hundreds of millions of users.
 - Internally consistent across bullets — the same system, the same order of
-  magnitude, one coherent story. And concrete about what was measured:
-  "cut p99 allocation stalls 35\%" not "improved performance significantly".
+  magnitude, one coherent story sized to the tenure. Concrete about what was
+  measured: "cut p99 latency from 41ms to 26ms" not "improved performance".
+- Prefer outcomes that describe the change itself over inventory counts of how many
+  things were shipped.
 When the domain matches the original work, keep the original metrics attached to
 what they actually measured.
 
@@ -132,18 +157,21 @@ downscale or hedge an achievement because the title says intern.
 Every bullet follows XYZ: accomplished [X], measured by [Y], by doing [Z].
 Put Y early. "Cut deploy time by 40\% by doing Z" beats "Did Z, which cut deploy time".
 
-At least 80% of bullets carry a hard number — but a page where every bullet ends in
-a conveniently impressive percentage reads like resume fan fiction. Numbers must
-look MEASURED:
-- Prefer from->to and absolute counts over naked percentages: "from 45 to 28
-  minutes", "12 production defects", "40+ pull requests", "two days to three
-  hours". Use a bare percentage at most twice per job.
-- Vary the quantity measured across bullets: time, count, rate, coverage, cost.
-  Five bullets that each end in a different percentage are a tell.
+Most bullets carry a hard number — but a page where every bullet ends in a
+conveniently impressive percentage, or stacks feature/defect/PR counts, reads like
+resume fan fiction. Numbers must look MEASURED:
+- Prefer from->to over naked percentages and over inventory counts: "from 45 to 28
+  minutes", "two days to three hours", "p99 from 41ms to 26ms". Use a bare
+  percentage at most twice per job.
+- Across the CURRENT role, invent at most 2-3 hard outcome metrics total. The other
+  bullets describe concrete work without another big number — substance without a
+  scoreboard.
 - Never write an unanchored comparative. "Caught regressions two sprints earlier"
   invites the question "earlier than what, measured how?" and has no answer. Anchor
   the change to something visible: "regressions now surface in PR checks instead of
   nightly runs".
+- Never lead with feature / ticket / PR / defect counts. Those numbers without
+  weight are theater.
 
 ## RULE 2 — REWRITE, DON'T PARAPHRASE
 Copy-paste or synonym-swapping an ORIGINAL bullet is a FAILURE and gets rejected.
@@ -248,11 +276,13 @@ only a fallback when the JD's domain already matches them)
 {{ORIGINAL_SECTION}}
 
 ## Before you output
-Check: bullet count per job matches ORIGINAL? Order preserved? At least 80% carry a
-number? Current-role bullets tell ONE story — one system, ONE primary language,
-5-6 technologies total, no language scatter? No tech-name swaps? Fixed-history
-metrics unchanged and free of banned tools? Frozen tool pairings intact? No \textbf?
-Every bullet a complete sentence under 28 words?
+Check: bullet count per job matches ORIGINAL? Order preserved? Current-role bullets
+tell ONE story — one system, ONE primary language, 5-6 technologies total, no
+language scatter? Scope fits the printed tenure (no feature-count theater, no
+inventory of every duty)? At most 2-3 hard invented metrics in the current role?
+No tech-name swaps? Fixed-history metrics unchanged and free of banned tools?
+Frozen tool pairings intact? No \textbf? Every bullet a complete sentence under
+28 words?
 
 ## Output
 The experience section LaTeX only.
