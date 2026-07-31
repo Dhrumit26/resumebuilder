@@ -8,13 +8,16 @@ human confirms the stack in three seconds. Density beats completeness.
 List only things you install, import, or deploy: languages, frameworks, databases,
 platforms, services, libraries. Python, FastAPI, PostgreSQL, Docker, AWS, Playwright,
 Swift, SwiftUI, Xcode, XCTest.
-NEVER list concepts or methodologies. These are stripped automatically and waste the
-line: LLMs, Large Language Models, Multi-Agent Systems, Agent Orchestration, RAG,
-Retrieval, Vector Search, Vector Databases, Semantic Caching, Evals, Evaluation
-Frameworks, Guardrails, Prompt Engineering, Distributed Systems, Microservices,
-Machine Learning, AI/ML, Scalability, Latency Optimization, System Design, OOP,
-Data Structures, Algorithms, Agile, Scrum, SDLC, async/await (as a lone skill —
-prefer XCTest / Swift Concurrency only if the JD names them as tools).
+NEVER list concepts, methodologies, or vague category placeholders. These are
+stripped automatically and waste the line: LLMs, Large Language Models,
+Multi-Agent Systems, Agent Orchestration, RAG, Retrieval, Vector Search,
+Vector Databases, Semantic Caching, Evals, Evaluation Frameworks, Guardrails,
+Prompt Engineering, Distributed Systems, Microservices, Machine Learning, AI/ML,
+Scalability, Latency Optimization, System Design, OOP, Data Structures,
+Algorithms, Agile, Scrum, SDLC,
+Apple frameworks, iOS frameworks, Apple SDKs, cloud services, web frameworks,
+backend frameworks, testing frameworks, CI/CD tools, DevOps tools.
+Name the real product: Foundation, UIKit, Combine, XCTest — never "Apple frameworks".
 A category made entirely of concepts causes the whole section to be discarded and
 replaced with the untailored original.
 
@@ -82,12 +85,16 @@ followed by \vspace{1pt} between lines, as in ORIGINAL.
 ## EXAMPLE — Swift / Apple JD
   \textbf{Languages}{: Swift, Python, TypeScript, JavaScript, SQL} \\
   \vspace{1pt}
-  \textbf{Apple Platforms}{: SwiftUI, Xcode, Foundation, Instruments} \\
+  \textbf{Apple Platforms}{: SwiftUI, Foundation, UIKit, Xcode, Instruments} \\
   \vspace{1pt}
   \textbf{Testing \& CI/CD}{: XCTest, GitHub Actions, Jest, Playwright} \\
   \vspace{1pt}
   \textbf{Backend}{: FastAPI, PostgreSQL, Docker, REST APIs} \\
 
+WRONG — category fog, not a tool:
+  \textbf{Apple Platforms}{: SwiftUI, Xcode, Apple frameworks} \\
+RIGHT — name the frameworks:
+  \textbf{Apple Platforms}{: SwiftUI, Foundation, Combine, Xcode} \\
 ## WEB RESEARCH — ground truth for specialized products
 Prefer the real product name from this research in the skills list
 (e.g. "Microsoft Fabric", not a vague "analytics platform").

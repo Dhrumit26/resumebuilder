@@ -130,6 +130,8 @@ problem in weaknesses:
   products ("Data Factory" without Azure); "Git-based CI/CD" instead of GitHub
   Actions / Azure DevOps / Jenkins / GitLab CI
 - Swift/SwiftUI in skills with no Xcode or XCTest — ecosystem hole
+- Vague skill placeholders: "Apple frameworks", "cloud services", "web frameworks"
+  instead of Foundation / UIKit / Combine / named products
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them

@@ -70,6 +70,18 @@ SKILL_CONCEPT_PATTERNS = [
     r"Algorithms?",
     r"Agile( /? ?Scrum)?",
     r"SDLC",
+    # Vague category placeholders — not real installable tools
+    r"Apple Frameworks?",
+    r"iOS Frameworks?",
+    r"Apple SDKs?",
+    r"Native Frameworks?",
+    r"Cloud (Services?|Platforms?|Tools?)",
+    r"Web Frameworks?",
+    r"Backend Frameworks?",
+    r"Frontend Frameworks?",
+    r"Testing Frameworks?",
+    r"CI/?CD Tools?",
+    r"DevOps Tools?",
 ]
 
 # Only full parser tags — never bare words like "Summary" or "\end{...}"
@@ -804,9 +816,14 @@ def _revert_bullets_with_unevidenced_tools(
 
 
 def _remove_concept_skills(skills: str) -> str:
-    """Skills lines must list concrete tools only — strip concept/methodology terms."""
+    """Skills lines must list concrete tools only — strip concept/methodology terms.
+
+    Vague placeholders like "Apple frameworks" are removed. If an Apple Platforms
+    line loses its only non-concrete entry, seed Foundation so the line stays useful.
+    """
 
     def clean_category(m: re.Match) -> str:
+        header = m.group(1)
         entries = _split_skill_entries(m.group(2))
         kept = [
             e for e in entries
@@ -814,6 +831,15 @@ def _remove_concept_skills(skills: str) -> str:
         ]
         if not kept:
             kept = entries
+        # Apple line with only SwiftUI/Xcode and no named framework — add Foundation
+        if re.search(r"Apple|iOS|macOS|Mobile", header, re.I):
+            lower = {e.lower() for e in kept}
+            if "foundation" not in lower and any(
+                re.fullmatch(pat, e, re.IGNORECASE)
+                for e in entries
+                for pat in (r"Apple Frameworks?", r"iOS Frameworks?", r"Apple SDKs?")
+            ):
+                kept.append("Foundation")
         return m.group(1) + ", ".join(kept) + m.group(3)
 
     return SKILL_CATEGORY_RE.sub(clean_category, skills)

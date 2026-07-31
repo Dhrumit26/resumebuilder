@@ -559,6 +559,17 @@ def t26_language_scatter_detected_in_flexible_bullets():
     assert langs == ["JavaScript"], langs
 
 
+def t30_apple_frameworks_placeholder_stripped():
+    fog = ORIG["skills"].replace(
+        "Frontend}{: React, Next.js}",
+        "Apple Platforms}{: SwiftUI, Xcode, Apple frameworks}",
+    )
+    cleaned = rb._remove_concept_skills(fog)
+    plain = rb.latex_to_plain(cleaned)
+    assert "Apple frameworks" not in plain, plain
+    assert "Foundation" in plain, plain  # seeded when placeholder removed
+
+
 def t29_ecosystem_companions_expand_swift_tools():
     analysis = {
         "tools": ["Swift", "SwiftUI"],
