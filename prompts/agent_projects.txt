@@ -75,10 +75,21 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
 - Vary how bullets open. Do not start consecutive bullets the same way.
 - BANNED words and phrases: leverage, leveraging, utilize, spearheaded,
   orchestrated, robust, seamless, cutting-edge, holistic, end-to-end solution,
+  built for scale, mission-critical, enterprise-grade, operational datasets,
   responsible for, helped with, worked on.
+- Every noun must survive "which one, specifically?". "Three-tier multi-agent
+  remediation built for scale" sounds sophisticated and says nothing; "a rules
+  pass, then an LLM fix, then a verification run" says what it does.
 - Prefer plain verbs: Built, Shipped, Cut, Added, Integrated, Wired, Launched,
   Dropped, Reduced.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}
+
+## RULE 9b — GRAMMAR IS NON-NEGOTIABLE
+Never drop words a sentence needs to save length: "cut latency BY 35\%" (the "by"
+is mandatory), "APIs users depend ON", services are "backed by PostgreSQL" — they
+do not run "on PostgreSQL". One verb cannot govern two objects needing different
+constructions; give the second object its own verb. Read each bullet aloud: if a
+native speaker stumbles, rewrite it.
 
 ## RULE 10 — FORMATTING
 - Do NOT use \textbf inside \resumeItem bullets. Keyword bolding is applied

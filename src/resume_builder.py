@@ -555,25 +555,42 @@ def _whitelist_skills(skills: str, original_skills: str, jd_tools: list[str], ma
         # Trust the candidate's real skills section; JD tools still get injected below.
         out = original_skills
 
-    # Inject missing JD tools into Backend/Cloud/DevOps category if still absent
+    # Inject missing JD tools into the category they belong to: languages go to the
+    # Languages line (a C# filed under "Backend & Cloud" reads as not knowing what
+    # C# is), everything else to the Backend/Cloud/DevOps category.
     still_missing = [t for t in to_inject if t.lower() not in latex_to_plain(out).lower()]
     if still_missing:
-        def inject(m: re.Match) -> str:
-            entries = _split_skill_entries(m.group(2))
-            for t in still_missing:
-                if t not in entries:
-                    entries.append(t)
-            return m.group(1) + ", ".join(entries[:12]) + m.group(3)
+        lang_names = {l.lower() for l in _BULLET_LANGUAGES} | {"c", "f#", "sql"}
+        lang_missing = [t for t in still_missing if t.lower() in lang_names]
+        other_missing = [t for t in still_missing if t.lower() not in lang_names]
 
-        pattern = re.compile(
-            r"(\\textbf\{(?:Backend[^}]*|Cloud[^}]*|DevOps[^}]*)\}\{\s*:\s*)([^}]*?)(\})",
-            re.IGNORECASE,
-        )
-        if pattern.search(out):
-            out = pattern.sub(inject, out, count=1)
-        else:
-            # fallback: first category
-            out = SKILL_CATEGORY_RE.sub(inject, out, count=1)
+        def make_inject(tools: list[str]):
+            def inject(m: re.Match) -> str:
+                entries = _split_skill_entries(m.group(2))
+                for t in tools:
+                    if t not in entries:
+                        entries.append(t)
+                return m.group(1) + ", ".join(entries[:12]) + m.group(3)
+            return inject
+
+        if lang_missing:
+            lang_pattern = re.compile(
+                r"(\\textbf\{Languages[^}]*\}\{\s*:\s*)([^}]*?)(\})", re.IGNORECASE
+            )
+            if lang_pattern.search(out):
+                out = lang_pattern.sub(make_inject(lang_missing), out, count=1)
+            else:
+                other_missing = lang_missing + other_missing
+        if other_missing:
+            pattern = re.compile(
+                r"(\\textbf\{(?:Backend[^}]*|Cloud[^}]*|DevOps[^}]*)\}\{\s*:\s*)([^}]*?)(\})",
+                re.IGNORECASE,
+            )
+            if pattern.search(out):
+                out = pattern.sub(make_inject(other_missing), out, count=1)
+            else:
+                # fallback: first category
+                out = SKILL_CATEGORY_RE.sub(make_inject(other_missing), out, count=1)
     return out
 
 

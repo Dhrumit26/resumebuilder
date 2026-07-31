@@ -52,7 +52,7 @@ services in TypeScript:
     service, giving energy operators reliable access to live operational datasets.}
   RIGHT — same engineering domain, same stack, believable employer:
     \resumeItem{Delivered 14 TypeScript API features on a production data-ingestion
-    service, giving customers reliable search over live operational datasets.}
+    service, giving customers reliable search over device telemetry events.}
 The JD's engineering needs are fully served; the employer is still itself.
 
 The ORIGINAL bullets for this role are only a fallback: reuse their facts ONLY when
@@ -128,13 +128,22 @@ BULLETS for these jobs: {{BANNED_TOOLS}} — naming one causes that bullet to be
 away and replaced with the old version. State the real work at full strength — never
 downscale or hedge an achievement because the title says intern.
 
-## RULE 1 — XYZ FORMULA + METRIC COVERAGE
+## RULE 1 — XYZ FORMULA + METRICS THAT READ MEASURED, NOT MANUFACTURED
 Every bullet follows XYZ: accomplished [X], measured by [Y], by doing [Z].
-Put Y early. "Cut X 45% by doing Z" beats "Did Z, which cut X 45%".
+Put Y early. "Cut deploy time by 40\% by doing Z" beats "Did Z, which cut deploy time".
 
-At least 80% of bullets MUST contain a hard number — percentage, time, dollar, count,
-or scale. Count them before finishing. 5 bullets -> at least 4 carry a number.
-Below 80% the resume loses points in proportion; below 40% it loses most of them.
+At least 80% of bullets carry a hard number — but a page where every bullet ends in
+a conveniently impressive percentage reads like resume fan fiction. Numbers must
+look MEASURED:
+- Prefer from->to and absolute counts over naked percentages: "from 45 to 28
+  minutes", "12 production defects", "40+ pull requests", "two days to three
+  hours". Use a bare percentage at most twice per job.
+- Vary the quantity measured across bullets: time, count, rate, coverage, cost.
+  Five bullets that each end in a different percentage are a tell.
+- Never write an unanchored comparative. "Caught regressions two sprints earlier"
+  invites the question "earlier than what, measured how?" and has no answer. Anchor
+  the change to something visible: "regressions now surface in PR checks instead of
+  nightly runs".
 
 ## RULE 2 — REWRITE, DON'T PARAPHRASE
 Copy-paste or synonym-swapping an ORIGINAL bullet is a FAILURE and gets rejected.
@@ -166,9 +175,30 @@ ONE complete sentence per bullet, 22-28 words. That is two printed lines.
   robust, seamless, cutting-edge, holistic, customer-minded, impact-driven,
   high agency, results-driven, detail-oriented, proven track record,
   navigate ambiguity, responsible for, helped with, worked on.
+- BANNED vague-sophistication phrases — they sound technical while saying nothing:
+  built for scale, at scale (as filler), operational datasets, cleaner handoffs,
+  locked down, end-to-end automation, mission-critical, enterprise-grade.
+- THE CONCRETE-NOUN TEST: every noun must survive the question "which one,
+  specifically?". "Live operational datasets" fails it; "customer order events"
+  passes. "Internal systems stayed locked down" fails; "kept write access scoped to
+  the sync worker's service account" passes. Vague nouns are how fake bullets hide.
 - Prefer plain verbs: Built, Cut, Raised, Shipped, Migrated, Rewrote, Fixed, Dropped,
   Reduced, Launched, Wrote, Partnered.
 - Angle 1-2 of these in where truthful, never more: {{PLACEMENT_KEYWORDS}}
+
+## RULE 5b — GRAMMAR IS NON-NEGOTIABLE
+Word-count pressure never justifies dropping words a sentence needs. Each of these
+real failures marks the resume as machine-written:
+- "Cut p99 latency 38\%" -> "Cut p99 latency BY 38\%". The "by" is not optional.
+- "Dropped pipeline time from 45 to 28 minutes and flaky failures 65\%" — one verb
+  cannot govern two objects that need different constructions. Give the second its
+  own verb: "...and cut flaky test failures by 65\%".
+- "APIs users depend" -> "APIs users depend ON". Never drop a preposition to save
+  a word.
+- Services do not run "on PostgreSQL" — they are "backed by PostgreSQL".
+- "flaky failures" -> "flaky test failures".
+Read each bullet as a sentence before output. If a native speaker would stumble,
+rewrite it.
 
 ## RULE 6 — FORMATTING
 - Do NOT use \textbf anywhere. Keyword bolding is applied automatically after you,
@@ -190,9 +220,9 @@ WRONG — tech-name swap, incoherent domain (multi-agent retrieval is not C++ wo
   structures and retrieval algorithms across live production services.}
 
 RIGHT — written natively in the systems domain, new coherent story and metric:
-  \resumeItem{Cut p99 request latency 38\% in a C++ ingestion service by replacing
-  hash-heavy lookups with cache-friendly flat structures, verified with before and
-  after benchmarks.}
+  \resumeItem{Cut p99 request latency from 41ms to 26ms in a C++ ingestion service
+  by replacing hash-heavy lookups with cache-friendly flat structures, verified
+  with before-and-after benchmarks.}
 
 Fixed history (internship), ORIGINAL bullet:
   \resumeItem{Reduced flaky CI failures by 65\% and pipeline runtime from 45 to 28
@@ -203,9 +233,9 @@ WRONG — broke a frozen pairing, Python was never the test framework:
   Python to Playwright, cutting pipeline runtime to 28 minutes.}
 
 RIGHT — same frozen facts, re-angled toward what a systems team values (fast,
-reliable pipelines), sentence rebuilt:
-  \resumeItem{Dropped CI pipeline time from 45 to 28 minutes and flaky failures 65\%
-  by moving end-to-end suites from Cypress to Playwright with parallel execution.}
+reliable pipelines), sentence rebuilt with each object getting its own verb:
+  \resumeItem{Dropped CI pipeline time from 45 to 28 minutes and cut flaky test
+  failures by 65\% by moving end-to-end suites from Cypress to Playwright.}
 
 ## JD Analysis
 {{JD_ANALYSIS}}

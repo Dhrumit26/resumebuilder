@@ -33,9 +33,23 @@ replaced with the untailored original.
   they land in whichever category comes first — which is how Kubernetes ends up filed
   under "Languages".
 - The other three names may be adapted to the JD. Keep them short and standard:
-  Languages / Backend & Cloud / Testing & CI/CD / Frontend.
+  Languages / Backend & Cloud / Testing & CI/CD / Frontend, or for an
+  infrastructure-heavy JD: Languages / Backend & Databases / Cloud & DevOps /
+  Testing & Frontend.
 - Order categories and the items inside them by JD relevance, most critical first.
   The first three items on each line are the ones that get read.
+
+## RULE 3b — EVERY TOOL IN ITS TRUE CATEGORY
+A misfiled tool tells the reader the candidate does not know what the tool is:
+- Frontend frameworks (React, Angular, Next.js, Vue) go ONLY under a Frontend
+  category — never under Backend or Cloud.
+- Databases (PostgreSQL, MySQL, MongoDB, SQL Server) are not "Cloud". File them
+  under a Backend or Databases category.
+- Infrastructure tooling (Terraform, Helm, Ansible, Argo CD) sits with Docker and
+  Kubernetes under a Cloud/DevOps category — never next to application frameworks.
+- The Languages line contains ONLY programming languages.
+When the 4 category names cannot cleanly hold the JD's tools, rename the flexible
+categories (Rule 3) rather than misfile a tool.
 
 ## RULE 4 — LINE FORMAT (mechanical, and unforgiving)
 Copy the ORIGINAL's skeleton exactly, including the itemize wrapper and the

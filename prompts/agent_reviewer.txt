@@ -89,6 +89,14 @@ problem in weaknesses:
 - Industry cosplay: the JD's business-sector vocabulary claimed as work history at
   an employer plainly not in that sector (an AI startup running "well-data services
   for energy operators")
+- Manufactured metrics: nearly every bullet ending in a bare percentage with no
+  from->to, no absolute count, and no scale anywhere — or unanchored comparatives
+  ("two sprints earlier" — earlier than what, measured how?)
+- Broken compression grammar: dropped prepositions ("cut latency 38%", "APIs users
+  depend"), one verb stretched over mismatched objects ("dropped time ... and flaky
+  failures 65%"), or wrong constructions ("services running on PostgreSQL")
+- The summary repeating the experience bullets' numbers — the page's most valuable
+  lines saying everything twice
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them
@@ -104,7 +112,11 @@ For each section needing work, give AT MOST 3 concrete, executable edits:
 - "experience: bullet 3 at Intuit has no metric — surface the coverage increase"
 - "skills: add 'Kubernetes' to the Backend & Cloud line (JD must-have, absent)"
 - "summary: mirror the JD title 'Platform Engineer' in the first sentence"
+- "summary: repeats the bullets' 38% and 81% numbers — replace with scope, keep at
+  most one number the bullets don't already use"
 - "experience: bullet 1 reads AI-generated — cut buzzwords, keep 2 tools max"
+- "experience: bullet 2 'cut latency 38%' drops the 'by' — fix the grammar"
+- "skills: Angular is filed under Backend & Cloud — move it to Frontend"
 Leave a section's list EMPTY when it is already strong. Empty means that section is
 NOT regenerated and its wording is preserved byte-for-byte, which is the outcome you
 want for anything good. Never give vague advice ("improve keywords").
@@ -144,7 +156,7 @@ only; the full lists belong in ats_reviewer.
       "seniority_fit": {"score": 0, "max": 10, "details": ""},
       "keyword_optimization": {"score": 0, "max": 10, "details": ""},
       "differentiation": {"score": 0, "max": 5, "details": ""},
-      "bullet_craft": {"score": 0, "max": 5, "details": "complete sentences, varied openings, consistent length"}
+      "bullet_craft": {"score": 0, "max": 5, "details": "grammatical sentences (no dropped prepositions or verb stretching), varied openings, consistent length"}
     },
     "top_matched_skills": [],
     "critical_gaps": [],
