@@ -1190,9 +1190,81 @@ def _remove_concept_skills(skills: str) -> str:
 # Spans we must never bold inside: existing bold/href/any LaTeX command token
 _PROTECTED_SPAN_RE = re.compile(r"\\textbf\{[^{}]*\}|\\href\{[^{}]*\}\{[^{}]*\}|\\[a-zA-Z]+\*?")
 
-MAX_BOLD_PER_BULLET = 3      # total \textbf per bullet (existing + new)
-MAX_NEW_BOLD_PER_BULLET = 2  # new bolds this pass may add to one bullet
+MAX_BOLD_PER_BULLET = 4      # total \textbf per bullet (keywords + metrics)
+MAX_NEW_BOLD_PER_BULLET = 2  # new keyword bolds this pass may add to one bullet
 MAX_BOLD_PER_KEYWORD = 3     # times one keyword may be bolded across a section
+MAX_METRIC_BOLDS_PER_BULLET = 2  # highlight result numbers separately
+
+
+# Longer patterns first so "42\% to 78\%" wins over bare "42\%".
+_METRIC_BOLD_PATTERNS = [
+    re.compile(
+        r"\b\d{1,3}\\%\s+to\s+\d{1,3}\\%",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b\d{1,3}\s+percent\s+to\s+\d{1,3}\s+percent\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b\d+\s*(?:ms|s)\s+to\s+\d+\s*(?:ms|s)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b\d+\s+to\s+\d+\s+(?:minutes?|hours?|days?|weeks?)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b\d+\s+(?:minutes?|hours?|days?|weeks?)\s+to\s+\d+\s+(?:minutes?|hours?|days?|weeks?)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\b\d{1,3}\\%"),
+    re.compile(r"\b\d{1,3}\s+percent\b", re.IGNORECASE),
+    re.compile(r"\b\d+x\b", re.IGNORECASE),
+    re.compile(r"\b(?:two|three|four|five)\s+times\b", re.IGNORECASE),
+    re.compile(r"\b\d+\s+days?\s+per\s+sprint\b", re.IGNORECASE),
+]
+
+
+def _bold_span(text: str, start: int, end: int) -> str:
+    return text[:start] + "\\textbf{" + text[start:end] + "}" + text[end:]
+
+
+def _span_is_protected(spans: list[tuple[int, int]], start: int, end: int) -> bool:
+    return any(s <= start < e or s < end <= e or (start <= s and end >= e) for s, e in spans)
+
+
+def bold_metrics_in_bullets(section: str) -> str:
+    """Bold measured results (%, from→to times, Nx) inside \\resumeItem bullets."""
+    out = section
+    for item in _extract_resume_items(section):
+        existing = item.count("\\textbf{")
+        budget = min(MAX_METRIC_BOLDS_PER_BULLET, MAX_BOLD_PER_BULLET - existing)
+        if budget <= 0:
+            continue
+        new_item = item
+        used = 0
+        # Re-scan after each bold so offsets stay valid
+        while used < budget:
+            spans = [(m.start(), m.end()) for m in _PROTECTED_SPAN_RE.finditer(new_item)]
+            found = None
+            for pat in _METRIC_BOLD_PATTERNS:
+                for m in pat.finditer(new_item):
+                    if _span_is_protected(spans, m.start(), m.end()):
+                        continue
+                    found = (m.start(), m.end())
+                    break
+                if found:
+                    break
+            if not found:
+                break
+            new_item = _bold_span(new_item, found[0], found[1])
+            used += 1
+        if new_item != item:
+            idx = out.find(item)
+            if idx != -1:
+                out = out[:idx] + new_item + out[idx + len(item):]
+    return out
 
 
 def _boldable_keywords(keywords: list[str]) -> list[str]:
@@ -1237,9 +1309,10 @@ def _bold_first_occurrence(text: str, keyword: str) -> tuple[str, bool]:
 def bold_keywords_in_bullets(section: str, keywords: list[str]) -> str:
     """Guarantee JD keywords appearing in \\resumeItem bullets are bolded.
 
-    Caps keep the page readable: max 3 bolds per bullet, max 2 new per bullet,
-    each keyword bolded at most three times per section. Longest keywords first so
-    "React Testing Library" wins over "React".
+    Caps keep the page readable: max 4 bolds per bullet, max 2 new keywords per
+    bullet, each keyword bolded at most three times per section. Longest keywords
+    first so "React Testing Library" wins over "React". Metrics are bolded in a
+    separate pass.
     """
     ordered = _boldable_keywords(keywords)
     if not ordered:

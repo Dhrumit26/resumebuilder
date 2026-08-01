@@ -32,6 +32,7 @@ from .resume_builder import (
     architecture_fog_in_text,
     bare_percent_overuse_in_flexible_bullets,
     bold_keywords_in_bullets,
+    bold_metrics_in_bullets,
     brand_bleed_in_text,
     bullet_rewrite_ratio,
     clean_generated_sections,
@@ -930,6 +931,8 @@ def _assemble(
     )
     # Guarantee JD keywords are visually bolded (the model's own bolding is inconsistent).
     # The summary is deliberately left unbolded — see strip_bold() in resume_builder.
+    cleaned["experience"] = bold_metrics_in_bullets(cleaned["experience"])
+    cleaned["projects"] = bold_metrics_in_bullets(cleaned["projects"])
     cleaned["experience"] = bold_keywords_in_bullets(cleaned["experience"], jd_keywords)
     cleaned["projects"] = bold_keywords_in_bullets(cleaned["projects"], jd_keywords)
     full_latex = assemble_full_resume(

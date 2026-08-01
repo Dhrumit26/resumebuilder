@@ -456,7 +456,7 @@ def t21_keyword_bolding():
         "\\resumeItemListEnd\n"
     )
     out = rb.bold_keywords_in_bullets(sec, ["Python", "FastAPI", "PostgreSQL", "Docker", "CI/CD", "C++", "AWS"])
-    # bullet 1: up to 2 new bolds under the highlight budget
+    # bullet 1: up to 2 new keyword bolds under the highlight budget
     b1 = rb._extract_resume_items(out)[0]
     assert 1 <= b1.count("\\textbf{") <= 2, b1
     # bullet 2: existing bold Python not double-bolded; href untouched
@@ -469,6 +469,24 @@ def t21_keyword_bolding():
     sout = rb.bold_keywords_in_summary(summ, ["Python", "FastAPI", "AWS"], max_new=1)
     assert sout.count("\\textbf{") == 1, sout
     assert sout.count("{") == sout.count("}")
+
+
+def t37_metric_bolding_highlights_results():
+    sec = (
+        "\\resumeItemListStart\n"
+        "        \\resumeItem{Optimized retrieval by 30\\% using DynamoDB indexing.}\n"
+        "        \\resumeItem{Cut pipeline runtime from 45 to 28 minutes and raised "
+        "coverage from 42\\% to 78\\% with Jest.}\n"
+        "\\resumeItemListEnd\n"
+    )
+    out = rb.bold_metrics_in_bullets(sec)
+    b1, b2 = rb._extract_resume_items(out)
+    assert "\\textbf{30\\%}" in b1, b1
+    assert "\\textbf{45 to 28 minutes}" in b2, b2
+    assert "\\textbf{42\\% to 78\\%}" in b2, b2
+    # then keywords still apply on top
+    with_kw = rb.bold_keywords_in_bullets(out, ["DynamoDB", "Jest"])
+    assert "\\textbf{DynamoDB}" in with_kw or "\\textbf{Jest}" in with_kw, with_kw
 
 
 def t34_story_thin_detects_floating_duty_bullets():
