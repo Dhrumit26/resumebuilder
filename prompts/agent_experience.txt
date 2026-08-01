@@ -249,8 +249,13 @@ resume fan fiction. Numbers must look MEASURED:
 
 ## RULE 2 — REWRITE, DON'T PARAPHRASE
 Copy-paste or synonym-swapping an ORIGINAL bullet is a FAILURE and gets rejected.
-For fixed-history bullets: same underlying achievement and metric, new sentence —
-different verb, different structure, at least half the words changed.
+For fixed-history jobs (Intuit and any non-flexible role): KEEP the same facts —
+same metrics, same Cypress→Playwright pairing, same coverage numbers, same React
+feature — but WRITE A NEW SENTENCE every time. Different opening verb, different
+clause order, outcome-first when it helps. If a reader could paste the ORIGINAL
+next to yours and see nearly the same words, you failed. At least half the words
+in EACH fixed-history bullet must differ from ORIGINAL. Never leave an Intuit
+bullet unchanged "because the facts are already good."
 
 ## RULE 3 — STRUCTURE (absolute, mechanical)
 - Copy the LaTeX skeleton from ORIGINAL exactly: \resumeSubheading,

@@ -508,6 +508,25 @@ def t34_story_thin_detects_floating_duty_bullets():
     assert rb.story_thin_in_flexible_bullets(rich, ["Clerxi AI"]) == []
 
 
+def t35_near_copy_fixed_history_detects_intuit_paste():
+    orig = ORIG["experience"]
+    # Clerxi rewritten, Intuit pasted verbatim → must flag
+    pasted = TAILORED["experience"]
+    # Force Intuit bullets back to original text
+    gen_items = rb._extract_resume_items(pasted)
+    orig_items = rb._extract_resume_items(orig)
+    assert len(gen_items) >= 10 and len(orig_items) >= 10
+    out = pasted
+    for i in range(5, 10):
+        out = out.replace(gen_items[i], orig_items[i], 1)
+    hits = rb.near_copy_fixed_history_bullets(out, orig, ["Clerxi AI"])
+    assert hits, hits
+    # Fully rewritten tailored fixture should be clean
+    assert rb.near_copy_fixed_history_bullets(
+        TAILORED["experience"], orig, ["Clerxi AI"]
+    ) == []
+
+
 def t23_skills_whitelist_and_go_false_positive():
     # "Go" must NOT match inside "algorithmic"
     evidence = rb.latex_to_plain(

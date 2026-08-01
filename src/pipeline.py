@@ -25,31 +25,36 @@ from .llm import TruncatedCompletion, call_llm, call_llm_json
 from .web_context import build_tech_context
 from .resume_builder import (
     _debug_dump,
+    _extract_resume_items,
+    _visible_bullet_text,
     assemble_full_resume,
+    architecture_fog_in_flexible_bullets,
+    architecture_fog_in_text,
+    bare_percent_overuse_in_flexible_bullets,
     bold_keywords_in_bullets,
+    brand_bleed_in_text,
     bullet_rewrite_ratio,
     clean_generated_sections,
     clean_llm_latex,
     count_resume_items_per_block,
     fill_prompt,
     find_incomplete_bullets,
+    flexible_item_indices,
     is_valid_jake_experience,
     is_valid_jake_projects,
     is_valid_jake_skills,
     is_valid_jake_summary,
-    architecture_fog_in_flexible_bullets,
-    architecture_fog_in_text,
-    bare_percent_overuse_in_flexible_bullets,
-    brand_bleed_in_text,
+    is_incomplete_plain,
     languages_in_flexible_bullets,
     latex_to_plain,
+    load_full_template,
+    load_original_sections,
+    load_prompt,
+    near_copy_fixed_history_bullets,
     senior_theater_in_flexible_bullets,
     stack_family_underuse_in_flexible_bullets,
     stack_name_overuse_in_flexible_bullets,
     story_thin_in_flexible_bullets,
-    load_full_template,
-    load_original_sections,
-    load_prompt,
     strip_delimiter_artifacts,
     strip_markdown_artifacts,
     truncate_jd,
@@ -84,7 +89,7 @@ CANDIDATE_TEMPERATURES = [0.25, 0.55, 0.75, 0.9]
 
 # Section attempts share one budget: an invalid-LaTeX retry, a too-close-to-original
 # retry, and a truncation retry-at-a-higher-cap all draw from it.
-MAX_SECTION_ATTEMPTS = 3
+MAX_SECTION_ATTEMPTS = 5
 SECTION_TOKEN_CAP = 2500
 MAX_SECTION_TOKEN_CAP = 6000
 
@@ -383,6 +388,94 @@ def _build_section_prompt(
     )
 
 
+def _surgical_rewrite_fixed_near_copies(latex: str, original_section: str) -> str:
+    """Force-rewrite fixed-history bullets that are still near-copies of ORIGINAL.
+
+    The main experience agent often rewrites Clerxi and pastes Intuit. After the
+    normal retry loop, this one focused call rewrites ONLY the pasted bullets.
+    """
+    near = near_copy_fixed_history_bullets(
+        latex, original_section, FLEXIBLE_EXPERIENCE_COMPANIES
+    )
+    if not near:
+        return latex
+
+    gen_items = _extract_resume_items(latex)
+    orig_items = _extract_resume_items(original_section)
+    flex = flexible_item_indices(latex, FLEXIBLE_EXPERIENCE_COMPANIES)
+    targets: list[tuple[int, str]] = []
+    for i, g_item in enumerate(gen_items):
+        if i in flex or i >= len(orig_items):
+            continue
+        g = _visible_bullet_text(g_item)
+        o = _visible_bullet_text(orig_items[i])
+        gw, ow = set(g.lower().split()), set(o.lower().split())
+        if not ow:
+            continue
+        overlap = len(gw & ow) / max(len(gw | ow), 1)
+        if overlap >= 0.72:
+            targets.append((i, o))
+    if not targets:
+        return latex
+
+    numbered = "\n".join(f"{n}. {text}" for n, (_, text) in enumerate(targets, 1))
+    prompt = (
+        "Rewrite each resume bullet below. Keep EVERY fact, metric, tool pairing, "
+        "and company-specific detail identical (including Cypress→Playwright, "
+        "coverage percentages, React form timings). Write a NEW sentence for each: "
+        "different opening verb, different structure, at least half the words changed. "
+        "Reply with ONLY a JSON object: {\"bullets\": [\"...\", \"...\"]} in the same "
+        "order — no LaTeX macros. Write percent signs as the word 'percent' or as "
+        "'\\%' so numbers are not truncated.\n\nBULLETS:\n"
+        + numbered
+    )
+    try:
+        raw = call_llm_json(prompt, temperature=0.45, max_tokens=1200)
+    except Exception as exc:
+        _debug_dump("surgical_fixed_rewrite_error", str(exc))
+        return latex
+
+    bullets = raw.get("bullets") if isinstance(raw, dict) else None
+    if not isinstance(bullets, list) or len(bullets) != len(targets):
+        _debug_dump("surgical_fixed_rewrite_bad_shape", str(raw)[:500])
+        return latex
+
+    out = latex
+    targets_by_idx = {idx: orig_text for idx, orig_text in targets}
+    # Replace from the end so earlier indices stay valid in the string
+    for (idx, _), new_text in sorted(
+        zip(targets, bullets), key=lambda p: p[0][0], reverse=True
+    ):
+        plain = str(new_text or "").strip()
+        if not plain:
+            continue
+        # Strip accidental wrappers
+        plain = re.sub(r"^\\resumeItem\{|\}$", "", plain).strip()
+        plain = plain.strip('"').strip("'")
+        # LaTeX: bare % comments out the rest of the line — keep metrics intact
+        plain = re.sub(r"(?<!\\)%", r"\\%", plain)
+        if not plain or is_incomplete_plain(latex_to_plain(plain)):
+            continue
+        # Still too close to the original fact sentence? skip
+        ow = set(targets_by_idx[idx].lower().split())
+        gw = set(latex_to_plain(plain).lower().split())
+        if ow and len(gw & ow) / max(len(gw | ow), 1) >= 0.72:
+            continue
+        old_item = gen_items[idx]
+        # Preserve surrounding \resumeItem{...} wrapper
+        m = re.match(r"^(\\resumeItem\{)(.*)(\})\s*$", old_item, re.DOTALL)
+        if not m:
+            continue
+        new_item = m.group(1) + plain + m.group(3)
+        pos = out.rfind(old_item)
+        if pos == -1:
+            pos = out.find(old_item)
+        if pos != -1:
+            out = out[:pos] + new_item + out[pos + len(old_item) :]
+    _debug_dump("surgical_fixed_rewrite", f"rewrote {len(targets)} bullets")
+    return out
+
+
 def write_section(
     name: str,
     jd: str,
@@ -574,10 +667,29 @@ def write_section(
                 temperature = min(temperature, 0.2)
                 continue
 
-        # Experience/projects must be real rewrites, not near-copies of ORIGINAL
+        # Experience/projects must be real rewrites, not near-copies of ORIGINAL.
+        # Fixed-history near-copy check runs even during fix rounds — otherwise a
+        # later pass can keep Intuit verbatim after Clerxi was rewritten.
+        if name == "experience":
+            near = near_copy_fixed_history_bullets(
+                latex, original_section, FLEXIBLE_EXPERIENCE_COMPANIES
+            )
+            if near and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_fixed_near_copy", ", ".join(near))
+                prompt += (
+                    "\n\nWARNING: Fixed-history bullets are still near-copies of "
+                    f"ORIGINAL ({'; '.join(near)}). Keep EVERY fact and metric "
+                    "(Cypress→Playwright, coverage 42→78%, React form timings, API "
+                    "contracts) but rewrite EACH sentence — new verb, new structure, "
+                    "at least half the words different. Do not leave Intuit bullets "
+                    "unchanged. You may keep the current-role (Clerxi) bullets if they "
+                    "already tell a coherent story."
+                )
+                temperature = min(0.55, max(temperature, 0.4))
+                continue
         if name in ("experience", "projects") and not fix_context:
             ratio = bullet_rewrite_ratio(latex, original_section)
-            if ratio < 0.6 and attempts == 1:
+            if ratio < 0.6 and attempts < MAX_SECTION_ATTEMPTS:
                 prompt += (
                     "\n\nWARNING: Your bullets were too close to ORIGINAL (copy/paraphrase). "
                     "REWRITE every \\resumeItem with different wording and a JD angle. "
@@ -587,6 +699,8 @@ def write_section(
                 )
                 temperature = min(0.55, max(temperature, 0.4))
                 continue
+        if name == "experience":
+            latex = _surgical_rewrite_fixed_near_copies(latex, original_section)
         _debug_dump(f"agent_{name}", latex)
         return latex, ("ok" if attempts == 1 else "retried")
 

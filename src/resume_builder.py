@@ -396,6 +396,38 @@ def bullet_rewrite_ratio(generated: str, original: str) -> float:
     return changed / len(gen_items)
 
 
+def near_copy_fixed_history_bullets(
+    generated: str,
+    original: str,
+    flexible_companies: list[str],
+    max_overlap: float = 0.72,
+) -> list[str]:
+    """Fixed-history (non-flexible) bullets that are still near-copies of ORIGINAL.
+
+    Flexible-company bullets are exempt — they are rewritten natively. Intuit-style
+    jobs must keep the same facts but new sentences; verbatim paste fails this gate.
+    """
+    gen_items = [_visible_bullet_text(i) for i in _extract_resume_items(generated)]
+    orig_items = [_visible_bullet_text(i) for i in _extract_resume_items(original)]
+    if not gen_items or not orig_items:
+        return []
+    flex = flexible_item_indices(generated, flexible_companies)
+    hits: list[str] = []
+    for i, g in enumerate(gen_items):
+        if i in flex:
+            continue
+        o = orig_items[i] if i < len(orig_items) else ""
+        if not o:
+            continue
+        gw, ow = set(g.lower().split()), set(o.lower().split())
+        if not ow:
+            continue
+        overlap = len(gw & ow) / max(len(gw | ow), 1)
+        if overlap >= max_overlap:
+            hits.append(f"bullet {i + 1} overlap={overlap:.2f}")
+    return hits
+
+
 def _repair_bullets_with_original(generated_section: str, original_section: str) -> str:
     """Fix ONLY broken (incomplete) bullets. Keep tailored content whenever possible.
 
