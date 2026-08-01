@@ -527,6 +527,21 @@ def t35_near_copy_fixed_history_detects_intuit_paste():
     ) == []
 
 
+def t36_made_up_claims_flags_fake_team_and_millions():
+    fake = (
+        "Software engineer on the Memberships team, developing scalable backend "
+        "services using Python and AWS Lambda for millions of concurrent users."
+    )
+    hits = rb.made_up_claims_in_text(fake, evidence="Python AWS Lambda SQS")
+    assert any("Memberships" in h for h in hits), hits
+    assert any("millions" in h for h in hits), hits
+    ok = (
+        "Software engineer building Python services on AWS Lambda that process "
+        "membership events through SQS."
+    )
+    assert rb.made_up_claims_in_text(ok, evidence="Python AWS Lambda SQS") == []
+
+
 def t23_skills_whitelist_and_go_false_positive():
     # "Go" must NOT match inside "algorithmic"
     evidence = rb.latex_to_plain(

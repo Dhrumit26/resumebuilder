@@ -146,6 +146,8 @@ problem in weaknesses:
 - Identical formulaic rhythm on every bullet, with no natural variation
 - Scale inflation: claims of billions of requests, petabyte pipelines, or systems
   serving hundreds of millions of users on a resume whose roles cannot support them
+- Made-up org/scale in the summary: invented team names ("on the Memberships team")
+  absent from evidence, or "millions of concurrent users" with no supporting tenure
 
 A penalised resume therefore tops out at 92, not 100. That is intended — do not
 inflate other categories to compensate.

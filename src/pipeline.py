@@ -51,6 +51,7 @@ from .resume_builder import (
     load_original_sections,
     load_prompt,
     near_copy_fixed_history_bullets,
+    made_up_claims_in_text,
     senior_theater_in_flexible_bullets,
     stack_family_underuse_in_flexible_bullets,
     stack_name_overuse_in_flexible_bullets,
@@ -613,6 +614,17 @@ def write_section(
                 )
                 temperature = min(temperature, 0.2)
                 continue
+            made_up = made_up_claims_in_text(latex, evidence)
+            if made_up and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_experience_made_up", ", ".join(made_up))
+                prompt += (
+                    "\n\nWARNING: Current-role claims look made up — "
+                    + ", ".join(made_up)
+                    + ". No invented team names, no millions-of-users scale. "
+                    "Keep mid-level, defensible scope. Rewrite."
+                )
+                temperature = min(temperature, 0.2)
+                continue
             thin = story_thin_in_flexible_bullets(latex, FLEXIBLE_EXPERIENCE_COMPANIES)
             if thin and attempts < MAX_SECTION_ATTEMPTS:
                 _debug_dump("agent_experience_story_thin", "; ".join(thin))
@@ -663,6 +675,18 @@ def write_section(
                     f"language ({', '.join(bleed)}) but JD domain is "
                     f"'{jd_analysis.get('domain')}'. Match the tailored experience "
                     "(frontend websites / HTML-CSS-JS stack) with no AI-driven story."
+                )
+                temperature = min(temperature, 0.2)
+                continue
+            made_up = made_up_claims_in_text(latex, evidence)
+            if made_up and attempts < MAX_SECTION_ATTEMPTS:
+                _debug_dump("agent_summary_made_up", ", ".join(made_up))
+                prompt += (
+                    "\n\nWARNING: Summary looks made up — "
+                    + ", ".join(made_up)
+                    + ". Drop invented team names and hyperscale claims "
+                    "('millions of concurrent users'). Ground the claim in the "
+                    "tailored experience's real system at mid-level scale. Rewrite."
                 )
                 temperature = min(temperature, 0.2)
                 continue

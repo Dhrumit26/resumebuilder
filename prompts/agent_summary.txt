@@ -80,6 +80,11 @@ State the role flatly. Never invent years.
   when `domain` is frontend web, backend web, DevOps, etc. "AI-driven data
   visualization" on an HTML/CSS/JavaScript consulting JD is brand bleed — ban it.
   Match the tailored experience's system and stack instead.
+- Never invent a named team ("Memberships team", "Payments squad") that is not in
+  the evidence. Describe the system or problem, not a fake org chart.
+- Never invent scale the evidence does not support: "millions of concurrent users",
+  "billions of requests", "petabyte" pipelines. Mid-level work on a small tenure
+  does not get hyperscale claims — that reads as totally made up.
 - NEVER mention these: {{BANNED_TOOLS}}
   ONE of these words causes your ENTIRE summary to be discarded and replaced.
 - Mirror at most 2 of these, and only where the evidence supports them:
@@ -122,10 +127,19 @@ Weak — hiring-manager scorecard glue (ban this shape forever):
   implementations after latency and quality tradeoffs, critically reviewing
   agentic AI code.}
 
+Weak — totally made up (invented team + hyperscale):
+  \textit{Software engineer on the Memberships team, developing scalable backend
+  services using Python and AWS Lambda for millions of concurrent users.}
+
 Strong for a Swift/UI JD — natural voice, one claim, no scorecard glue:
   \textit{Software engineer building SwiftUI tools that keep internal workflows
   fast under real project data. Ships view updates with measured preview latency
   and clear state ownership in Xcode.}
+
+Strong for a backend/event JD — grounded system, no fake team or millions:
+  \textit{Software engineer building Python services on AWS Lambda that process
+  membership events through SQS. Keeps retries and DLQs honest so failed jobs
+  surface before customers notice.}
 
 ## WEB RESEARCH — ground truth for specialized products
 Use real product names and components from this research when the JD centres on them.

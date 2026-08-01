@@ -967,6 +967,38 @@ def senior_theater_in_flexible_bullets(section: str, companies: list[str]) -> li
     return hits
 
 
+_SCALE_INFLATION_PATTERNS = [
+    (re.compile(r"\bmillions?\s+of\s+(?:concurrent\s+)?users\b", re.I), "millions of users"),
+    (re.compile(r"\bbillions?\s+of\s+(?:requests|events|users|messages)\b", re.I), "billions of …"),
+    (re.compile(r"\bhundreds\s+of\s+millions\b", re.I), "hundreds of millions"),
+    (re.compile(r"\bpetabytes?\b", re.I), "petabytes"),
+    (re.compile(r"\btrillions?\b", re.I), "trillions"),
+]
+
+# "on the Memberships team" / "on the Payments Team" — org-chart cosplay
+_INVENTED_TEAM_RE = re.compile(
+    r"\bon the\s+([A-Z][A-Za-z0-9/&\-]*(?:\s+[A-Z][A-Za-z0-9/&\-]*)?)\s+[Tt]eam\b"
+)
+
+
+def made_up_claims_in_text(text: str, evidence: str = "") -> list[str]:
+    """Hyperscale claims and invented team names that make a resume look fake."""
+    if not text:
+        return []
+    plain = latex_to_plain(text)
+    hits: list[str] = []
+    for pat, label in _SCALE_INFLATION_PATTERNS:
+        if pat.search(plain):
+            hits.append(label)
+    evidence_l = (evidence or "").lower()
+    for m in _INVENTED_TEAM_RE.finditer(plain):
+        team = m.group(1).strip()
+        # Allow only if the team name already appears in evidence (rare)
+        if team.lower() not in evidence_l:
+            hits.append(f"invented team ({team} team)")
+    return hits
+
+
 _STORY_SETTING_RE = re.compile(
     r"\b(?:platform|service|console|dashboard|portal|application|pipeline|"
     r"tool|website|site|storefront|workspace|module|feed)\b",
