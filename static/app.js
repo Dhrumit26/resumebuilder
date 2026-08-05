@@ -11,9 +11,12 @@ const refineBtn = document.getElementById("refine-btn");
 const refineChat = document.getElementById("refine-chat");
 const refineStatus = document.getElementById("refine-status");
 const refineLoading = document.getElementById("refine-loading");
+const resetBtn = document.getElementById("reset-btn");
 
 const RESULT_KEY = "resumeBuilder.latestResult";
 const JD_KEY = "resumeBuilder.jobDescription";
+const VERSION_KEY = "resumeBuilder.storageVersion";
+const STORAGE_VERSION = "3";
 
 let latestLatex = "";
 let latestResult = null;
@@ -25,6 +28,25 @@ function normalizeJd(text) {
 function currentJd() {
   return (jobInput && jobInput.value.trim()) || "";
 }
+
+function wipeSavedData() {
+  try {
+    [RESULT_KEY, JD_KEY].forEach(k => sessionStorage.removeItem(k));
+    [RESULT_KEY, JD_KEY].forEach(k => localStorage.removeItem(k));
+    sessionStorage.setItem(VERSION_KEY, STORAGE_VERSION);
+  } catch (_) { /* private mode */ }
+  latestResult = null;
+  latestLatex = "";
+}
+
+// Anything written by an older build of this page predates the JD-scoping rules
+// below, so it cannot be trusted to belong to the posting on screen.
+try {
+  const reset = new URLSearchParams(location.search).has("reset");
+  if (reset || sessionStorage.getItem(VERSION_KEY) !== STORAGE_VERSION) {
+    wipeSavedData();
+  }
+} catch (_) { /* ignore */ }
 
 // A stored resume belongs to the posting it was built from. Without this check a
 // new posting inherits the previous one's domain through the restored result.
@@ -72,6 +94,22 @@ function clearBuildState() {
   if (latexOutput) latexOutput.textContent = "";
   hide(results);
   clearRefineChat();
+}
+
+function onResetClick() {
+  wipeSavedData();
+  if (jobInput) jobInput.value = "";
+  if (latexOutput) latexOutput.textContent = "";
+  hide(results);
+  hide(errorEl);
+  clearRefineChat();
+  syncRefineAvailability();
+  if (resetBtn) {
+    resetBtn.textContent = "Cleared — paste the new posting";
+    setTimeout(() => {
+      resetBtn.textContent = "Clear saved resume and start fresh";
+    }, 2500);
+  }
 }
 
 // Rewrites apply to the resume as generated. Once the posting in the box no
@@ -417,6 +455,7 @@ async function onRefineClick() {
 
 if (buildBtn) buildBtn.addEventListener("click", onBuildClick);
 if (jobInput) jobInput.addEventListener("input", syncRefineAvailability);
+if (resetBtn) resetBtn.addEventListener("click", onResetClick);
 if (refineBtn) {
   refineBtn.addEventListener("click", (e) => {
     e.preventDefault();
