@@ -490,6 +490,40 @@ def _named_in_text(plain: str, names: tuple[str, ...]) -> list[str]:
     return found
 
 
+_TEAM_CONTEXT_RE = re.compile(
+    r"\b(?:on|within|for|as part of)\s+(?:the\s+|an?\s+)?"
+    r"(?:[a-z0-9&/+.-]+\s+){0,5}(?:team|group)\b",
+    re.I,
+)
+_PRODUCT_CONTEXT_RE = re.compile(
+    r"\b(?:product|platform|service|application|app|console|dashboard|portal|"
+    r"system|pipeline|api|apis|gateway|device|firmware|yocto image|board|"
+    r"checkout|payments?|payout|settlement|ledger|retrieval|agent workflow|"
+    r"component library|test harness|test suite)\b",
+    re.I,
+)
+_AUDIENCE_PURPOSE_RE = re.compile(
+    r"\b(?:used by|serving|supporting|powering|for|so|so that|to help|enabling)\s+"
+    r"(?:internal\s+)?(?:customers?|users?|merchants?|support agents?|engineers?|"
+    r"developers?|partners?|operators?|analysts?|finance teams?|feature teams?|"
+    r"field teams?|qa teams?|release teams?)\b",
+    re.I,
+)
+
+
+def role_context_bullet_indices(bullets: list[str]) -> list[int]:
+    """Bullets that establish team/product ownership and the product's purpose."""
+    found: list[int] = []
+    for idx, bullet in enumerate(bullets):
+        plain = _plain(bullet)
+        has_team = bool(_TEAM_CONTEXT_RE.search(plain))
+        has_product = bool(_PRODUCT_CONTEXT_RE.search(plain))
+        has_audience = bool(_AUDIENCE_PURPOSE_RE.search(plain))
+        if has_product and (has_team or has_audience):
+            found.append(idx)
+    return found
+
+
 def verify_fabricated_block(
     bullets: list[str],
     analysis: dict,
@@ -507,6 +541,25 @@ def verify_fabricated_block(
     plains = [_plain(b) for b in bullets]
     plain = " ".join(plains)
     low = plain.lower()
+
+    context_indices = role_context_bullet_indices(bullets)
+    if not context_indices:
+        issues.append(
+            Issue(
+                "missing-role-context",
+                "add 1–2 context-anchor bullets that name the functional team or product "
+                "area, the concrete product/system, and who or what it serves; keep the "
+                "existing what/how/measured-result structure",
+            )
+        )
+    elif len(context_indices) > 2:
+        issues.append(
+            Issue(
+                "context-spam",
+                f"{len(context_indices)} bullets repeat team/product context — keep it to "
+                "1–2 anchors and let the other bullets focus on execution and results",
+            )
+        )
 
     hits = _spine_hits(low, analysis)
     jd_spine = spine_labels_from_analysis(analysis)
