@@ -44,6 +44,8 @@ from .skeleton import (
 )
 from .verify import (
     Issue,
+    FAB_MAX_WORDS,
+    FAB_MIN_WORDS,
     _mentioned_tech,
     _plain,
     keyword_coverage,
@@ -58,7 +60,7 @@ BULLET_TEMPERATURE = 0.35
 FABRICATED_TEMPERATURE = 0.2
 REPAIR_TEMPERATURE = 0.15
 MAX_REPAIR_ROUNDS = 2
-MAX_FABRICATED_REPAIR_ROUNDS = 4
+MAX_FABRICATED_REPAIR_ROUNDS = 6
 
 
 def _fill(template: str, **kwargs: str) -> str:
@@ -276,6 +278,9 @@ def _write_bullets_for_block(
     issues_by_index: dict[int, list[Issue]] = {}
     block_issues: list[Issue] = []
     max_rounds = MAX_FABRICATED_REPAIR_ROUNDS if selection.fabricated else MAX_REPAIR_ROUNDS
+    best_bullets: list[str] | None = None
+    best_error_count: int | None = None
+    best_block_issues: list[Issue] = []
 
     while attempts <= max_rounds:
         attempts += 1
@@ -297,9 +302,17 @@ def _write_bullets_for_block(
         issues_by_index = {}
         for i, bullet in enumerate(candidate):
             fact = None if selection.fabricated else facts[i]
-            found = verify_bullet(
-                bullet, fact, lexicon, grounded=not selection.fabricated
-            )
+            if selection.fabricated:
+                found = verify_bullet(
+                    bullet,
+                    None,
+                    lexicon,
+                    grounded=False,
+                    min_words=FAB_MIN_WORDS,
+                    max_words=FAB_MAX_WORDS,
+                )
+            else:
+                found = verify_bullet(bullet, fact, lexicon, grounded=True)
             errors = [x for x in found if x.severity == "error"]
             if errors:
                 issues_by_index[i] = errors
@@ -313,6 +326,12 @@ def _write_bullets_for_block(
                 issues_by_index.setdefault(0, []).extend(block_issues)
 
         bullets = candidate
+        error_count = sum(len(v) for v in issues_by_index.values())
+        if best_error_count is None or error_count < best_error_count:
+            best_error_count = error_count
+            best_bullets = list(candidate)
+            best_block_issues = list(block_issues)
+
         if not issues_by_index:
             break
 
@@ -325,13 +344,17 @@ def _write_bullets_for_block(
         )
         temperature = REPAIR_TEMPERATURE
 
+    if selection.fabricated and best_bullets is not None:
+        bullets = best_bullets
+        block_issues = best_block_issues
+
     fallbacks: list[str] = []
     if not bullets:
         bullets = [""] * count
         issues_by_index = {i: [Issue("no-output", "writer produced nothing")] for i in range(count)}
 
     # Grounded blocks: anything still failing falls back to the plain fact.
-    # Fabricated blocks keep the last candidate — invent mode has no fact text to fall to.
+    # Fabricated blocks keep the best candidate — invent mode has no fact text to fall to.
     if not selection.fabricated:
         for idx in list(issues_by_index.keys()):
             bullets[idx] = _latex_text(facts[idx].core)

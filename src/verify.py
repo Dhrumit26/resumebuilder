@@ -19,6 +19,11 @@ from .matching import _TOOL_THEMES, TECH_SYNONYMS, token_pattern
 
 MIN_WORDS = 14
 MAX_WORDS = 34
+# Fabricated Clerxi bullets must match Intuit density on the page: >1 line, ≤2 lines.
+FAB_MIN_WORDS = 22
+FAB_MAX_WORDS = 36
+FAB_MIN_CHARS = 115
+FAB_MAX_CHARS = 210
 SUMMARY_MIN_WORDS = 24
 SUMMARY_MAX_WORDS = 40
 
@@ -592,8 +597,10 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
     )
     fluff_anywhere = re.compile(
         r"(?i)\b(?:collaborated with|facilitated|participated in|"
-        r"ensuring seamless|seamless user|refine cloud technology|"
+        r"ensuring seamless|ensuring consistent|ensuring scalable|ensuring data|"
+        r"seamless user|refine cloud technology|"
         r"improving the dashboard.?s scalability|"
+        r"enhancing user experience|significantly|"
         r"reducing bugs(?!\s+by\b)(?!\s+from\b))\b"
     )
     fluff_phrase = re.compile(
@@ -602,7 +609,9 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
         r"scalable cloud solutions|growing user demands|ai-first product teams|"
         r"context-aware ai responses|technical discussions?|"
         r"significantly improving|ensuring efficient operation|"
-        r"consistent performance across|seamless user interactions)\b"
+        r"consistent and reliable updates|"
+        r"consistent performance across|seamless user interactions|"
+        r"scalable and resilient infrastructure)\b"
     )
     for i, text in enumerate(plains):
         if fluff_open.search(text.strip()) or fluff_anywhere.search(text):
@@ -622,25 +631,45 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
                 )
             )
 
-    # Metrics: Clerxi must not look empty next to Intuit.
-    with_number = sum(1 for t in plains if re.search(r"\d", t))
+    # Metrics + length: every invent bullet must carry WHAT/HOW/WHY density.
+    for i, text in enumerate(plains):
+        words = len(re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z]+)?", text))
+        chars = len(text)
+        if words < FAB_MIN_WORDS or chars < FAB_MIN_CHARS:
+            issues.append(
+                Issue(
+                    "too-thin",
+                    f"bullet {i + 1} is too short ({words} words / {chars} chars) — "
+                    f"need ≥{FAB_MIN_WORDS} words and ≥{FAB_MIN_CHARS} chars so it fills "
+                    f"more than one resume line with what/how/result",
+                )
+            )
+        if words > FAB_MAX_WORDS or chars > FAB_MAX_CHARS:
+            issues.append(
+                Issue(
+                    "too-long",
+                    f"bullet {i + 1} is too long ({words} words / {chars} chars) — "
+                    f"keep ≤{FAB_MAX_WORDS} words and ≤{FAB_MAX_CHARS} chars (under two lines)",
+                )
+            )
+        if not re.search(r"\d", text):
+            issues.append(
+                Issue(
+                    "metric-starved",
+                    f"bullet {i + 1} has no number — every invent bullet needs a metric "
+                    f"or counted result (what changed and by how much)",
+                )
+            )
+
     with_from_to = sum(
         1 for t in plains if re.search(r"\bfrom\b.+\bto\b", t.lower())
     )
-    if len(plains) >= 4 and with_number < 2:
+    if len(plains) >= 4 and with_from_to < 2:
         issues.append(
             Issue(
                 "metric-starved",
-                f"only {with_number}/{len(plains)} bullets carry a number — need at least "
-                f"2 measured outcomes (coverage, latency, time, cost). Intuit-level density.",
-            )
-        )
-    if len(plains) >= 4 and with_from_to < 1:
-        issues.append(
-            Issue(
-                "metric-starved",
-                "need at least one from→to metric "
-                "(e.g. 'from 1.8s to 1.1s' or 'from 40% to 78%')",
+                "need at least two from→to metrics across the block "
+                "(e.g. 'from 1.8s to 1.1s', 'from 40% to 78%')",
             )
         )
 
