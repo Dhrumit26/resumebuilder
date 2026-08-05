@@ -1,6 +1,101 @@
 # Tech Resume Builder
 
-Gold-standard tech resume tailoring — built to beat typical applicants, not just match job descriptions.
+Tailors your real experience to a job posting. Every bullet traces back to a fact
+you wrote down; the tool chooses which of them to show, in what order, and how to
+phrase them for the posting.
+
+---
+
+## The fact-grounded pipeline (current — `/api/v2/build`)
+
+**Read this first if you are changing anything.**
+
+### The one rule
+
+`data/facts.yaml` is the only source of truth for what may appear on the resume —
+**except** when a role sets `fabricated: true`.
+
+A writer agent may **select**, **order**, and **rephrase** facts. It may never
+invent a system, a tool, or a number. That is enforced in code, not by asking the
+model nicely: [`src/verify.py`](src/verify.py) rejects any bullet containing a
+number or technology its own fact does not license, and a bullet that cannot pass
+falls back to the plain fact text.
+
+**`flexible: true`** (Clerxi) — aggressive *truthful* reframing of confirmed facts
+toward the JD's vocabulary. Still fact-grounded.
+
+**`fabricated: true`** (Clerxi, when you want invent mode) — ignore the fact bank
+for that role's bullets and invent a coherent mid-level story natively in the JD's
+engineering domain (v1-style). Intuit and projects stay fact-grounded. Craft
+checks still apply; fact-license checks do not. Set `fabricated: false` to return
+to select/order/rephrase-only for Clerxi.
+
+### How tailoring happens
+
+The LaTeX templates in `latex/` own the layout **and the bullet count** (Clerxi 5,
+Intuit 5, each project 2, 4 skills lines). Nothing the model returns can change
+that — [`src/skeleton.py`](src/skeleton.py) parses the templates and substitutes
+only bullet *text*. So a posting changes the resume in three ways:
+
+1. **Selection** — which facts fill the fixed slots
+2. **Order** — the fact that best matches the posting goes first
+3. **Framing** — the same work described in the posting's vocabulary
+
+### Adding facts — the single highest-value thing you can do
+
+Each role currently has exactly as many facts as it has bullet slots, so every
+fact is always used and only order and framing change. **More real facts = more
+genuine tailoring.** If you did frontend work at Clerxi, add it, and a frontend
+posting will pull real frontend bullets out of your current role instead of
+backend ones reworded.
+
+```yaml
+- id: short-slug
+  core: >-
+    What you actually did, one or two lines.
+  tools: [React, TypeScript]     # only what you really used for THIS work
+  themes: [frontend-ui, react]   # vocabulary: THEMES in src/facts.py
+  metrics: ["35%", "2 hours to 10 minutes"]   # a number not listed here is rejected
+  angles:                        # optional: honest reframings for other domains
+    - Front-end feature work measured by user outcome
+```
+
+Small things count: a UI you touched, a script, a dashboard, a migration, a bug
+class you fixed, an on-call save. Facts with no metric are fine — that bullet
+simply gets written without a number.
+
+### Scoring
+
+The score is **measured, not judged**: keyword coverage (45), metric density (20),
+domain match (20), skills coverage (15). Same resume in, same number out. It says
+how well the resume fits the posting — not your odds of getting hired. Missing
+keywords are reported as genuine gaps rather than papered over.
+
+### Layout
+
+| File | Role |
+|------|------|
+| `data/facts.yaml` | the fact bank — what may be said |
+| `src/facts.py` | loads and validates it; `THEMES` vocabulary |
+| `src/skeleton.py` | parses `latex/` templates, fills bullet slots, escapes LaTeX |
+| `src/matching.py` | JD → themes → fact selection and ordering (no LLM) |
+| `src/verify.py` | groundedness, craft, and coverage checks (no LLM) |
+| `src/pipeline_v2.py` | orchestration |
+| `prompts/v2/` | the two writer prompts |
+| `tests/facts_pipeline.py` | offline suite, no API key needed |
+
+```bash
+python3 tests/facts_pipeline.py     # v2
+python3 tests/edge_cases.py         # v1
+```
+
+---
+
+## v1 pipeline (legacy — `/api/build`, `/api/build/stream`)
+
+Still present and still passing its tests. It asked the model to invent a
+plausible current role and then policed the invention with symptom-specific
+gates. Kept for reference; the sections below describe it.
 
 ## What Makes This Gold Standard
 

@@ -119,6 +119,28 @@ def _extract_json_text(raw: str) -> str:
     return text
 
 
+_VALID_JSON_ESCAPES = set('"\\/bfnrtu')
+
+
+def _fix_invalid_escapes(text: str) -> str:
+    """Drop backslashes that JSON does not allow, so one stray \\% is survivable.
+
+    Models asked for LaTeX-flavoured text sometimes emit "cut costs by 40\\%"
+    inside a JSON string. That is an invalid escape and json.loads rejects the
+    whole object — losing an entire section over one character.
+    """
+    out = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if ch == "\\" and i + 1 < len(text) and text[i + 1] not in _VALID_JSON_ESCAPES:
+            i += 1  # skip the backslash, keep the character it was escaping
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def call_llm_json(
     prompt: str,
     temperature: float = 0.2,
@@ -143,7 +165,10 @@ def call_llm_json(
             continue
         try:
             cleaned = _extract_json_text(raw)
-            data = json.loads(cleaned)
+            try:
+                data = json.loads(cleaned)
+            except json.JSONDecodeError:
+                data = json.loads(_fix_invalid_escapes(cleaned))
             if not isinstance(data, dict):
                 raise ValueError(f"Expected JSON object, got {type(data).__name__}")
             return data
