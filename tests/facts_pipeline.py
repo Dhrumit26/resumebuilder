@@ -244,6 +244,22 @@ def t18c_technology_named_in_the_fact_itself_is_allowed():
     assert not issues, [f"{i.code}: {i.message}" for i in issues]
 
 
+def t18d_posting_titles_drop_team_and_programme_noise():
+    """Mirroring a title is good; echoing the employer's team name back is not."""
+    from src.pipeline_v2 import clean_role_title
+
+    cases = {
+        "Software Engineer - AI Agentic Product Dev Team (US)": "Software Engineer",
+        "Developer Technology Engineer, AI - New College Grad 2026":
+            "Developer Technology Engineer, AI",
+        "Software Engineer, Backend Platform": "Software Engineer, Backend Platform",
+        "Frontend Web Developer": "Frontend Web Developer",
+        "Platform / DevOps Engineer": "Platform / DevOps Engineer",
+    }
+    for raw, expected in cases.items():
+        assert clean_role_title(raw) == expected, f"{raw!r} -> {clean_role_title(raw)!r}"
+
+
 def t19_summary_may_not_repeat_bullet_numbers():
     facts = [_fact("intuit", "react-form-ux")]
     issues = verify_summary(

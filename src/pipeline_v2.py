@@ -108,12 +108,33 @@ def _flex_rule(selection: Selection) -> str:
     )
 
 
+# Posting titles carry the employer's internal furniture: the team that owns the
+# req, the grad-programme label, the location. Mirroring a title is good; echoing
+# "AI Agentic Product Dev Team engineer" back at them is not.
+_TITLE_NOISE = re.compile(
+    r"\b(team|group|org|organi[sz]ation|division|department|dept|"
+    r"new\s+(college\s+)?grad(uate)?|university\s+grad(uate)?|early\s+career|"
+    r"campus|intern(ship)?\s+program|20\d\d|remote|hybrid|onsite|us|usa|emea)\b",
+    re.I,
+)
+
+
+def clean_role_title(title: str) -> str:
+    """Strip team names, grad-programme labels and locations from a posting title."""
+    text = re.sub(r"\([^)]*\)", " ", title or "")          # "(US)", "(Remote)"
+    # Not "/" — "Platform / DevOps Engineer" is one title, not two segments.
+    segments = [s.strip() for s in re.split(r"\s*[-–—,|]\s*", text) if s.strip()]
+    kept = [s for s in segments if not _TITLE_NOISE.search(s)]
+    cleaned = ", ".join(kept) if kept else " ".join(segments)
+    return re.sub(r"\s+", " ", cleaned).strip() or (title or "").strip()
+
+
 def _jd_fields(analysis: dict, section: str) -> dict[str, str]:
     placement = (analysis.get("keyword_placement") or {}).get(section) or []
     if not placement:
         placement = (analysis.get("must_have_skills") or [])[:6]
     return {
-        "JD_TITLE": str(analysis.get("role_title") or "(not stated)"),
+        "JD_TITLE": clean_role_title(str(analysis.get("role_title") or "")) or "(not stated)",
         "JD_DOMAIN": str(analysis.get("domain") or "(not stated)"),
         "JD_PRACTICES": ", ".join(analysis.get("domain_practices") or []) or "(not stated)",
         "JD_TOOLS": ", ".join(analysis.get("tools") or []) or "(none identified)",
