@@ -1,51 +1,49 @@
 You invent ONE coherent mid-level engineering role for this posting. Facts are ignored.
 Write exactly {{COUNT}} bullets for {{BLOCK_LABEL}}.
 
-## GOLD STANDARD — copy this SHAPE (not the words) when the JD is AI/LLM/agentic
-Bullet 1 plants WHO/WHAT/WHERE + spine. Later bullets refer back. One language. Real verbs.
+Recruiters compare this block to Intuit below it. If Clerxi has no numbers and Intuit
+has five, you failed. Density must match: concrete system + stack + measured change.
 
-GOOD (Python + AWS + RAG/agent spine, ~3 months of work):
+## GOLD — copy the SHAPE (not the words)
+
+AI/LLM/agentic JD (Python + AWS):
 1. Built Python RAG retrieval APIs for an internal agent console that answers support questions over product docs on AWS.
 2. Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by rewriting the embedding lookup and inference batching.
 3. Shipped tool-calling orchestration for those agents so they could read tickets and draft replies without leaving the console.
-4. Covered those LLM workflow handlers with pytest so retrieval regressions stopped shipping into the agent loop.
-5. Deployed that same retrieval service with Docker on AWS so staging matched production inference settings before each release.
+4. Raised pytest coverage on those LLM workflow handlers from 48% to 82% so retrieval regressions stopped shipping into the agent loop.
+5. Deployed that same retrieval service with Docker on AWS, cutting staging-to-prod config drift from hours to minutes before each release.
 
-BAD (keyword cosplay — automatic fail, even if every spine word appears):
-1. Developed a RAG system enhancing LLM workflows for AI-powered product features.
-2. Implemented model inference techniques, significantly improving system performance and user experience.
-3. Boosted reliability by integrating scalable cloud solutions on AWS.
-4. Enhanced usability by refining prompting strategies for context-aware AI responses.
-5. Facilitated technical discussions with AI-first product teams on orchestration frameworks.
+Frontend JD (TypeScript + React):
+1. Built a TypeScript React ops dashboard for internal support that surfaces live ticket queues and SLA breach alerts on AWS.
+2. Cut the slowest dashboard filter path from 900ms to 320ms by memoizing list virtualization and trimming re-renders.
+3. Raised Jest + React Testing Library coverage on that dashboard from 40% to 78%, cutting UI regressions shipped to staging.
+4. Wired the same dashboard to REST ticket APIs with typed clients so broken payload shapes failed in CI instead of production.
+5. Shipped the dashboard behind a feature flag on AWS, rolling to 100% of internal users over two weeks with zero rollback.
 
-Why BAD fails: no product setting, no primary language, vague %/adjectives, meeting/process theater, every bullet is a JD keyword wearing a costume.
+## INSTANT FAIL — do not write these
+- "Collaborated with the team…" / "Monitored telemetry…" / "Enhanced code quality…" / "ensuring seamless…"
+- Zero metrics across five bullets while Intuit has many
+- Keyword list with no system ("React, Jest, Kubernetes, AWS" costume)
+- Bare "by 25%" with no from→to
+- Language scatter or multi-cloud
 
-## BEFORE YOU WRITE (private)
-1. Name ONE system in one sentence: who uses it, what it does, where it lives.
-2. Primary language MUST be {{PRIMARY_LANGUAGE}}. Name it in bullet 1 or 2. At most one other language. ONE cloud: {{PRIMARY_CLOUD}}.
-3. Map bullets to spine practices — each bullet is a different facet of THAT system.
+## METRICS (mechanical)
+- At least TWO bullets must carry a real number.
+- At least ONE must be from→to (latency, coverage, time, cost).
+- At most THREE hard metrics in the whole block — other bullets = concrete delivery with tools, still specific.
+- Prefer: from 1.8s to 1.1s, from 40% to 78%, from 2 weeks to 4 days. Not: "reducing bugs", "improving performance".
 
-## SPINE — mandatory when listed (mechanical check)
+## SPINE — mandatory when listed
 {{JD_SPINE}}
-
 Related: {{JD_CONCEPTS}}
-
-If RAG/retrieval, agent, embeddings, LLM, model inference, or orchestration appear above,
-each MUST show up as concrete work on the system. Do not skip RAG for a fluff "AI platform".
-
-## HARD BANS — any of these fails the block
-- Opening with: Facilitated, Collaborated, Conducted, Participated, Helped, Ensured, Boosted, Enhanced usability
-- Empty phrases: AI-powered product features, user experience, real-world impact, scalable cloud solutions, growing user demands, AI-first product teams, context-aware AI responses, system performance and reliability (with no measured change)
-- Vague percent with no baseline: "by 25%" / "by 30%" without from→to (use "from X to Y" or skip the number)
-- Language scatter (Python+Java+Go+TypeScript). Cloud scatter (AWS+GCP+Azure).
-- led / owned / spearheaded / leveraged / utilized / robust / seamless
-- Industry cosplay from the posting. Hyperscale. Invented team names.
-- At most 2–3 hard metrics in the whole block; other bullets = concrete delivery, no fake scoreboard
+Primary language: {{PRIMARY_LANGUAGE}} (name in bullet 1 or 2). Cloud: {{PRIMARY_CLOUD}} only.
+If RAG/agent/embeddings/LLM/inference/orchestration are listed, each MUST appear as work on the system.
 
 ## CRAFT
-- XYZ: outcome first, then how. 18–30 words. One sentence. Never end on by/to/with/using/and.
-- Verbs: Built, Shipped, Cut, Raised, Migrated, Rewrote, Fixed, Reduced, Defined, Deployed, Covered.
-- 2–3 technologies per bullet max. Bullets 2–{{COUNT}} must refer back ("that console", "those agents", "the same retrieval path").
+- XYZ: outcome first, then how. 18–30 words. One sentence.
+- Verbs: Built, Shipped, Cut, Raised, Migrated, Rewrote, Fixed, Reduced, Defined, Deployed, Covered, Wired.
+- Never: Collaborated, Facilitated, Conducted, Participated, Helped, Ensured, Boosted, Monitored (alone), leveraged, utilized, robust, seamless.
+- Bullets 2–{{COUNT}} refer back ("that console", "the same dashboard", "those agents").
 - Plain prose. No LaTeX, no \\textbf, no markdown. Write % plainly.
 
 ## THIS JOB POSTING
