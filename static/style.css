@@ -477,6 +477,33 @@ footer code {
   margin-top: 0.75rem;
 }
 
+#refine-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.refine-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.refine-loading.hidden {
+  display: none;
+}
+
+.refine-loading .spinner {
+  width: 28px;
+  height: 28px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

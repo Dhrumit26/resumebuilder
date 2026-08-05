@@ -10,15 +10,42 @@ const refineInput = document.getElementById("refine-input");
 const refineBtn = document.getElementById("refine-btn");
 const refineChat = document.getElementById("refine-chat");
 const refineStatus = document.getElementById("refine-status");
+const refineLoading = document.getElementById("refine-loading");
+
+const RESULT_KEY = "resumeBuilder.latestResult";
+const JD_KEY = "resumeBuilder.jobDescription";
 
 let latestLatex = "";
 let latestResult = null;
 
-function show(el) { el.classList.remove("hidden"); }
-function hide(el) { el.classList.add("hidden"); }
+try {
+  const saved = sessionStorage.getItem(RESULT_KEY);
+  if (saved) latestResult = JSON.parse(saved);
+  const savedJd = sessionStorage.getItem(JD_KEY);
+  if (savedJd && jobInput && !jobInput.value.trim()) jobInput.value = savedJd;
+} catch (_) { /* ignore */ }
+
+function show(el) { if (el) el.classList.remove("hidden"); }
+function hide(el) { if (el) el.classList.add("hidden"); }
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function persistResult(data) {
+  latestResult = data;
+  latestLatex = data.latex || "";
+  try {
+    sessionStorage.setItem(RESULT_KEY, JSON.stringify({
+      latex: data.latex,
+      sections: data.sections,
+      jd_analysis: data.jd_analysis,
+      meta: data.meta,
+      measurement: data.measurement,
+      gaps: data.gaps,
+    }));
+    if (jobInput) sessionStorage.setItem(JD_KEY, jobInput.value.trim());
+  } catch (_) { /* quota / private mode */ }
 }
 
 function scoreColor(score) {
@@ -36,6 +63,7 @@ function verdictFor(score) {
 
 function renderRoleTarget(jd) {
   const el = document.getElementById("role-target");
+  if (!el) return;
   if (!jd) { el.innerHTML = ""; return; }
   el.innerHTML = `
     <h3>Target Role</h3>
@@ -46,6 +74,7 @@ function renderRoleTarget(jd) {
 
 function renderBuildMeta(meta) {
   const el = document.getElementById("build-meta");
+  if (!el) return;
   if (!meta) { el.innerHTML = ""; return; }
   const lines = (meta.skills_lines || []).join(", ");
   el.innerHTML = `
@@ -62,6 +91,7 @@ function renderBuildMeta(meta) {
 // surfacing: it means the writer could not phrase that fact within the rules.
 function renderFallbacks(meta) {
   const el = document.getElementById("fallbacks");
+  if (!el) return;
   const flagged = (meta.blocks || []).filter(b => (b.fell_back_to_fact || []).length);
   const summaryFell = meta.summary && meta.summary.fell_back;
   if (!flagged.length && !summaryFell) { el.innerHTML = ""; return; }
@@ -80,6 +110,7 @@ function renderFallbacks(meta) {
 
 function renderSelectedFacts(meta) {
   const el = document.getElementById("selected-facts");
+  if (!el) return;
   const selected = meta.selected_facts || {};
   const blocks = Object.keys(selected);
   if (!blocks.length) { el.innerHTML = ""; return; }
@@ -98,9 +129,11 @@ function renderSelectedFacts(meta) {
 function renderMeasurement(measurement) {
   const score = measurement.score ?? 0;
   const overallEl = document.getElementById("overall-score");
+  if (!overallEl) return;
   overallEl.textContent = score;
   overallEl.style.color = scoreColor(score);
-  document.getElementById("verdict").textContent = verdictFor(score);
+  const verdictEl = document.getElementById("verdict");
+  if (verdictEl) verdictEl.textContent = verdictFor(score);
 
   const breakdown = measurement.breakdown || {};
   const kw = breakdown.keyword_coverage || {};
@@ -108,45 +141,61 @@ function renderMeasurement(measurement) {
 
   const covEl = document.getElementById("coverage-score");
   const covPct = kw.max ? Math.round((kw.score / kw.max) * 100) : 0;
-  covEl.textContent = `${covPct}%`;
-  covEl.style.color = scoreColor(covPct);
-  document.getElementById("coverage-detail").textContent = kw.details || "";
+  if (covEl) {
+    covEl.textContent = `${covPct}%`;
+    covEl.style.color = scoreColor(covPct);
+  }
+  const covDetail = document.getElementById("coverage-detail");
+  if (covDetail) covDetail.textContent = kw.details || "";
 
   const mdEl = document.getElementById("metric-score");
   const mdPct = md.max ? Math.round((md.score / md.max) * 100) : 0;
-  mdEl.textContent = `${mdPct}%`;
-  mdEl.style.color = scoreColor(mdPct);
-  document.getElementById("metric-detail").textContent = md.details || "";
+  if (mdEl) {
+    mdEl.textContent = `${mdPct}%`;
+    mdEl.style.color = scoreColor(mdPct);
+  }
+  const mdDetail = document.getElementById("metric-detail");
+  if (mdDetail) mdDetail.textContent = md.details || "";
 
-  document.getElementById("score-breakdown").innerHTML =
-    "<h3>Breakdown</h3>" +
-    Object.entries(breakdown).map(([key, val]) => `
-      <div class="breakdown-item">
-        <span>${esc(key.replace(/_/g, " "))}</span>
-        <span>${val.score}/${val.max}</span>
-      </div>
-      <div class="breakdown-detail">${esc(val.details || "")}</div>
-    `).join("");
+  const breakdownEl = document.getElementById("score-breakdown");
+  if (breakdownEl) {
+    breakdownEl.innerHTML =
+      "<h3>Breakdown</h3>" +
+      Object.entries(breakdown).map(([key, val]) => `
+        <div class="breakdown-item">
+          <span>${esc(key.replace(/_/g, " "))}</span>
+          <span>${val.score}/${val.max}</span>
+        </div>
+        <div class="breakdown-detail">${esc(val.details || "")}</div>
+      `).join("");
+  }
 
   const matched = measurement.matched_keywords || [];
-  document.getElementById("matched-keywords").innerHTML = matched.length
-    ? "<h3>JD Keywords On The Page</h3><div class='tag-list'>" +
-      matched.map(k => `<span class="tag">${esc(k)}</span>`).join("") + "</div>"
-    : "";
+  const matchedEl = document.getElementById("matched-keywords");
+  if (matchedEl) {
+    matchedEl.innerHTML = matched.length
+      ? "<h3>JD Keywords On The Page</h3><div class='tag-list'>" +
+        matched.map(k => `<span class="tag">${esc(k)}</span>`).join("") + "</div>"
+      : "";
+  }
 
   const missing = measurement.missing_keywords || [];
-  document.getElementById("missing-keywords").innerHTML = missing.length
-    ? "<h3>Genuine Gaps</h3>" +
-      "<p class='positioning'>The posting asks for these and your fact bank has no evidence of them. They are left off on purpose — if you do have this experience, add it to data/facts.yaml.</p>" +
-      "<div class='tag-list'>" +
-      missing.map(k => `<span class="tag missing">${esc(k)}</span>`).join("") + "</div>"
-    : "";
+  const missingEl = document.getElementById("missing-keywords");
+  if (missingEl) {
+    missingEl.innerHTML = missing.length
+      ? "<h3>Genuine Gaps</h3>" +
+        "<p class='positioning'>The posting asks for these and your fact bank has no evidence of them. They are left off on purpose — if you do have this experience, add it to data/facts.yaml.</p>" +
+        "<div class='tag-list'>" +
+        missing.map(k => `<span class="tag missing">${esc(k)}</span>`).join("") + "</div>"
+      : "";
+  }
 }
 
 // The gaps this posting exposed, asked back as questions. Answering one turns it
 // into a fact, and every later posting can draw on it.
 function renderGapQuestions(gaps) {
   const el = document.getElementById("gap-questions");
+  if (!el) return;
   const questions = (gaps && gaps.questions) || [];
   if (!questions.length) { el.innerHTML = ""; return; }
   el.innerHTML =
@@ -158,22 +207,20 @@ function renderGapQuestions(gaps) {
 }
 
 function renderResult(data, { appendChat } = {}) {
-  latestResult = data;
-  latestLatex = data.latex;
-  latexOutput.textContent = data.latex;
+  persistResult(data);
+  if (latexOutput) latexOutput.textContent = data.latex;
   renderRoleTarget(data.jd_analysis);
   renderBuildMeta(data.meta || {});
   renderMeasurement(data.measurement || {});
   renderGapQuestions(data.gaps || {});
   renderFallbacks(data.meta || {});
   renderSelectedFacts(data.meta || {});
-  if (appendChat) {
-    appendRefineMessage("bot", appendChat);
-  }
+  if (appendChat) appendRefineMessage("bot", appendChat);
   show(results);
 }
 
 function appendRefineMessage(role, text) {
+  if (!refineChat) return;
   const div = document.createElement("div");
   div.className = `refine-msg ${role}`;
   div.textContent = text;
@@ -182,9 +229,29 @@ function appendRefineMessage(role, text) {
 }
 
 function clearRefineChat() {
-  refineChat.innerHTML = "";
-  refineInput.value = "";
+  if (refineChat) refineChat.innerHTML = "";
+  if (refineInput) refineInput.value = "";
   hide(refineStatus);
+  hide(refineLoading);
+}
+
+function setRefineBusy(busy) {
+  if (refineBtn) {
+    refineBtn.disabled = busy;
+    refineBtn.textContent = busy ? "Rewriting…" : "Rewrite with suggestion";
+  }
+  if (busy) {
+    show(refineLoading);
+    if (refineStatus) {
+      refineStatus.textContent = "Rewriting from your suggestion…";
+      refineStatus.classList.add("refining");
+    }
+    show(refineStatus);
+  } else {
+    hide(refineLoading);
+    hide(refineStatus);
+    if (refineStatus) refineStatus.classList.remove("refining");
+  }
 }
 
 async function build(jobDescription) {
@@ -209,16 +276,35 @@ async function refine(suggestion) {
   if (!latestResult || !latestResult.sections) {
     throw new Error("Generate a resume first, then suggest a rewrite.");
   }
-  const res = await fetch("/api/v2/refine", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      job_description: jobInput.value.trim(),
-      suggestion,
-      sections: latestResult.sections,
-      jd_analysis: latestResult.jd_analysis || null,
-    }),
-  });
+  const jd = (jobInput && jobInput.value.trim()) || sessionStorage.getItem(JD_KEY) || "";
+  if (jd.length < 20) {
+    throw new Error("Paste the job description above again, then retry the rewrite.");
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 180000);
+  let res;
+  try {
+    res = await fetch("/api/v2/refine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        job_description: jd,
+        suggestion,
+        sections: latestResult.sections,
+        jd_analysis: latestResult.jd_analysis || null,
+      }),
+    });
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      throw new Error("Rewrite timed out after 3 minutes. Try again.");
+    }
+    throw new Error(
+      "Could not reach the server. Restart it with: python3 run.py"
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) {
     let detail = `Rewrite failed (HTTP ${res.status})`;
     try {
@@ -234,7 +320,7 @@ async function refine(suggestion) {
   renderResult(data, { appendChat: botText });
 }
 
-buildBtn.addEventListener("click", async () => {
+async function onBuildClick() {
   const jobDescription = jobInput.value.trim();
   if (jobDescription.length < 20) {
     errorEl.textContent = "Please paste a full job description (at least 20 characters).";
@@ -256,55 +342,71 @@ buildBtn.addEventListener("click", async () => {
     hide(loading);
     buildBtn.disabled = false;
   }
-});
+}
 
-refineBtn.addEventListener("click", async () => {
-  const suggestion = refineInput.value.trim();
-  if (suggestion.length < 3) {
-    errorEl.textContent = "Write a short suggestion for what to rewrite.";
-    show(errorEl);
-    return;
-  }
-  hide(errorEl);
-  appendRefineMessage("user", suggestion);
-  refineInput.value = "";
-  refineBtn.disabled = true;
-  refineStatus.textContent = "Rewriting from your suggestion…";
-  refineStatus.classList.add("refining");
-  show(refineStatus);
-
+async function onRefineClick() {
   try {
+    const suggestion = (refineInput && refineInput.value.trim()) || "";
+    if (suggestion.length < 3) {
+      errorEl.textContent = "Write a short suggestion for what to rewrite.";
+      show(errorEl);
+      return;
+    }
+    hide(errorEl);
+    appendRefineMessage("user", suggestion);
+    if (refineInput) refineInput.value = "";
+    setRefineBusy(true);
     await refine(suggestion);
   } catch (err) {
     appendRefineMessage("bot", `Could not rewrite: ${err.message}`);
-    errorEl.textContent = err.message;
-    show(errorEl);
+    if (errorEl) {
+      errorEl.textContent = err.message;
+      show(errorEl);
+    }
   } finally {
-    hide(refineStatus);
-    refineStatus.classList.remove("refining");
-    refineBtn.disabled = false;
+    setRefineBusy(false);
   }
-});
+}
 
-refineInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+if (buildBtn) buildBtn.addEventListener("click", onBuildClick);
+if (refineBtn) {
+  refineBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    refineBtn.click();
-  }
-});
+    onRefineClick();
+  });
+} else {
+  console.error("refine-btn not found — rewrite UI will not work");
+}
 
-copyBtn.addEventListener("click", async () => {
-  await navigator.clipboard.writeText(latestLatex);
-  copyBtn.textContent = "Copied!";
-  setTimeout(() => { copyBtn.textContent = "Copy LaTeX"; }, 2000);
-});
+if (refineInput) {
+  refineInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      onRefineClick();
+    }
+  });
+}
 
-downloadBtn.addEventListener("click", () => {
-  const blob = new Blob([latestLatex], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "tailored_resume.tex";
-  a.click();
-  URL.revokeObjectURL(url);
-});
+if (copyBtn) {
+  copyBtn.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(latestLatex);
+    copyBtn.textContent = "Copied!";
+    setTimeout(() => { copyBtn.textContent = "Copy LaTeX"; }, 2000);
+  });
+}
+
+if (downloadBtn) {
+  downloadBtn.addEventListener("click", () => {
+    const blob = new Blob([latestLatex], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tailored_resume.tex";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+if (latestResult && latestResult.latex) {
+  renderResult(latestResult);
+}
