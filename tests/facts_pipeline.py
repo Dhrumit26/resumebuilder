@@ -226,11 +226,16 @@ def t15c_fabricated_block_requires_jd_spine():
     assert any(i.code == "missing-spine" for i in issues), issues
 
     good = [
-        "Built Python RAG retrieval APIs for an internal agent console over product docs on AWS.",
-        "Cut multi-agent query latency on that console from 1.8s to 1.1s by rewriting the embedding path.",
-        "Shipped tool-calling orchestration so those agents could read tickets and draft replies.",
-        "Raised pytest coverage on those LLM workflow handlers from 48% to 82% so inference regressions stopped.",
-        "Deployed that retrieval service with Docker on AWS so staging matched production.",
+        "Built Python RAG retrieval APIs for an internal agent console that answers support "
+        "questions over product docs on AWS, cutting first-response draft time from 12 minutes to under 4.",
+        "Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by rewriting the "
+        "embedding lookup path and batching model inference calls under load.",
+        "Shipped tool-calling orchestration for those agents so they could read tickets and "
+        "draft replies in-console, raising successful auto-drafts from 40% to 72% of sampled threads.",
+        "Raised pytest coverage on those LLM workflow handlers from 48% to 82%, which cut "
+        "retrieval regressions reaching staging by more than half over six weeks.",
+        "Deployed that same retrieval service with Docker on AWS so staging matched production "
+        "inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
     ]
     assert not verify_fabricated_block(good, jd), verify_fabricated_block(good, jd)
 
@@ -302,7 +307,30 @@ def t15f_fabricated_block_rejects_metric_starved_frontend_fluff():
         "Monitored telemetry data to optimize the dashboard's performance, ensuring seamless user interactions.",
     ]
     codes = {i.code for i in verify_fabricated_block(thin, jd)}
-    assert "metric-starved" in codes or "fluff-bullet" in codes, codes
+    assert "metric-starved" in codes or "fluff-bullet" in codes or "too-thin" in codes, codes
+
+
+def t15g_fabricated_block_rejects_short_lines_missing_result():
+    """Short one-liners without full what/how/why density must not ship."""
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "frontend web",
+        "domain_practices": ["frontend development"],
+        "concepts": ["React", "TypeScript"],
+        "tools": ["TypeScript", "React", "AWS"],
+    }
+    short = [
+        "Built a TypeScript React dashboard for Clerxi AI that visualizes real-time data analytics on AWS.",
+        "Cut the slowest data visualization load time from 1.2s to 600ms by optimizing React rendering.",
+        "Raised Jest coverage on that dashboard from 45% to 80%, reducing UI regressions in production.",
+        "Wired the same dashboard to REST APIs with typed clients, ensuring payload shape validation in CI.",
+        "Deployed the dashboard using Kubernetes on AWS, reducing deployment time from 3 hours to 45 minutes.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(short, jd)}
+    # Bullet 1/4 may lack digits or length; block must not pass as-is.
+    assert codes, "expected density/metric failures on short screenshot-style bullets"
+    assert "too-thin" in codes or "metric-starved" in codes, codes
 
 
 def t16_frozen_pairing_must_stay_intact():
@@ -440,15 +468,17 @@ class _Stub:
                 raise ValueError("Failed to parse LLM JSON")
             goods = [
                 "Built Python RAG retrieval APIs for an internal agent console that answers "
-                "support questions over product docs on AWS.",
+                "support questions over product docs on AWS, cutting first-response draft "
+                "time from 12 minutes to under 4.",
                 "Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by "
-                "rewriting the embedding lookup and inference batching.",
+                "rewriting the embedding lookup path and batching model inference calls under load.",
                 "Shipped tool-calling orchestration for those agents so they could read "
-                "tickets and draft replies without leaving the console.",
-                "Raised pytest coverage on those LLM workflow handlers from 48% to 82% so "
-                "retrieval regressions stopped shipping into the agent loop.",
+                "tickets and draft replies in-console, raising successful auto-drafts from "
+                "40% to 72% of sampled threads.",
+                "Raised pytest coverage on those LLM workflow handlers from 48% to 82%, which "
+                "cut retrieval regressions reaching staging by more than half over six weeks.",
                 "Deployed that same retrieval service with Docker on AWS so staging matched "
-                "production inference settings before each release.",
+                "production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
             ]
             return {"bullets": goods[:count]}
 
