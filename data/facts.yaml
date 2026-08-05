@@ -6,6 +6,18 @@
 # The writer agents may CHOOSE facts, ORDER them, and REPHRASE them in the job
 # description's vocabulary. They may never invent a system, a tool, or a number.
 #
+# CLERXI-SPECIFIC TAILORING MODE
+#   For role id `clerxi`, tailor aggressively toward the job description while
+#   remaining fully truthful. The writer may select, reorder, compress, combine,
+#   and reframe confirmed Clerxi facts using the JD's vocabulary.
+#
+#   The writer may NOT invent work, tools, systems, ownership, scope, or metrics.
+#   When the JD calls for experience not represented by a confirmed fact, do not
+#   put it on the resume. Instead, return a separate verification question such
+#   as: "Did you do X at Clerxi? If yes, describe it and any measurable result."
+#   A suggested fact becomes usable only after the candidate confirms it and it
+#   is added to this fact bank.
+#
 # HOW TAILORING WORKS
 #   The LaTeX templates in latex/ fix the layout and the bullet count
 #   (Clerxi 5, Intuit 5, each project 2). Tailoring therefore happens by:
@@ -61,9 +73,10 @@ roles:
     location: Huntington Beach, CA
     dates: May. 2026 -- Present
     tenure_months: 3
-    # flexible: this role's facts may be re-ordered and re-framed toward the
-    # JD's domain. It does NOT mean inventing work — every bullet still comes
-    # from a fact below.
+    # aggressive truthful tailoring: this role's confirmed facts may be
+    # selected, re-ordered, combined, compressed, and re-framed toward the JD's
+    # domain. Missing experience must become a verification question, never a
+    # fabricated resume bullet. Every published claim must trace to a fact below.
     flexible: true
     facts:
       - id: retrieval-services

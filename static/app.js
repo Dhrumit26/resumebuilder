@@ -137,12 +137,27 @@ function renderMeasurement(measurement) {
     : "";
 }
 
+// The gaps this posting exposed, asked back as questions. Answering one turns it
+// into a fact, and every later posting can draw on it.
+function renderGapQuestions(gaps) {
+  const el = document.getElementById("gap-questions");
+  const questions = (gaps && gaps.questions) || [];
+  if (!questions.length) { el.innerHTML = ""; return; }
+  el.innerHTML =
+    "<h3>Worth Checking — Did You Do Any Of This?</h3>" +
+    "<p class='positioning'>This posting wants things your fact bank does not cover. " +
+    "Anything you answer yes to (with a number) becomes a new fact in data/facts.yaml and " +
+    "raises every future build. Anything you did not do stays off the resume.</p>" +
+    `<ul>${questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
+}
+
 function renderResult(data) {
   latestLatex = data.latex;
   latexOutput.textContent = data.latex;
   renderRoleTarget(data.jd_analysis);
   renderBuildMeta(data.meta || {});
   renderMeasurement(data.measurement || {});
+  renderGapQuestions(data.gaps || {});
   renderFallbacks(data.meta || {});
   renderSelectedFacts(data.meta || {});
   show(results);

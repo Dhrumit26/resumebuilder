@@ -281,6 +281,102 @@ def _original_summary_text() -> str:
     return (m.group(1).strip() if m else "").replace("\n", " ")
 
 
+def capability_gaps(bank, analysis: dict) -> tuple[list[str], list[str]]:
+    """What this posting wants that NO fact in the bank evidences.
+
+    Returns (missing tools, missing capability themes). These are the questions
+    the resume cannot answer — not because the writing is weak, but because the
+    fact bank has nothing to draw on.
+    """
+    bank_tools = {t.lower() for t in bank.all_tools()}
+    bank_themes = {t for f in bank.all_facts() for t in f.themes}
+
+    # Match against everything the bank actually says, not just its tool names.
+    # "Backend Development" and "Model Inference" are capabilities, so they are
+    # evidenced by the wording of the facts ("backend retrieval services",
+    # "inference costs") rather than by an entry in a tools list.
+    corpus = " ".join(
+        [f.core + " " + " ".join(f.angles) + " " + " ".join(f.tools) for f in bank.all_facts()]
+        + [i for c in bank.skill_categories for i in c.items]
+    )
+
+    wanted: list[str] = []
+    for key in ("tools", "must_have_skills"):
+        for term in analysis.get(key) or []:
+            if term not in wanted:
+                wanted.append(term)
+
+    evidenced = set(keyword_coverage(corpus, wanted)["matched"])
+    missing_tools = [
+        term for term in wanted
+        if term not in evidenced and not tool_matches(term, bank_tools)
+    ]
+
+    profile = theme_profile(analysis)
+    missing_themes = [
+        theme for theme, weight in sorted(profile.items(), key=lambda kv: -kv[1])
+        if weight >= 2.0 and theme not in bank_themes
+    ]
+    return missing_tools, missing_themes
+
+
+_QUESTION_PROMPT = """You help a candidate remember work they actually did, so it can go on
+their resume. You are NOT writing resume content and you never assert that they did anything.
+
+This job posting wants experience their fact bank does not currently cover:
+  technologies: {TOOLS}
+  capabilities: {THEMES}
+
+What they DO have on record:
+{FACTS}
+
+Write up to {COUNT} short questions asking whether they did any of this at their current job
+({COMPANY}) or on a project. Rules:
+- One specific thing per question. Never "do you have backend experience?" — ask
+  "did you write or own any service endpoints, and roughly how many?"
+- Always ask for the measurable part: how many, how much faster, before/after.
+- Ask only about things adjacent to what they already do; skip anything absurd
+  for their background.
+- A question is not a suggestion that they claim it. If the answer is no, it is no.
+
+Return ONLY: {{"questions": ["...", "..."]}}"""
+
+
+def verification_questions(bank, analysis: dict, limit: int = 6) -> list[str]:
+    """Turn this posting's gaps into questions that could grow the fact bank."""
+    missing_tools, missing_themes = capability_gaps(bank, analysis)
+    if not missing_tools and not missing_themes:
+        return []
+
+    known = "\n".join(f"- {f.core}" for f in bank.all_facts()[:12])
+    flexible = next((r.company for r in bank.roles if r.flexible), "their current role")
+    prompt = _QUESTION_PROMPT.format(
+        TOOLS=", ".join(missing_tools[:10]) or "(none)",
+        THEMES=", ".join(t.replace("-", " ") for t in missing_themes[:8]) or "(none)",
+        FACTS=known,
+        COUNT=limit,
+        COMPANY=flexible,
+    )
+    try:
+        raw = call_llm_json(prompt, temperature=0.3, max_tokens=700, role="writer")
+        questions = [str(q).strip() for q in (raw.get("questions") or []) if str(q).strip()]
+        if questions:
+            return questions[:limit]
+    except Exception as exc:
+        _debug_dump("v2_questions_error", str(exc))
+
+    # Deterministic fallback so a gap is never silently dropped.
+    out = [
+        f"Did you use {tool} at {flexible} or on a project? If so, for what, and what was the result?"
+        for tool in missing_tools[:limit]
+    ]
+    out += [
+        f"Have you done any {theme.replace('-', ' ')} work? What did you change, and by how much?"
+        for theme in missing_themes[: max(0, limit - len(out))]
+    ]
+    return out[:limit]
+
+
 def measure(
     resume_plain: str,
     analysis: dict,
@@ -437,6 +533,12 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
     # --- 9. Measure (deterministic) -----------------------------------------
     measurement = measure(resume_plain, analysis, selections, all_bullets, skills_lines)
 
+    # --- 10. Turn this posting's gaps into questions ------------------------
+    # What the resume could not say, asked back as questions. Answer one and it
+    # becomes a fact, and every future posting can draw on it.
+    questions = verification_questions(bank, analysis)
+    missing_tools, missing_themes = capability_gaps(bank, analysis)
+
     payload = {
         "latex": full_latex,
         "sections": rendered,
@@ -460,6 +562,11 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
             "summary_words": word_count(latex_to_plain(rendered["summary"])),
         },
         "measurement": measurement,
+        "gaps": {
+            "questions": questions,
+            "missing_tools": missing_tools,
+            "missing_capabilities": [t.replace("-", " ") for t in missing_themes],
+        },
     }
     emit("final", payload)
     return payload

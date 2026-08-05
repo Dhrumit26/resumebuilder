@@ -309,6 +309,9 @@ TECH_SYNONYMS: dict[str, list[str]] = {
     "system design": ["service-oriented", "api design", "api contracts"],
     "embeddings": ["embedding"],
     "apis": ["api", "rest apis"],
+    "performance optimization": ["latency", "performance tuning", "optimizing"],
+    "ai algorithms": ["retrieval algorithms"],
+    "code review": ["code review", "cross-team"],
 }
 
 
