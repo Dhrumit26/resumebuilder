@@ -383,6 +383,103 @@ def t15i_fabricated_rejects_cloning_sibling_role():
     assert "system-clone" in codes or "role-clone" in codes or "metric-clone" in codes, codes
 
 
+def t15j_fabricated_rejects_parallel_madlib_twins():
+    """Same story with Built→Developed and 45→50 must fail — not just exact clones."""
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "embedded systems",
+        "domain_practices": ["firmware", "networking"],
+        "concepts": ["Yocto", "MQTT"],
+        "tools": ["Python", "Yocto", "MQTT", "Ubuntu Core"],
+    }
+    clerxi = [
+        "Built a Python-based embedded OS application using Yocto, reducing boot time from 45 seconds to 20 seconds on target boards.",
+        "Rewrote legacy code in Python for an embedded system, improving execution speed by 30% and reducing memory usage from 512MB to 256MB.",
+        "Implemented MQTT-based networking protocols on Ubuntu Core, increasing data transmission efficiency from 60% to 85% under load.",
+        "Developed security protocols using Python and Linux OS, cutting unauthorized access attempts by 50% across device fleets.",
+        "Automated test methods and procedures development with Python scripts, reducing manual testing time from 5 hours to 2 hours per cycle.",
+    ]
+    twin = [
+        "Developed a Python-based embedded OS application using Yocto, reducing system boot time from 50 seconds to 25 seconds on target boards.",
+        "Refactored legacy Python code for an embedded system, improving execution speed by 28% and reducing memory usage from 600MB to 300MB.",
+        "Implemented MQTT-based networking protocols on Armbian, increasing data transmission efficiency from 65% to 90% under load.",
+        "Designed and integrated security protocols using Python and Linux OS, cutting unauthorized access attempts by 45% across device fleets.",
+        "Automated test methods and procedures development with Python scripts, reducing manual testing time from 6 hours to 2.5 hours per cycle.",
+    ]
+    codes = {
+        i.code
+        for i in verify_fabricated_block(
+            twin, jd, sibling_bullets=clerxi, secondary_lane=True
+        )
+    }
+    assert "parallel-clone" in codes or "role-clone" in codes or "system-clone" in codes, codes
+
+
+def t15k_work_split_divides_embedded_lanes():
+    from src.pipeline_v2 import plan_work_split
+
+    split = plan_work_split(
+        {
+            "domain": "embedded systems",
+            "tools": ["Yocto", "MQTT", "Python"],
+            "concepts": ["firmware"],
+        }
+    )
+    assert any("Yocto" in x or "device" in x.lower() for x in split["current"])
+    assert any("CI" in x or "test" in x.lower() for x in split["intern"])
+    assert split["current"] != split["intern"]
+
+
+def t15l_secondary_lane_requires_enablement_not_product_spine():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "AI platform",
+        "concepts": ["RAG", "multi-agent", "embeddings", "LLM", "orchestration"],
+        "tools": ["Python", "AWS"],
+        "domain_practices": ["agent workflows"],
+    }
+    clerxi = [
+        "Built Python RAG retrieval APIs for an internal agent console over product docs on AWS, cutting first-response draft time from 12 minutes to under 4.",
+        "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the embedding lookup path and batching model inference under load.",
+        "Shipped tool-calling orchestration so support agents could read tickets and draft replies in-console, raising successful auto-drafts from 40% to 72% of sampled threads.",
+        "Increased pytest coverage on LLM workflow handlers from 48% to 82%, contributing to fewer retrieval regressions reaching staging over six weeks.",
+        "Containerized the retrieval service with Docker on AWS so staging matched production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
+    ]
+    # Product twin — no enablement lane
+    product_twin = [
+        "Built Python RAG retrieval APIs for a support console over docs on AWS, cutting draft time from 11 minutes to under 5.",
+        "Cut p95 multi-agent query latency from 1.7s to 1.0s by rewriting embedding lookup and batching inference under load.",
+        "Shipped tool-calling orchestration so agents could read tickets and draft replies, raising auto-drafts from 38% to 70%.",
+        "Raised handler reliability on LLM workflows from 48% to 80%, contributing to fewer retrieval regressions over five weeks.",
+        "Containerized the retrieval service with Docker on AWS, shrinking release dry-runs from 2 hours to 40 minutes.",
+    ]
+    twin_codes = {
+        i.code
+        for i in verify_fabricated_block(
+            product_twin, jd, sibling_bullets=clerxi, secondary_lane=True
+        )
+    }
+    assert "parallel-clone" in twin_codes or "missing-enablement" in twin_codes or "role-clone" in twin_codes, twin_codes
+
+    # True enablement complement
+    intern = [
+        "Migrated end-to-end agent API suites to Playwright for a Python service platform, cutting flaky CI failures from about 18% to 6% of runs.",
+        "Raised pytest coverage on shared FastAPI LLM handlers from 42% to 78%, contributing to fewer production defects across the internship.",
+        "Defined REST API contracts across retrieval service boundaries so partner teams hit fewer integration breaks across three releases.",
+        "Shortened deployment cycles from 2 weeks to 4 days by refactoring shared Python platform services used by feature teams.",
+        "Built request pre-check logic on shared Python forms APIs that cut completion time by 35% and dropped support tickets by 50%.",
+    ]
+    ok = verify_fabricated_block(
+        intern, jd, sibling_bullets=clerxi, secondary_lane=True
+    )
+    codes = {i.code for i in ok}
+    assert "missing-enablement" not in codes
+    assert "parallel-clone" not in codes
+    assert "missing-spine" not in codes, codes
+
+
 def t16_frozen_pairing_must_stay_intact():
     fact = _fact("intuit", "ci-migration")
     issues = verify_bullet(

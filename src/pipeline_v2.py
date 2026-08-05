@@ -109,18 +109,19 @@ def _flex_rule(selection: Selection) -> str:
             return (
                 f"FABRICATED MODE for a PAST INTERNSHIP at {company} "
                 f"(~{selection.tenure_months or 3} months). Invent a coherent mid-level "
-                "intern story in the posting's engineering domain — a DIFFERENT system and "
-                "a DIFFERENT facet of the JD than the current role above. Prefer complementary "
-                "work: testing/CI, API contracts, platform/refactor, coverage, handoffs — "
-                "while the current role owns the primary product spine. Same domain fit, "
-                "not a clone. Company name stays real. Size scope to an internship. "
+                "intern story in the posting's engineering domain. You own the ENABLEMENT "
+                "facet (tests, CI, contracts, platform tooling, reliability) — a DIFFERENT "
+                "system than the current role's primary product. Same domain so a hiring "
+                "manager sees one strong candidate across both jobs; never a mad-lib clone. "
+                "Company name stays real. Size scope to an internship. "
                 "Each bullet stands alone; no vague 'cloud technology'."
             )
         return (
             f"FABRICATED MODE for the CURRENT role at {company}: invent the PRIMARY "
             "product story natively in the posting's engineering domain (main spine: "
-            "RAG/agents/core stack). Ignore the fact bank for grounding. Company name "
-            "stays real; product follows the JD domain, not brand tokens. Do not adopt "
+            "build/ship the core system). Leave testing/CI/contracts/platform enablement "
+            "room for the internship block. Ignore the fact bank for grounding. Company "
+            "name stays real; product follows the JD domain, not brand tokens. Do not adopt "
             "the posting's industry. Each bullet stands alone — no mechanical "
             "'that dashboard' chains; name real services; soften coverage→defect claims."
         )
@@ -136,6 +137,116 @@ def _flex_rule(selection: Selection) -> str:
     return (
         "This is past history and is FIXED. Keep every fact in its own domain — re-angle the "
         "emphasis toward what this posting values, but never restage the work somewhere else."
+    )
+
+
+def plan_work_split(analysis: dict) -> dict[str, list[str]]:
+    """Split the JD into current-role vs internship lanes for invent mode.
+
+    Goal: together the two roles read as one interview-ready match — complementary
+    evidence in the same domain, not twin bullets with swapped numbers.
+    """
+    blob = " ".join(
+        str(x).lower()
+        for key in (
+            "domain",
+            "role_title",
+            "domain_practices",
+            "practices",
+            "concepts",
+            "tools",
+            "must_have_skills",
+        )
+        for x in (
+            [analysis.get(key)]
+            if isinstance(analysis.get(key), str)
+            else (analysis.get(key) or [])
+        )
+        if x
+    )
+
+    if any(k in blob for k in ("embedded", "firmware", "yocto", "mqtt", "iot", "armbian")):
+        return {
+            "current": [
+                "Primary device/product work: Yocto image or board bring-up, boot/runtime on the target",
+                "Core networking or protocol features the product ships (e.g. MQTT on-device path)",
+                "Main application services running on the embedded OS",
+            ],
+            "intern": [
+                "Board/image CI and automated regression for firmware/OS builds",
+                "Hardware-in-the-loop or protocol conformance test suites",
+                "Release tooling, flake reduction, coverage, partner API/contract checks",
+            ],
+        }
+    if any(k in blob for k in ("frontend", "react", "typescript", "ui ", "ux")):
+        return {
+            "current": [
+                "Primary UI product: component library or main dashboard features users ship",
+                "Performance of hot UI paths and production client wiring",
+                "Feature delivery on the customer-facing surface",
+            ],
+            "intern": [
+                "Jest / React Testing Library coverage and regression gates",
+                "CI, visual/e2e reliability, release pipeline hardening",
+                "Typed API client contracts and incident-reducing test scaffolding",
+            ],
+        }
+    if any(k in blob for k in ("rag", "llm", "agent", "embedding", "inference", "orchestr")):
+        return {
+            "current": [
+                "Primary agent/RAG product spine: retrieval APIs, orchestration, inference path",
+                "Latency and quality of the live multi-agent or retrieval service",
+                "Production shipping of the core AI workflow",
+            ],
+            "intern": [
+                "Eval harnesses, pytest coverage on LLM handlers, regression gates",
+                "CI for retrieval/agent workflows and staging parity",
+                "API contracts, tool-call mocks, platform/refactor support for the team",
+            ],
+        }
+    # Default: backend / platform
+    return {
+        "current": [
+            "Primary service/API product the team ships to users or partners",
+            "Core performance, data path, or feature delivery on that system",
+            "Production ownership of the main backend surface",
+        ],
+        "intern": [
+            "Test automation, CI reliability, coverage on shared services",
+            "API contracts, platform refactors, deployment-cycle improvements",
+            "Support tooling and handoff-quality work sized to an internship",
+        ],
+    }
+
+
+def _work_split_block(selection: Selection, analysis: dict) -> str:
+    """Prompt text: divide JD work so both invent roles hire as one package."""
+    if not selection.fabricated:
+        return ""
+    split = plan_work_split(analysis)
+    current = "\n".join(f"  - {x}" for x in split["current"])
+    intern = "\n".join(f"  - {x}" for x in split["intern"])
+    is_intern = "intuit" in selection.owner_label.lower()
+
+    if is_intern:
+        return (
+            "\n## INTERVIEW WORK-SPLIT — YOU OWN ENABLEMENT\n"
+            "A hiring manager should read BOTH roles and want to interview: same domain, "
+            "divided work, zero twin bullets.\n"
+            "YOUR LANE (internship — own these):\n"
+            f"{intern}\n"
+            "LEAVE TO THE CURRENT ROLE (do not mad-lib their story with new numbers):\n"
+            f"{current}\n"
+            "FORBIDDEN: same system + same duties with Built→Developed and 45s→50s swaps.\n"
+        )
+    return (
+        "\n## INTERVIEW WORK-SPLIT — YOU OWN THE PRIMARY PRODUCT\n"
+        "Write so that WHEN paired with the internship block, the resume covers the JD "
+        "without repeating the same five stories.\n"
+        "YOUR LANE (current role — own these):\n"
+        f"{current}\n"
+        "LEAVE ROOM for the internship (they will own these — do not consume them all):\n"
+        f"{intern}\n"
     )
 
 
@@ -155,15 +266,15 @@ def _differentiation_block(
         if "intuit" in selection.owner_label.lower():
             return (
                 "\n## STRATEGIC POSITIONING\n"
-                "No sibling role text yet. Still: invent an INTERNSHIP-scoped story "
-                "(testing, CI, contracts, platform) — leave the deepest product spine "
+                "No sibling role text yet. Still: invent an INTERNSHIP-scoped enablement "
+                "story (testing, CI, contracts, platform) — leave the deepest product spine "
                 "for the current role when both are fabricated.\n"
             )
         return (
             "\n## STRATEGIC POSITIONING\n"
             "You write the CURRENT role first. Own the posting's primary product spine. "
-            "A later internship block will cover a complementary facet — do not try to "
-            "cover every JD duty here.\n"
+            "A later internship block will cover enablement — do not try to cover every "
+            "JD duty here.\n"
         )
 
     lines = [
@@ -171,12 +282,16 @@ def _differentiation_block(
         "## STRATEGIC DIFFERENTIATION — DO NOT CLONE",
         "Another fabricated role on this resume already claimed the work below.",
         "Your block must MATCH the JD strategically but tell a DIFFERENT story:",
-        "- Different system / product (not the same dashboard, console, library, or API).",
-        "- Different JD facet (if they own RAG/agents/product UI, you own tests/CI/"
-        "contracts/platform/reliability — or the reverse).",
+        "- Different system / product (not the same dashboard, console, Yocto image,",
+        "  MQTT stack, OS app, security protocol suite, or API).",
+        "- Different JD facet (if they own the primary product, you own tests/CI/",
+        "  contracts/platform/reliability — or the reverse).",
         "- Different metrics (never reuse the same from→to numbers or % figures).",
-        "- Different opening verbs and sentence shapes — no paraphrased twins.",
+        "- Different opening verbs AND sentence shapes — no paraphrased twins.",
+        "- FORBIDDEN: mad-lib clones (same bullet with Built→Developed and 45s→50s).",
+        "  If a reader can line up your 5 bullets with theirs 1:1, you FAIL.",
         "- Internship tenure: smaller scope, fewer epic claims than a current role.",
+        "- Together you should look hireable: complementary proof, one coherent domain.",
         "",
     ]
     for label, bullets in siblings.items():
@@ -317,6 +432,7 @@ def _write_bullets_for_block(
             TENURE=tenure,
             FLEX_RULE=_flex_rule(selection),
             DIFFERENTIATION=_differentiation_block(selection, sibling_fabricated),
+            WORK_SPLIT=_work_split_block(selection, analysis),
             COUNT=str(count),
             FIX_BLOCK="",
             **jd_kwargs,
@@ -389,10 +505,14 @@ def _write_bullets_for_block(
 
         block_issues = []
         if selection.fabricated:
+            secondary = bool(siblings) and "intuit" in selection.owner_label.lower()
             block_issues = [
                 i
                 for i in verify_fabricated_block(
-                    candidate, analysis, sibling_bullets=siblings
+                    candidate,
+                    analysis,
+                    sibling_bullets=siblings,
+                    secondary_lane=secondary,
                 )
                 if i.severity == "error"
             ]
