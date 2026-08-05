@@ -383,6 +383,34 @@ def t15i_fabricated_rejects_cloning_sibling_role():
     assert "system-clone" in codes or "role-clone" in codes or "metric-clone" in codes, codes
 
 
+def t15j_fabricated_rejects_parallel_madlib_twins():
+    """Same story with Built→Developed and 45→50 must fail — not just exact clones."""
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "embedded systems",
+        "domain_practices": ["firmware", "networking"],
+        "concepts": ["Yocto", "MQTT"],
+        "tools": ["Python", "Yocto", "MQTT", "Ubuntu Core"],
+    }
+    clerxi = [
+        "Built a Python-based embedded OS application using Yocto, reducing boot time from 45 seconds to 20 seconds on target boards.",
+        "Rewrote legacy code in Python for an embedded system, improving execution speed by 30% and reducing memory usage from 512MB to 256MB.",
+        "Implemented MQTT-based networking protocols on Ubuntu Core, increasing data transmission efficiency from 60% to 85% under load.",
+        "Developed security protocols using Python and Linux OS, cutting unauthorized access attempts by 50% across device fleets.",
+        "Automated test methods and procedures development with Python scripts, reducing manual testing time from 5 hours to 2 hours per cycle.",
+    ]
+    twin = [
+        "Developed a Python-based embedded OS application using Yocto, reducing system boot time from 50 seconds to 25 seconds on target boards.",
+        "Refactored legacy Python code for an embedded system, improving execution speed by 28% and reducing memory usage from 600MB to 300MB.",
+        "Implemented MQTT-based networking protocols on Armbian, increasing data transmission efficiency from 65% to 90% under load.",
+        "Designed and integrated security protocols using Python and Linux OS, cutting unauthorized access attempts by 45% across device fleets.",
+        "Automated test methods and procedures development with Python scripts, reducing manual testing time from 6 hours to 2.5 hours per cycle.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(twin, jd, sibling_bullets=clerxi)}
+    assert "parallel-clone" in codes or "role-clone" in codes or "system-clone" in codes, codes
+
+
 def t16_frozen_pairing_must_stay_intact():
     fact = _fact("intuit", "ci-migration")
     issues = verify_bullet(

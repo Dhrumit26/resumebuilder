@@ -41,6 +41,8 @@ Frontend (TypeScript + React):
 - Strong false causation: "raised coverage, which cut regressions by 60%" → use "contributing to" / "alongside"
 - Missing WHAT, HOW, or RESULT; under ~22 words; over ~36 words; no digit
 - Collaborated / Monitored / Enhanced code quality / seamless / language or cloud scatter
+- Cloning another role on this resume: same system + same duties with only verbs/numbers
+  swapped (Built→Developed, 45s→50s). That fails. Write a complementary facet instead.
 
 ## METRICS
 - EVERY bullet has a real number. At least TWO from→to metrics in the block.

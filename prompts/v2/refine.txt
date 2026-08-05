@@ -37,6 +37,9 @@ Tools: {{JD_TOOLS}}
 - If the suggestion is unclear or impossible, set changed to [] and leave fields null.
 - Fabricated invent roles (Clerxi / Intuit) may be rewritten freely to match the
   suggestion and JD — but do not clone the same system across both companies.
+  Never mad-lib the same five bullets with swapped verbs/numbers (Built→Developed,
+  45s→50s). Intuit must be a complementary facet (tests/CI/contracts/platform),
+  not a twin of Clerxi.
 - Projects stay closer to their current content unless the suggestion targets them.
 
 ## OUTPUT

@@ -171,11 +171,14 @@ def _differentiation_block(
         "## STRATEGIC DIFFERENTIATION — DO NOT CLONE",
         "Another fabricated role on this resume already claimed the work below.",
         "Your block must MATCH the JD strategically but tell a DIFFERENT story:",
-        "- Different system / product (not the same dashboard, console, library, or API).",
-        "- Different JD facet (if they own RAG/agents/product UI, you own tests/CI/"
-        "contracts/platform/reliability — or the reverse).",
+        "- Different system / product (not the same dashboard, console, Yocto image,",
+        "  MQTT stack, OS app, security protocol suite, or API).",
+        "- Different JD facet (if they own the primary product/spine, you own tests/CI/",
+        "  contracts/platform/reliability/tooling — or the reverse).",
         "- Different metrics (never reuse the same from→to numbers or % figures).",
-        "- Different opening verbs and sentence shapes — no paraphrased twins.",
+        "- Different opening verbs AND sentence shapes — no paraphrased twins.",
+        "- FORBIDDEN: mad-lib clones (same bullet with Built→Developed and 45s→50s).",
+        "  If a reader can line up your 5 bullets with theirs 1:1, you FAIL.",
         "- Internship tenure: smaller scope, fewer epic claims than a current role.",
         "",
     ]
