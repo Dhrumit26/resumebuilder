@@ -765,16 +765,40 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
         rendered[section] = render_section(templates[section], bullets_by_block)
 
     # --- 6. Skills: selection from the bank, no LLM -------------------------
-    # Constrained by the facts that actually made the page, so the skills line
-    # backs up the bullets instead of claiming every technology at once.
-    # Fabricated blocks also license tools named in the invented bullets.
+    # Constrained by what the resume actually shows. When inventing roles,
+    # skills must follow fabricated bullets + JD tools on the page — not leftover
+    # Playwright/RAG bank filler from a different domain.
+    fabricated_any = any(sel.fabricated for sel in selections.values())
     evidenced = {t for sel in selections.values() for f in sel.facts for t in f.tools}
+    # Expand lexicon with JD tools so invent stacks (C++, Yocto, MQTT, …) count.
+    jd_tool_names = [
+        str(t).strip()
+        for key in ("tools", "must_have_skills", "exact_keywords_for_ats")
+        for t in (analysis.get(key) or [])
+        if str(t).strip()
+    ]
+    scan_lexicon = set(lexicon) | {t.lower() for t in jd_tool_names} | {
+        "yocto", "mqtt", "amqp", "jenkins", "armbian", "c++", "c++11", "c++17", "c++20",
+    }
     for label, bullets in written.items():
+        for bullet in bullets:
+            evidenced |= _mentioned_tech(_plain(bullet), scan_lexicon)
         if selections[label].fabricated:
-            for bullet in bullets:
-                evidenced |= _mentioned_tech(_plain(bullet), lexicon)
+            # Preserve original casing from JD when the bullet used that tool.
+            plain = _plain(" ".join(bullets)).lower()
+            for tool in jd_tool_names:
+                if re.search(
+                    r"(?<![A-Za-z0-9_])" + re.escape(tool) + r"(?![A-Za-z0-9_+#])",
+                    plain,
+                    re.I,
+                ):
+                    evidenced.add(tool)
     skills_lines = select_skills(
-        bank, analysis, skills_line_count(templates["skills"]), evidenced
+        bank,
+        analysis,
+        skills_line_count(templates["skills"]),
+        evidenced,
+        strict_evidence=fabricated_any,
     )
     rendered["skills"] = render_skills(templates["skills"], skills_lines)
 

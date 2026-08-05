@@ -40,6 +40,8 @@ _EXTRA_TECH = {
     "sqlalchemy", "celery", "webpack", "vite", "babel", "eslint", "storybook",
     "cypress", "playwright", "jest", "redis", "postgresql", "mysql", "docker",
     "aws", "lambda", "s3", "ec2", "ecs", "eks", "rds", "sqs", "sns",
+    "yocto", "mqtt", "amqp", "jenkins", "armbian", "ubuntu", "zephyr",
+    "c++", "c++11", "c++17", "c++20",
 }
 
 _BANNED_PHRASES = {
@@ -545,12 +547,14 @@ def verify_fabricated_block(
                 f"primary language '{primary}' never appears — name it in bullet 1 or 2",
             )
         )
-    if len(langs) > 2:
+    # One primary language only. A second language is the language-scatter tell
+    # (Python RAG bullets next to C++/Yocto bullets in the same job).
+    if len(langs) > 1:
         issues.append(
             Issue(
                 "language-scatter",
-                f"named {', '.join(langs)} across one job — pick '{primary}' "
-                f"(+ at most one secondary) and rebuild every bullet",
+                f"named {', '.join(langs)} across one job — pick only '{primary}' "
+                f"and rebuild every bullet around that stack",
             )
         )
 
