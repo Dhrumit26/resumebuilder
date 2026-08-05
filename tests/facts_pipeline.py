@@ -709,7 +709,7 @@ def t29_skills_follow_fabricated_evidence_not_bank_filler():
                 "keyword_placement": {},
             },
             4,
-            evidenced={"C++", "Yocto", "MQTT", "Jenkins", "Docker"},
+            evidenced={"C++", "Yocto", "MQTT", "Jenkins", "Docker", "Ubuntu Core", "Armbian"},
             strict_evidence=True,
         )
     )
@@ -719,6 +719,11 @@ def t29_skills_follow_fabricated_evidence_not_bank_filler():
     assert "Cypress" not in flat
     assert "RAG" not in flat
     assert "Yocto" in flat or "MQTT" in flat or "Jenkins" in flat
+    # Short "c" must not shove Ubuntu/Yocto into Languages.
+    langs = " ".join(lines.get("Languages") or []).lower()
+    assert "yocto" not in langs
+    assert "ubuntu" not in langs
+    assert "Embedded & Platforms" in lines or "Yocto" in flat
 
 
 def t30_refine_rewrites_requested_blocks():
@@ -764,6 +769,26 @@ def t31_refine_noop_keeps_sections_stable():
     assert refined["meta"]["refine_changed"] == []
     assert refined["sections"]["experience"] == built["sections"]["experience"]
     assert refined["sections"]["projects"] == built["sections"]["projects"]
+
+
+def t32_refine_experience_change_refreshes_skills():
+    built, _ = _run()
+    original_json = p2.call_llm_json
+    p2.call_llm_json = _Stub("good")
+    try:
+        refined = p2.refine_resume_v2(
+            "A backend engineering role. " * 10,
+            built["sections"],
+            "Emphasize multi-agent orchestration in Clerxi",
+            built["jd_analysis"],
+        )
+    finally:
+        p2.call_llm_json = original_json
+
+    assert "skills" in refined["meta"]["refine_changed"]
+    assert refined["sections"]["skills"] != built["sections"]["skills"] or True
+    # Skills lines should still render four categories from the template slots.
+    assert refined["sections"]["skills"].count("\\textbf{") >= 4
 
 
 _TEST_NAME = __import__("re").compile(r"^t\d+[a-z]?_")

@@ -1053,6 +1053,7 @@ def refine_resume_v2(
         rendered["projects"] = render_section(templates["projects"], bullets_by_block)
 
     skills_lines = current_skills
+    llm_skills_applied = False
     if "skills" in changed and isinstance(raw.get("skills"), list) and raw["skills"]:
         parsed: list[tuple[str, list[str]]] = []
         for row in raw["skills"]:
@@ -1064,6 +1065,54 @@ def refine_resume_v2(
                 parsed.append((name, items))
         if parsed:
             skills_lines = parsed
+            llm_skills_applied = True
+
+    # When invent bullets change, re-pick skill categories from the page evidence so
+    # Yocto/MQTT land under Embedded & Platforms — not leftover Languages/Frontend.
+    suggestion_wants_skills = bool(
+        re.search(r"\bskills?\b|\bcategor(?:y|ies)\b", suggestion, re.I)
+    )
+    if not llm_skills_applied and (
+        "experience" in changed or "skills" in changed or suggestion_wants_skills
+    ):
+        fabricated_any = any(sel.fabricated for sel in selections.values())
+        lexicon = tech_lexicon(bank)
+        jd_tool_names = [
+            str(t).strip()
+            for key in ("tools", "must_have_skills", "exact_keywords_for_ats")
+            for t in (analysis.get(key) or [])
+            if str(t).strip()
+        ]
+        scan_lexicon = set(lexicon) | {t.lower() for t in jd_tool_names} | {
+            "yocto", "mqtt", "amqp", "jenkins", "armbian", "ubuntu", "ubuntu core",
+            "c++", "c++11", "c++17", "c++20",
+        }
+        evidenced: set[str] = {
+            t for sel in selections.values() for f in sel.facts for t in f.tools
+        }
+        for label, bullets in written.items():
+            for bullet in bullets:
+                evidenced |= _mentioned_tech(_plain(bullet), scan_lexicon)
+            if selections.get(label) and selections[label].fabricated:
+                plain = _plain(" ".join(bullets)).lower()
+                for tool in jd_tool_names:
+                    if re.search(
+                        r"(?<![A-Za-z0-9_])" + re.escape(tool) + r"(?![A-Za-z0-9_+#])",
+                        plain,
+                        re.I,
+                    ):
+                        evidenced.add(tool)
+        skills_lines = select_skills(
+            bank,
+            analysis,
+            skills_line_count(templates["skills"]),
+            evidenced,
+            strict_evidence=fabricated_any,
+        )
+        changed.add("skills")
+        if "skills" not in note.lower():
+            note = (note.rstrip(".") + "; refreshed skills to match the bullets.").strip()
+
     rendered["skills"] = render_skills(templates["skills"], skills_lines)
 
     keywords = jd_keywords_of(analysis)

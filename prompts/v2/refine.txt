@@ -30,8 +30,10 @@ Tools: {{JD_TOOLS}}
 - Experience/project bullets: 22–36 words when you rewrite a full block; each needs
   a metric if you rewrite that block. Prefer from→to.
 - Summary: exactly 2 sentences, 26–38 words, NO numbers, match the bullet stack.
-- Skills: only rewrite if the suggestion asks; each line is a category name plus
-  a list of tools. Keep 4 lines when possible.
+- Skills: rewrite whenever experience changes OR the suggestion asks. Prefer
+  categories that fit the stack (e.g. Embedded & Platforms for Yocto/MQTT,
+  Languages for C++/Python — never put Yocto under Languages). Keep 4 lines.
+  Each line is a category name plus a list of tools.
 - If the suggestion is unclear or impossible, set changed to [] and leave fields null.
 - Fabricated invent roles (Clerxi / Intuit) may be rewritten freely to match the
   suggestion and JD — but do not clone the same system across both companies.

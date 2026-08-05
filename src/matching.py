@@ -28,9 +28,12 @@ _DOMAIN_THEMES: list[tuple[str, list[str]]] = [
     ("api", ["api-design", "api-contracts", "backend-services"]),
     ("microservice", ["backend-services", "distributed-systems", "api-design"]),
     ("distributed", ["distributed-systems", "backend-services", "performance-optimization"]),
-    ("systems programming", ["performance-optimization", "algorithms-data-structures"]),
-    ("embedded", ["performance-optimization", "algorithms-data-structures"]),
-    ("firmware", ["performance-optimization", "algorithms-data-structures"]),
+    ("systems programming", ["performance-optimization", "algorithms-data-structures", "embedded-systems"]),
+    ("embedded", ["embedded-systems", "performance-optimization", "algorithms-data-structures"]),
+    ("firmware", ["embedded-systems", "performance-optimization", "algorithms-data-structures"]),
+    ("yocto", ["embedded-systems"]),
+    ("iot", ["embedded-systems", "networking"]),
+    ("networking", ["networking", "embedded-systems"]),
     ("ai", ["ai-ml", "search-retrieval"]),
     ("llm", ["ai-ml", "search-retrieval"]),
     ("ml", ["ai-ml"]),
@@ -468,8 +471,8 @@ MAX_SKILLS_PER_LINE = 6
 # Where to park a JD/resume tool that is not already in a skill-bank category.
 _INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
     ("Languages", (
-        "python", "typescript", "javascript", "java", "go", "c++", "c#", "rust",
-        "kotlin", "swift", "sql", "c",
+        "python", "typescript", "javascript", "java", "go", "c++", "c++11", "c++17",
+        "c++20", "c#", "rust", "kotlin", "swift", "sql", "c",
     )),
     ("Frontend", (
         "react", "next.js", "angular", "vue", "html", "css", "jquery", "bootstrap",
@@ -481,11 +484,39 @@ _INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
     ("AI & Data", (
         "llm", "llms", "rag", "embeddings", "vector search", "multi-agent systems",
     )),
+    ("Embedded & Platforms", (
+        "yocto", "mqtt", "amqp", "ubuntu core", "ubuntu", "armbian", "linux",
+        "zephyr", "freertos", "bare metal",
+    )),
     ("Testing & CI/CD", (
         "jest", "playwright", "cypress", "pytest", "junit", "jenkins", "github actions",
-        "gitlab ci", "git", "yocto", "mqtt", "selenium",
+        "gitlab ci", "git", "selenium",
     )),
 ]
+
+
+def _needle_hits_tool(needle: str, tool: str) -> bool:
+    """Match inject needles without letting short tokens (c, go) hit ubuntu/yocto."""
+    n = (needle or "").lower().strip()
+    t = (tool or "").lower().strip()
+    if not n or not t:
+        return False
+    if n == t:
+        return True
+    # Single-letter / 2-char languages must be whole tokens.
+    if len(n) <= 2:
+        return bool(
+            re.search(
+                r"(?<![A-Za-z0-9_+#])" + re.escape(n) + r"(?![A-Za-z0-9_+#])",
+                t,
+            )
+        )
+    if t.startswith(n) and (len(t) == len(n) or not t[len(n)].isalnum()):
+        return True
+    # c++ inside c++11 / c++17
+    if re.search(r"(?<![A-Za-z0-9])" + re.escape(n) + r"(?![A-Za-z0-9])", t):
+        return True
+    return False
 
 
 def _inject_category_name(tool: str, category_names: list[str]) -> str | None:
@@ -493,7 +524,7 @@ def _inject_category_name(tool: str, category_names: list[str]) -> str | None:
     for name, needles in _INJECT_CATEGORY_HINTS:
         if name not in category_names:
             continue
-        if any(n == low or n in low or low in n for n in needles):
+        if any(_needle_hits_tool(n, low) for n in needles):
             return name
     themes = _TOOL_THEMES.get(low) or []
     if any(t.startswith("frontend") or t == "react" for t in themes) and "Frontend" in category_names:
@@ -502,9 +533,16 @@ def _inject_category_name(tool: str, category_names: list[str]) -> str | None:
         return "Testing & CI/CD"
     if any(t.startswith("ai") or "search" in t for t in themes) and "AI & Data" in category_names:
         return "AI & Data"
-    if "Languages" in category_names and low in {
-        "python", "typescript", "javascript", "java", "go", "c++", "c#", "rust", "sql", "c",
-    }:
+    if "Embedded & Platforms" in category_names and any(
+        k in low for k in ("yocto", "mqtt", "amqp", "ubuntu", "armbian", "linux", "firmware")
+    ):
+        return "Embedded & Platforms"
+    if "Languages" in category_names and (
+        low in {
+            "python", "typescript", "javascript", "java", "go", "c++", "c#", "rust", "sql", "c",
+        }
+        or low.startswith("c++")
+    ):
         return "Languages"
     if "Backend & Cloud" in category_names:
         return "Backend & Cloud"
