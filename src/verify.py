@@ -40,7 +40,8 @@ _EXTRA_TECH = {
 _BANNED_PHRASES = {
     "leverage", "leveraging", "leveraged", "leverages",
     "utilize", "utilized", "utilizes", "utilizing",
-    "spearheaded", "orchestrated", "championed", "robust", "seamless", "cutting-edge", "holistic",
+    "spearheaded", "orchestrated", "championed", "robust", "seamless", "seamlessly",
+    "cutting-edge", "holistic",
     "results-driven", "impact-driven", "detail-oriented", "proven track record",
     "responsible for", "helped with", "worked on", "state-of-the-art",
     "best-in-class", "mission-critical", "enterprise-grade", "at scale",
@@ -587,21 +588,29 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
     # Fluff / meeting theater / empty JD cosplay.
     fluff_open = re.compile(
         r"(?i)^(facilitated|collaborated|conducted|participated|helped|ensured|"
-        r"boosted|enhanced usability)\b"
+        r"boosted|monitored|enhanced(?:\s+code\s+quality)?)\b"
+    )
+    fluff_anywhere = re.compile(
+        r"(?i)\b(?:collaborated with|facilitated|participated in|"
+        r"ensuring seamless|seamless user|refine cloud technology|"
+        r"improving the dashboard.?s scalability|"
+        r"reducing bugs(?!\s+by\b)(?!\s+from\b))\b"
     )
     fluff_phrase = re.compile(
-        r"(?i)\b(?:ai-powered product features|user experience|real-world impact|"
+        r"(?i)\b(?:ai-powered product features|user experience|user satisfaction|"
+        r"real-world impact|"
         r"scalable cloud solutions|growing user demands|ai-first product teams|"
         r"context-aware ai responses|technical discussions?|"
-        r"significantly improving|ensuring efficient operation)\b"
+        r"significantly improving|ensuring efficient operation|"
+        r"consistent performance across|seamless user interactions)\b"
     )
     for i, text in enumerate(plains):
-        if fluff_open.search(text.strip()):
+        if fluff_open.search(text.strip()) or fluff_anywhere.search(text):
             issues.append(
                 Issue(
                     "fluff-bullet",
-                    f"bullet {i + 1} opens with meeting/process theater — rewrite as "
-                    f"Built/Shipped/Cut work on the same system",
+                    f"bullet {i + 1} is meeting/process/empty theater — rewrite as "
+                    f"Built/Shipped/Cut/Raised work with a tool and a measured change",
                 )
             )
         if fluff_phrase.search(text):
@@ -612,6 +621,28 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
                     f"engineering (tool + change + system back-reference)",
                 )
             )
+
+    # Metrics: Clerxi must not look empty next to Intuit.
+    with_number = sum(1 for t in plains if re.search(r"\d", t))
+    with_from_to = sum(
+        1 for t in plains if re.search(r"\bfrom\b.+\bto\b", t.lower())
+    )
+    if len(plains) >= 4 and with_number < 2:
+        issues.append(
+            Issue(
+                "metric-starved",
+                f"only {with_number}/{len(plains)} bullets carry a number — need at least "
+                f"2 measured outcomes (coverage, latency, time, cost). Intuit-level density.",
+            )
+        )
+    if len(plains) >= 4 and with_from_to < 1:
+        issues.append(
+            Issue(
+                "metric-starved",
+                "need at least one from→to metric "
+                "(e.g. 'from 1.8s to 1.1s' or 'from 40% to 78%')",
+            )
+        )
 
     # Bare percent theater: "by 25%" with no from→to baseline.
     bare_pct = 0
