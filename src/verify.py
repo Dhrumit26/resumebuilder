@@ -58,8 +58,16 @@ _VAGUE_SUMMARY = {
 # The summary positions; the bullets prove. A claim with no proof below it is
 # the exact move that makes a resume read invented.
 _PRACTICE_CLAIMS = (
-    "accessib", "responsive", "cross-browser", "real-time", "machine learning",
+    "accessib", "responsive", "cross-browser", "real-time",
     "scalab", "distributed", "secure", "mobile", "microservice", "observab",
+    # Whole technical domains. A posting's headline term is the thing a model
+    # reaches for hardest, and claiming one you have never worked in is the
+    # single most damaging line on a resume — an interviewer opens there.
+    "machine learning", "deep learning", "neural network", "computer vision",
+    "natural language processing", "reinforcement learning", "recommender",
+    "cuda", "gpu", "parallel programming", "parallelization", "kernel",
+    "computer architecture", "low-level", "embedded", "compiler",
+    "cryptograph", "blockchain", "quantum",
 )
 
 
@@ -165,7 +173,11 @@ def verify_bullet(
                 )
             )
 
+    # A technology the fact's own sentence names is licensed even when it is not
+    # in `tools` — "semantic caching" appears in the core text of the fact that
+    # describes it, and the bullet is allowed to repeat what the fact says.
     allowed_tech = {t.lower() for t in fact.tools}
+    allowed_tech |= _mentioned_tech(fact.core + " " + " ".join(fact.angles), lexicon)
     for tech in sorted(_mentioned_tech(plain, lexicon)):
         if tech in allowed_tech:
             continue
@@ -200,6 +212,19 @@ def verify_bullet(
                 f"this work: {fact.core}",
             )
         )
+
+    # Claiming a technical domain the fact never mentions — the model reaching
+    # for the posting's headline term (a RAG bullet becoming "deep learning").
+    fact_corpus = (fact.core + " " + " ".join(fact.angles) + " " + " ".join(fact.tools)).lower()
+    low_plain = plain.lower()
+    for claim in _PRACTICE_CLAIMS:
+        if claim in low_plain and claim not in fact_corpus:
+            issues.append(
+                Issue(
+                    "invented-domain",
+                    f"'{claim}...' is not what this work was — the fact says: {fact.core}",
+                )
+            )
 
     # --- craft checks --------------------------------------------------------
     if len(words) < min_words:
@@ -255,6 +280,7 @@ def verify_summary(
     for fact in facts:
         allowed_numbers |= fact.numbers()
         allowed_tech |= {t.lower() for t in fact.tools}
+        allowed_tech |= _mentioned_tech(fact.core + " " + " ".join(fact.angles), lexicon)
 
     used_numbers = _NUM_RE.findall(plain)
     for number in used_numbers:

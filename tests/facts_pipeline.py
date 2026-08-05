@@ -221,6 +221,29 @@ def t18_unanchored_bullet_is_rejected():
     assert any(i.code == "unanchored" for i in issues)
 
 
+def t18b_claiming_a_technical_domain_the_fact_lacks_is_rejected():
+    """A GPU/ML posting must not turn RAG cost work into 'deep learning' work."""
+    fact = _fact("clerxi", "cost-40")
+    for claim in ("deep learning", "CUDA kernel", "computer vision"):
+        issues = verify_bullet(
+            f"Reduced {claim} inference costs by 40\\% through semantic caching "
+            "and embedding-dimension tuning in Python.",
+            fact, LEXICON,
+        )
+        assert any(i.code in ("invented-domain", "invented-tool") for i in issues), claim
+
+
+def t18c_technology_named_in_the_fact_itself_is_allowed():
+    """'semantic caching' is in this fact's core text, so the bullet may say it."""
+    fact = _fact("clerxi", "cost-40")
+    issues = verify_bullet(
+        "Reduced infrastructure and inference costs by 40\\% through semantic caching, "
+        "dynamic top-k sizing, and embedding tuning in Python.",
+        fact, LEXICON,
+    )
+    assert not issues, [f"{i.code}: {i.message}" for i in issues]
+
+
 def t19_summary_may_not_repeat_bullet_numbers():
     facts = [_fact("intuit", "react-form-ux")]
     issues = verify_summary(
@@ -354,7 +377,7 @@ def t28_skills_section_reflects_the_bullets():
     assert "C++" not in skills, "off-domain skills should be pruned"
 
 
-_TEST_NAME = __import__("re").compile(r"^t\d\d_")
+_TEST_NAME = __import__("re").compile(r"^t\d+[a-z]?_")
 
 
 def main() -> int:
