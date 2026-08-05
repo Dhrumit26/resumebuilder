@@ -10,8 +10,8 @@
   <div class="container">
     <header>
       <h1>Tech Resume Builder</h1>
-      <p class="subtitle">Gold-standard tech resume tailoring — built to beat typical applicants</p>
-      <p class="tagline">Parallel section agents · hard 1-page limits · ATS + hiring manager score</p>
+      <p class="subtitle">Tailors your real experience to a job posting — and never invents any of it</p>
+      <p class="tagline">Every bullet traces to a fact you wrote · your LaTeX layout and bullet counts · coverage measured, not guessed</p>
     </header>
 
     <main>
@@ -27,48 +27,43 @@
 
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
-        <p>Analyzing the job description and writing sections…</p>
-        <p class="loading-steps">A usable resume appears as soon as it exists, then improves in place</p>
-        <p class="loading-note">Jake LaTeX only (no markdown) · mostly 2-line bullets · targets ATS 90+</p>
+        <p>Analyzing the posting, selecting your facts, writing sections…</p>
+        <p class="loading-steps">Usually 10–20 seconds</p>
+        <p class="loading-note">Bullets are checked against your fact bank; anything unsupported is rewritten or reverted</p>
       </div>
 
       <div id="error" class="error hidden"></div>
 
-      <div id="stream-status" class="stream-status"></div>
-
       <section id="results" class="results hidden">
         <div id="role-target" class="role-target"></div>
-        <div id="remake-meta" class="role-target"></div>
+        <div id="build-meta" class="role-target"></div>
 
         <div class="scores-panel">
-          <h2>Scores vs Typical Applicant</h2>
+          <h2>Match Measurement</h2>
+          <p class="tagline">Computed from the finished resume — the same resume always scores the same. This measures fit against the posting, not your odds of being hired.</p>
           <div class="score-cards">
             <div class="score-card primary">
-              <span class="score-label">ATS Match Score</span>
+              <span class="score-label">JD Match</span>
               <span id="overall-score" class="score-value">—</span>
               <span id="verdict" class="verdict"></span>
-              <span id="vs-typical" class="vs-typical"></span>
             </div>
             <div class="score-card">
-              <span class="score-label">ATS Pass Likelihood</span>
-              <span id="ats-pass" class="score-value small">—</span>
-              <span id="ats-review-score" class="sub-score"></span>
+              <span class="score-label">Keyword Coverage</span>
+              <span id="coverage-score" class="score-value small">—</span>
+              <span id="coverage-detail" class="sub-score"></span>
             </div>
             <div class="score-card">
-              <span class="score-label">Hiring Manager</span>
-              <span id="human-score" class="score-value">—</span>
-              <span id="interview-rec" class="verdict"></span>
-              <span id="competitive-rank" class="sub-score"></span>
+              <span class="score-label">Bullets With Metrics</span>
+              <span id="metric-score" class="score-value small">—</span>
+              <span id="metric-detail" class="sub-score"></span>
             </div>
           </div>
 
-          <div id="competitive-advantages" class="advantages"></div>
-          <div id="interview-triggers" class="triggers"></div>
           <div id="score-breakdown" class="breakdown"></div>
           <div id="matched-keywords" class="keywords"></div>
           <div id="missing-keywords" class="keywords missing"></div>
-          <div id="rejection-risks" class="risks"></div>
-          <div id="recommendations" class="recommendations"></div>
+          <div id="fallbacks" class="risks"></div>
+          <div id="selected-facts" class="recommendations"></div>
         </div>
 
         <div class="output-panel">
@@ -83,7 +78,7 @@
     </main>
 
     <footer>
-      <p>Put your real resume in <code>latex/*/original.tex</code>. Uses Google XYZ formula, JD keyword mirroring, and multi-pass review.</p>
+      <p>Layout and bullet counts come from <code>latex/*/original.tex</code>. What the bullets may say comes from <code>data/facts.yaml</code> — add more real facts there and the tailoring gets stronger.</p>
     </footer>
   </div>
 

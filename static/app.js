@@ -11,6 +11,10 @@ let latestLatex = "";
 
 function show(el) { el.classList.remove("hidden"); }
 function hide(el) { el.classList.add("hidden"); }
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
 function scoreColor(score) {
   if (score >= 80) return "var(--success)";
@@ -18,212 +22,147 @@ function scoreColor(score) {
   return "var(--error)";
 }
 
+function verdictFor(score) {
+  if (score >= 85) return "strong match";
+  if (score >= 70) return "good match";
+  if (score >= 55) return "partial match";
+  return "weak match — the posting wants experience this resume does not have";
+}
+
 function renderRoleTarget(jd) {
   const el = document.getElementById("role-target");
   if (!jd) { el.innerHTML = ""; return; }
   el.innerHTML = `
     <h3>Target Role</h3>
-    <p><strong>${jd.role_title || "—"}</strong> · ${jd.seniority_level || "—"} · ${jd.company_type || "—"} · ${jd.years_experience_wanted || ""}</p>
-    <p class="positioning">${jd.competitive_positioning || jd.ideal_summary_angle || ""}</p>
+    <p><strong>${esc(jd.role_title || "—")}</strong> · ${esc(jd.domain || "—")} · ${esc(jd.seniority_level || "")}</p>
+    <p class="positioning">${esc(jd.competitive_positioning || jd.ideal_summary_angle || "")}</p>
   `;
 }
 
-function renderRemakeMeta(meta) {
-  const el = document.getElementById("remake-meta");
+function renderBuildMeta(meta) {
+  const el = document.getElementById("build-meta");
   if (!meta) { el.innerHTML = ""; return; }
-  const history = (meta.history || [])
-    .map(h => {
-      const cand = (h.candidate_scores && h.candidate_scores.length > 1)
-        ? ` [candidates: ${h.candidate_scores.join("/")} → kept #${h.picked_candidate}]` : "";
-      const fixed = (h.fixed_sections && h.fixed_sections.length)
-        ? ` [fixed: ${h.fixed_sections.join(", ")}]` : "";
-      const fb = (h.fallback_used && h.fallback_used.length)
-        ? ` (kept prev: ${h.fallback_used.join(", ")})` : "";
-      return `${h.type} → ${h.score ?? "—"}${cand}${fixed}${fb}`;
-    })
-    .join(" · ");
-  const passed = meta.passed_threshold ? "passed threshold" : "below threshold (best effort)";
+  const lines = (meta.skills_lines || []).join(", ");
   el.innerHTML = `
-    <h3>Optimization Loop</h3>
-    <p><strong>Final ATS:</strong> ${meta.final_score ?? "—"} · min ${meta.score_threshold ?? 90} · target ${meta.target_score ?? 95} (${passed})</p>
-    <p class="positioning">Remakes: ${meta.remake_attempts ?? 0} · History: ${history || "—"} · Kept best version from pass ${meta.best_pass ?? 1} · LLM calls: ${meta.llm_calls ?? "—"}</p>
+    <h3>How This Was Built</h3>
+    <p class="positioning">
+      ${meta.llm_calls ?? "—"} model calls · summary ${meta.summary_words ?? "—"} words ·
+      skills lines: ${esc(lines)}
+    </p>
   `;
 }
 
-function renderScores(data) {
-  const atsScorer = data.scores.ats_scorer;
-  const atsReview = data.scores.ats_reviewer;
-  const humanReview = data.scores.human_reviewer;
+// Bullets that failed verification and reverted to the plain fact text. Worth
+// surfacing: it means the writer could not phrase that fact within the rules.
+function renderFallbacks(meta) {
+  const el = document.getElementById("fallbacks");
+  const flagged = (meta.blocks || []).filter(b => (b.fell_back_to_fact || []).length);
+  const summaryFell = meta.summary && meta.summary.fell_back;
+  if (!flagged.length && !summaryFell) { el.innerHTML = ""; return; }
 
-  const overall = atsScorer.overall_score ?? 0;
+  const items = flagged.map(b =>
+    `<li class="risk">${esc(b.block)}: ${esc((b.fell_back_to_fact || []).join(", "))}</li>`
+  );
+  if (summaryFell) {
+    items.push('<li class="risk">summary: kept the original — the tailored draft could not pass verification</li>');
+  }
+  el.innerHTML =
+    "<h3>Reverted to Plain Fact Text</h3>" +
+    "<p class='positioning'>These came out as the raw fact rather than a tailored sentence. Usually means the fact is thin — adding detail in data/facts.yaml helps.</p>" +
+    `<ul>${items.join("")}</ul>`;
+}
+
+function renderSelectedFacts(meta) {
+  const el = document.getElementById("selected-facts");
+  const selected = meta.selected_facts || {};
+  const blocks = Object.keys(selected);
+  if (!blocks.length) { el.innerHTML = ""; return; }
+
+  el.innerHTML =
+    "<h3>Facts Chosen For This Posting</h3>" +
+    "<p class='positioning'>Ranked by relevance to this JD. The same fact bank produces a different order for a different posting.</p>" +
+    blocks.map(name => `
+      <div class="breakdown-item"><span>${esc(name)}</span><span></span></div>
+      <div class="breakdown-detail">${
+        selected[name].map(f => `${esc(f.id)} (${f.score})`).join(" · ")
+      }</div>
+    `).join("");
+}
+
+function renderMeasurement(measurement) {
+  const score = measurement.score ?? 0;
   const overallEl = document.getElementById("overall-score");
-  overallEl.textContent = overall;
-  overallEl.style.color = scoreColor(overall);
+  overallEl.textContent = score;
+  overallEl.style.color = scoreColor(score);
+  document.getElementById("verdict").textContent = verdictFor(score);
 
-  document.getElementById("verdict").textContent =
-    (atsScorer.verdict || "").replace(/_/g, " ");
+  const breakdown = measurement.breakdown || {};
+  const kw = breakdown.keyword_coverage || {};
+  const md = breakdown.metric_density || {};
 
-  const vsTypical = atsScorer.vs_typical_applicant || humanReview.vs_typical_applicant || "";
-  document.getElementById("vs-typical").textContent = vsTypical;
+  const covEl = document.getElementById("coverage-score");
+  const covPct = kw.max ? Math.round((kw.score / kw.max) * 100) : 0;
+  covEl.textContent = `${covPct}%`;
+  covEl.style.color = scoreColor(covPct);
+  document.getElementById("coverage-detail").textContent = kw.details || "";
 
-  document.getElementById("ats-pass").textContent =
-    (atsReview.pass_likelihood || "—").toUpperCase();
-  document.getElementById("ats-pass").style.color = scoreColor(atsReview.ats_score ?? 0);
-  document.getElementById("ats-review-score").textContent =
-    atsReview.ats_score != null ? `Score: ${atsReview.ats_score}` : "";
+  const mdEl = document.getElementById("metric-score");
+  const mdPct = md.max ? Math.round((md.score / md.max) * 100) : 0;
+  mdEl.textContent = `${mdPct}%`;
+  mdEl.style.color = scoreColor(mdPct);
+  document.getElementById("metric-detail").textContent = md.details || "";
 
-  const humanEl = document.getElementById("human-score");
-  humanEl.textContent = humanReview.human_score ?? "—";
-  humanEl.style.color = scoreColor(humanReview.human_score ?? 0);
+  document.getElementById("score-breakdown").innerHTML =
+    "<h3>Breakdown</h3>" +
+    Object.entries(breakdown).map(([key, val]) => `
+      <div class="breakdown-item">
+        <span>${esc(key.replace(/_/g, " "))}</span>
+        <span>${val.score}/${val.max}</span>
+      </div>
+      <div class="breakdown-detail">${esc(val.details || "")}</div>
+    `).join("");
 
-  document.getElementById("interview-rec").textContent =
-    (humanReview.interview_recommendation || "").replace(/_/g, " ");
-  document.getElementById("competitive-rank").textContent =
-    (humanReview.competitive_rank || "").replace(/_/g, " ");
+  const matched = measurement.matched_keywords || [];
+  document.getElementById("matched-keywords").innerHTML = matched.length
+    ? "<h3>JD Keywords On The Page</h3><div class='tag-list'>" +
+      matched.map(k => `<span class="tag">${esc(k)}</span>`).join("") + "</div>"
+    : "";
 
-  const advEl = document.getElementById("competitive-advantages");
-  const advantages = atsScorer.competitive_advantages || humanReview.strengths || [];
-  if (advantages.length) {
-    advEl.innerHTML = "<h3>Why You Beat Typical Applicants</h3><ul>" +
-      advantages.map(a => `<li>${a}</li>`).join("") + "</ul>";
-  } else { advEl.innerHTML = ""; }
-
-  const trigEl = document.getElementById("interview-triggers");
-  const triggers = humanReview.interview_triggers || [];
-  if (triggers.length) {
-    trigEl.innerHTML = "<h3>Interview Triggers</h3><ul>" +
-      triggers.map(t => `<li>${t}</li>`).join("") + "</ul>";
-  } else { trigEl.innerHTML = ""; }
-
-  const breakdownEl = document.getElementById("score-breakdown");
-  if (atsScorer.breakdown) {
-    breakdownEl.innerHTML = "<h3>Score Breakdown</h3>" +
-      Object.entries(atsScorer.breakdown)
-        .map(([key, val]) =>
-          `<div class="breakdown-item">
-            <span>${key.replace(/_/g, " ")}</span>
-            <span>${val.score}/${val.max}</span>
-          </div>
-          <div class="breakdown-detail">${val.details || ""}</div>`
-        ).join("");
-  }
-
-  const matchedEl = document.getElementById("matched-keywords");
-  const matched = atsScorer.top_matched_skills || atsReview.matched_keywords || [];
-  if (matched.length) {
-    matchedEl.innerHTML = "<h3>Matched Skills & Keywords</h3><div class='tag-list'>" +
-      matched.map(k => `<span class="tag">${k}</span>`).join("") + "</div>";
-  }
-
-  const missingEl = document.getElementById("missing-keywords");
-  const missing = atsScorer.critical_gaps || atsReview.missing_keywords || [];
-  if (missing.length) {
-    missingEl.innerHTML = "<h3>Critical Gaps</h3><div class='tag-list'>" +
-      missing.map(k => `<span class="tag missing">${k}</span>`).join("") + "</div>";
-  }
-
-  const risksEl = document.getElementById("rejection-risks");
-  const risks = atsReview.rejection_risks || humanReview.red_flags || [];
-  if (risks.length) {
-    risksEl.innerHTML = "<h3>Rejection Risks</h3><ul>" +
-      risks.map(r => `<li class="risk">${r}</li>`).join("") + "</ul>";
-  } else { risksEl.innerHTML = ""; }
-
-  const recsEl = document.getElementById("recommendations");
-  const recs = [
-    ...(atsReview.recommendations || []),
-    ...(humanReview.improvement_suggestions || []),
-  ];
-  if (recs.length) {
-    recsEl.innerHTML = "<h3>Improvements (Ranked by Impact)</h3><ul>" +
-      recs.map(r => `<li>${r}</li>`).join("") + "</ul>";
-  }
+  const missing = measurement.missing_keywords || [];
+  document.getElementById("missing-keywords").innerHTML = missing.length
+    ? "<h3>Genuine Gaps</h3>" +
+      "<p class='positioning'>The posting asks for these and your fact bank has no evidence of them. They are left off on purpose — if you do have this experience, add it to data/facts.yaml.</p>" +
+      "<div class='tag-list'>" +
+      missing.map(k => `<span class="tag missing">${esc(k)}</span>`).join("") + "</div>"
+    : "";
 }
 
-function setStatus(text, refining) {
-  const el = document.getElementById("stream-status");
-  if (!el) return;
-  el.textContent = text || "";
-  el.classList.toggle("refining", !!refining);
-}
-
-function renderResult(data, refining) {
+function renderResult(data) {
   latestLatex = data.latex;
   latexOutput.textContent = data.latex;
   renderRoleTarget(data.jd_analysis);
-  renderRemakeMeta(data.meta);
-  renderScores(data);
+  renderBuildMeta(data.meta || {});
+  renderMeasurement(data.measurement || {});
+  renderFallbacks(data.meta || {});
+  renderSelectedFacts(data.meta || {});
   show(results);
-  setStatus(
-    refining
-      ? `Usable resume ready (ATS ${data.meta?.final_score ?? "—"}). Still refining — this will update automatically.`
-      : "",
-    refining
-  );
 }
 
-// SSE over POST, so EventSource (GET-only) can't be used — parse the frames by hand.
-async function streamBuild(jobDescription) {
-  const res = await fetch("/api/build/stream", {
+async function build(jobDescription) {
+  const res = await fetch("/api/v2/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ job_description: jobDescription }),
   });
   if (!res.ok) {
-    let detail = "Generation failed";
-    try { detail = (await res.json()).detail || detail; } catch (_) {}
+    let detail = `Generation failed (HTTP ${res.status})`;
+    try {
+      const body = await res.json();
+      detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail) || detail;
+    } catch (_) { /* keep the status-code message */ }
     throw new Error(detail);
   }
-  if (!res.body) throw new Error("Streaming is not supported by this browser");
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let sawResult = false;
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    let split;
-    while ((split = buffer.indexOf("\n\n")) !== -1) {
-      const frame = buffer.slice(0, split);
-      buffer = buffer.slice(split + 2);
-
-      let event = "message";
-      const dataLines = [];
-      for (const line of frame.split("\n")) {
-        if (line.startsWith("event:")) event = line.slice(6).trim();
-        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
-      }
-      if (!dataLines.length) continue;
-
-      let payload;
-      try { payload = JSON.parse(dataLines.join("\n")); } catch (_) { continue; }
-
-      if (event === "jd") {
-        renderRoleTarget(payload.jd_analysis);
-        setStatus("Job description analyzed — writing sections…", true);
-      } else if (event === "draft") {
-        hide(loading);
-        renderResult(payload, true);
-        sawResult = true;
-      } else if (event === "pass") {
-        setStatus(
-          `Refining — pass ${payload.pass}, best ATS ${payload.best_score ?? "—"}…`,
-          true
-        );
-      } else if (event === "final") {
-        hide(loading);
-        renderResult(payload, false);
-        sawResult = true;
-      } else if (event === "error") {
-        throw new Error(payload.detail || "Generation failed");
-      }
-    }
-  }
-  if (!sawResult) throw new Error("Stream ended before a resume was produced");
+  renderResult(await res.json());
 }
 
 buildBtn.addEventListener("click", async () => {
@@ -236,12 +175,11 @@ buildBtn.addEventListener("click", async () => {
 
   hide(errorEl);
   hide(results);
-  setStatus("", false);
   show(loading);
   buildBtn.disabled = true;
 
   try {
-    await streamBuild(jobDescription);
+    await build(jobDescription);
   } catch (err) {
     errorEl.textContent = err.message;
     show(errorEl);

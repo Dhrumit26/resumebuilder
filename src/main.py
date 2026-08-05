@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .pipeline import build_tailored_resume
+from .pipeline_v2 import build_resume_v2
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -68,6 +69,19 @@ def build_resume(request: BuildRequest):
             status_code=502,
             detail=f"Model returned invalid JSON. Try again. ({exc})",
         ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Resume generation failed: {exc}") from exc
+
+
+# Fact-grounded build. Every bullet traces to data/facts.yaml, the LaTeX
+# templates own the layout, and quality is measured in code rather than scored
+# by an LLM. See src/pipeline_v2.py.
+@app.post("/api/v2/build")
+def build_resume_facts(request: BuildRequest):
+    try:
+        return build_resume_v2(request.job_description)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:

@@ -1,0 +1,289 @@
+# =============================================================================
+# FACT BANK — the only source of truth for what may appear on the resume.
+# =============================================================================
+#
+# Every bullet the builder writes must trace back to a fact in this file.
+# The writer agents may CHOOSE facts, ORDER them, and REPHRASE them in the job
+# description's vocabulary. They may never invent a system, a tool, or a number.
+#
+# HOW TAILORING WORKS
+#   The LaTeX templates in latex/ fix the layout and the bullet count
+#   (Clerxi 5, Intuit 5, each project 2). Tailoring therefore happens by:
+#     1. SELECTION  — which real facts fill those slots (needs more facts than
+#                     slots to have any choice — see "ADDING FACTS" below)
+#     2. ORDER      — the fact that matches the JD best goes first
+#     3. FRAMING    — the same fact described at the abstraction level and in
+#                     the vocabulary the JD cares about, without changing what
+#                     actually happened
+#
+# ADDING FACTS  <-- read this
+#   Right now each role has exactly as many facts as it has bullet slots, so
+#   every fact is always used and only order and framing change. The more REAL
+#   facts you add here, the more genuinely the resume can flex toward a job.
+#   Small things count and are worth adding: a UI you touched, a script you
+#   wrote, a dashboard, a migration, a bug class you fixed, a doc you owned,
+#   an on-call save, a code review practice. If you did frontend work at
+#   Clerxi, add it — that is what lets a frontend JD pull real frontend
+#   bullets out of your current role instead of backend ones reworded.
+#
+# FIELDS
+#   core     (required) What actually happened, in plain words. The immutable
+#            fact. Writers rephrase this; they never add to it.
+#   tools    Technologies genuinely used for THIS fact. A writer may not name
+#            a tool in a bullet unless it is listed on that bullet's fact.
+#   themes   Engineering themes, used by code to match facts to a JD.
+#            Vocabulary: see THEMES in src/facts.py.
+#   metrics  Every number that may appear in a bullet from this fact, written
+#            exactly. A number not listed here is rejected as fabricated.
+#   frozen   Tool pairings that must survive rewording verbatim
+#            (e.g. "Cypress to Playwright" — never becomes "Python to Playwright").
+#   angles   Optional. Truthful alternative framings of the same work, for JDs
+#            in a different domain. These are angles, not new claims.
+# =============================================================================
+
+profile:
+  name: Dhrumit Savaliya
+  phone: 562-515-5080
+  email: dhrumitsavaliya7@gmail.com
+  linkedin: linkedin.com/in/dhrumit-savaliya
+  github: github.com/dhrumit26
+
+education:
+  - school: California State University, Long Beach
+    location: Long Beach, CA
+    degree: Bachelor of Science in Computer Science
+    date: "Graduated: Dec. 2025"
+
+roles:
+  - id: clerxi
+    company: Clerxi AI
+    title: Software Engineer
+    location: Huntington Beach, CA
+    dates: May. 2026 -- Present
+    tenure_months: 3
+    # flexible: this role's facts may be re-ordered and re-framed toward the
+    # JD's domain. It does NOT mean inventing work — every bullet still comes
+    # from a fact below.
+    flexible: true
+    facts:
+      - id: retrieval-services
+        core: >-
+          Built Python backend retrieval services on AWS for a distributed multi-agent
+          system, designing service-oriented APIs that run semantic reranking over
+          technical documents.
+        tools: [Python, AWS, REST APIs]
+        themes: [backend-services, api-design, distributed-systems, cloud-aws, ai-ml, search-retrieval, oop-design]
+        metrics: []
+        angles:
+          - Backend API development on a production service
+          - Service-oriented architecture and API design
+          - Search and ranking infrastructure
+
+      - id: latency-45
+        core: >-
+          Cut multi-agent query latency by 45% by re-engineering the core data structures
+          and retrieval algorithms, watching live production services throughout to keep
+          accuracy steady.
+        tools: [Python]
+        themes: [performance-optimization, algorithms-data-structures, monitoring-observability, search-retrieval, backend-services]
+        metrics: ["45%"]
+        angles:
+          - Profiling and optimizing a hot path in production
+          - Data structure and algorithm work with a measured before/after
+
+      - id: cost-40
+        core: >-
+          Reduced infrastructure and inference costs by 40% through semantic caching,
+          dynamic top-k sizing, and embedding-dimension tuning across a distributed
+          vector search backend.
+        tools: [Python]
+        themes: [cost-optimization, caching, performance-optimization, distributed-systems, ai-ml, search-retrieval]
+        metrics: ["40%"]
+        angles:
+          - Caching strategy and resource efficiency work
+          - Cost/performance tuning of a production backend
+
+      - id: agent-orchestration-api
+        core: >-
+          Deployed a containerized API server for stateful agent orchestration with Docker,
+          securely exposing internal ERP and project-management systems for read/write
+          automation.
+        tools: [Docker, REST APIs, AWS]
+        themes: [containers-devops, api-design, integrations, automation-tooling, security-auth, backend-services, cloud-aws]
+        metrics: []
+        angles:
+          - Containerized deployment and DevOps practice
+          - Third-party/system integration behind a secure API
+          - Internal tooling and workflow automation
+
+      - id: sdlc-delivery
+        core: >-
+          Worked with engineering and product across the full SDLC — API contract
+          definition, deployment, and production support — shipping agent infrastructure
+          on schedule.
+        tools: []
+        themes: [collaboration-process, api-contracts, ci-cd, backend-services, production-support]
+        metrics: []
+        angles:
+          - Cross-functional delivery and on-call/production support
+          - Owning an API contract from design through release
+
+      # ---------------------------------------------------------------------
+      # ADD MORE REAL CLERXI FACTS BELOW. Each one you add gives a JD in a
+      # different domain something honest to select. Template:
+      #
+      # - id: short-slug
+      #   core: >-
+      #     What you actually did, one or two lines.
+      #   tools: [Tool, Tool]
+      #   themes: [see THEMES in src/facts.py]
+      #   metrics: ["35%", "2 hours to 10 minutes"]
+      # ---------------------------------------------------------------------
+
+  - id: intuit
+    company: Intuit
+    title: Software Engineer Intern
+    location: San Diego, CA
+    dates: Jun. 2025 -- Aug. 2025
+    tenure_months: 3
+    # fixed history: facts may be re-ordered and re-worded, never re-domained.
+    flexible: false
+    facts:
+      - id: ci-migration
+        core: >-
+          Cut flaky CI failures by 65% and pipeline runtime from 45 to 28 minutes by
+          migrating end-to-end tests from Cypress to Playwright, speeding releases by
+          2 days per sprint.
+        tools: [Cypress, Playwright]
+        themes: [ci-cd, testing, test-automation, performance-optimization, developer-experience]
+        metrics: ["65%", "45 to 28 minutes", "2 days per sprint"]
+        frozen: ["Cypress to Playwright"]
+        angles:
+          - Pipeline reliability and build speed
+          - Test infrastructure ownership
+
+      - id: platform-refactor
+        core: >-
+          Tripled iteration speed and shortened deployment cycles from 2 weeks to 4 days
+          by refactoring TypeScript and JavaScript platform services that power low-code
+          features used across teams.
+        tools: [TypeScript, JavaScript]
+        themes: [refactoring, typescript-js, backend-services, ci-cd, developer-experience, collaboration-process]
+        metrics: ["Tripled", "3x", "2 weeks to 4 days"]
+        angles:
+          - Refactoring shared services other teams depend on
+          - Release cadence and developer velocity
+
+      - id: test-coverage
+        core: >-
+          Raised unit and integration test coverage from 42% to 78% with Jest and React
+          Testing Library, cutting production defects by 40%.
+        tools: [Jest, React Testing Library, React]
+        themes: [testing, test-automation, quality, frontend-ui, react]
+        metrics: ["42% to 78%", "40%"]
+        angles:
+          - Test strategy for a frontend codebase
+          - Defect prevention with measured coverage
+
+      - id: react-form-ux
+        core: >-
+          Built React pre-selection logic that cut form completion time by 35% and dropped
+          configuration-related support tickets by 50%.
+        tools: [React, JavaScript]
+        themes: [frontend-ui, react, typescript-js, ux-performance, product-engineering]
+        metrics: ["35%", "50%"]
+        angles:
+          - Front-end feature work measured by user outcome
+          - Form UX and input handling
+
+      - id: api-contracts
+        core: >-
+          Defined and maintained API contracts across service boundaries, giving cleaner
+          cross-team handoffs and fewer integration breaks during multi-sprint releases.
+        tools: [REST APIs]
+        themes: [api-design, api-contracts, collaboration-process, backend-services, integrations]
+        metrics: []
+        angles:
+          - Interface design between services owned by different teams
+
+      # ADD MORE REAL INTUIT FACTS HERE (same template as above).
+
+projects:
+  - id: autofixee
+    name: AutoFixee
+    tagline: AI self-healing CI platform
+    url: https://auto-fix-dashboard.vercel.app/
+    date: Jan. 2026
+    facts:
+      - id: platform
+        # lead: introduces what the project IS, so it goes first when selected —
+        # otherwise a detail bullet can end up referring to something unnamed.
+        lead: true
+        core: >-
+          Built an AI self-healing CI platform that watches failed GitHub Actions and
+          GitLab CI runs in real time, identifies root causes, and opens verified fix PRs
+          automatically, cutting manual debug time by 70%.
+        tools: [GitHub Actions, GitLab CI, Python]
+        themes: [ci-cd, automation-tooling, ai-ml, testing, containers-devops, developer-experience]
+        metrics: ["70%"]
+
+      - id: services
+        core: >-
+          Engineered Python/FastAPI webhook and REST services backed by PostgreSQL and AWS,
+          cutting inference costs by 80%+ with a three-tier rule-based and multi-agent
+          remediation strategy.
+        tools: [Python, FastAPI, PostgreSQL, AWS]
+        themes: [backend-services, api-design, databases, cloud-aws, cost-optimization, ai-ml]
+        metrics: ["80%+"]
+
+  - id: beachbank
+    name: Beach Bank
+    tagline: Full-stack banking application
+    url: https://beachbank.netlify.app
+    date: Dec. 2025
+    facts:
+      - id: app
+        lead: true
+        core: >-
+          Built a full-stack banking app with multi-account linking, real-time balances,
+          transaction history, and secure fund transfers through Plaid and Dwolla REST API
+          integrations.
+        tools: [Plaid, Dwolla, REST APIs]
+        themes: [full-stack, integrations, api-design, frontend-ui, security-auth, product-engineering]
+        metrics: []
+
+      - id: stack
+        core: >-
+          Implemented it with Next.js 14, React, TypeScript, PostgreSQL, OAuth 2.0, and
+          GitHub Actions CI/CD, adding pagination and spending analytics.
+        tools: [Next.js, React, TypeScript, PostgreSQL, OAuth 2.0, GitHub Actions]
+        themes: [frontend-ui, react, typescript-js, databases, ci-cd, security-auth, full-stack]
+        metrics: []
+
+# -----------------------------------------------------------------------------
+# SKILLS — only technologies actually used. The builder picks 4 category lines
+# (the template has 4 slots) and orders each line to lead with what the JD asks
+# for. It never adds a skill that is not listed here.
+# -----------------------------------------------------------------------------
+skills:
+  categories:
+    - name: Languages
+      always: true          # this line is always shown, and always first
+      items: [Python, SQL, TypeScript, JavaScript, Java, C, C++]
+      themes: [any]
+
+    - name: Backend & Cloud
+      items: [FastAPI, Node.js, REST APIs, PostgreSQL, Redis, Docker, AWS]
+      themes: [backend-services, api-design, cloud-aws, databases, containers-devops, distributed-systems]
+
+    - name: AI & Data
+      items: [LLMs, Multi-Agent Systems, Vector Search, Semantic Caching, RAG]
+      themes: [ai-ml, search-retrieval, caching]
+
+    - name: Testing & CI/CD
+      items: [Jest, Playwright, Cypress, React Testing Library, GitHub Actions, GitLab CI, Jenkins, Git]
+      themes: [testing, test-automation, ci-cd, quality, developer-experience]
+
+    - name: Frontend
+      items: [React, Next.js, HTML, CSS]
+      themes: [frontend-ui, react, typescript-js, full-stack, ux-performance]
