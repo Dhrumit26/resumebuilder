@@ -18,11 +18,26 @@ const JD_KEY = "resumeBuilder.jobDescription";
 let latestLatex = "";
 let latestResult = null;
 
+function normalizeJd(text) {
+  return String(text ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function currentJd() {
+  return (jobInput && jobInput.value.trim()) || "";
+}
+
+// A stored resume belongs to the posting it was built from. Without this check a
+// new posting inherits the previous one's domain through the restored result.
 try {
   const saved = sessionStorage.getItem(RESULT_KEY);
-  if (saved) latestResult = JSON.parse(saved);
+  const parsed = saved ? JSON.parse(saved) : null;
   const savedJd = sessionStorage.getItem(JD_KEY);
   if (savedJd && jobInput && !jobInput.value.trim()) jobInput.value = savedJd;
+  if (parsed && normalizeJd(parsed.built_from_jd) === normalizeJd(currentJd())) {
+    latestResult = parsed;
+  } else {
+    sessionStorage.removeItem(RESULT_KEY);
+  }
 } catch (_) { /* ignore */ }
 
 function show(el) { if (el) el.classList.remove("hidden"); }
@@ -32,8 +47,9 @@ function esc(s) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-function persistResult(data) {
-  latestResult = data;
+function persistResult(data, jobDescription) {
+  const builtFrom = jobDescription || data.built_from_jd || currentJd();
+  latestResult = Object.assign({}, data, { built_from_jd: builtFrom });
   latestLatex = data.latex || "";
   try {
     sessionStorage.setItem(RESULT_KEY, JSON.stringify({
@@ -43,9 +59,31 @@ function persistResult(data) {
       meta: data.meta,
       measurement: data.measurement,
       gaps: data.gaps,
+      built_from_jd: builtFrom,
     }));
-    if (jobInput) sessionStorage.setItem(JD_KEY, jobInput.value.trim());
+    sessionStorage.setItem(JD_KEY, builtFrom);
   } catch (_) { /* quota / private mode */ }
+}
+
+function clearBuildState() {
+  latestResult = null;
+  latestLatex = "";
+  try { sessionStorage.removeItem(RESULT_KEY); } catch (_) { /* ignore */ }
+  if (latexOutput) latexOutput.textContent = "";
+  hide(results);
+  clearRefineChat();
+}
+
+// Rewrites apply to the resume as generated. Once the posting in the box no
+// longer matches, a rewrite would splice the old domain into the new target.
+function syncRefineAvailability() {
+  if (!refineBtn) return;
+  const stale =
+    !!latestResult && normalizeJd(currentJd()) !== normalizeJd(latestResult.built_from_jd);
+  refineBtn.disabled = stale;
+  refineBtn.title = stale
+    ? "The job description changed — generate again before suggesting rewrites."
+    : "";
 }
 
 function scoreColor(score) {
@@ -206,8 +244,8 @@ function renderGapQuestions(gaps) {
     `<ul>${questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
 }
 
-function renderResult(data, { appendChat } = {}) {
-  persistResult(data);
+function renderResult(data, { appendChat, jobDescription } = {}) {
+  persistResult(data, jobDescription);
   if (latexOutput) latexOutput.textContent = data.latex;
   renderRoleTarget(data.jd_analysis);
   renderBuildMeta(data.meta || {});
@@ -217,6 +255,7 @@ function renderResult(data, { appendChat } = {}) {
   renderSelectedFacts(data.meta || {});
   if (appendChat) appendRefineMessage("bot", appendChat);
   show(results);
+  syncRefineAvailability();
 }
 
 function appendRefineMessage(role, text) {
@@ -251,10 +290,12 @@ function setRefineBusy(busy) {
     hide(refineLoading);
     hide(refineStatus);
     if (refineStatus) refineStatus.classList.remove("refining");
+    syncRefineAvailability();
   }
 }
 
 async function build(jobDescription) {
+  clearBuildState();
   const res = await fetch("/api/v2/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -268,17 +309,23 @@ async function build(jobDescription) {
     } catch (_) { /* keep the status-code message */ }
     throw new Error(detail);
   }
-  clearRefineChat();
-  renderResult(await res.json());
+  renderResult(await res.json(), { jobDescription });
 }
 
 async function refine(suggestion) {
   if (!latestResult || !latestResult.sections) {
     throw new Error("Generate a resume first, then suggest a rewrite.");
   }
-  const jd = (jobInput && jobInput.value.trim()) || sessionStorage.getItem(JD_KEY) || "";
+  const jd = latestResult.built_from_jd || "";
+  const typed = currentJd();
+  if (typed && normalizeJd(typed) !== normalizeJd(jd)) {
+    throw new Error(
+      "This resume was generated for a different job description. " +
+      "Click Generate for the new posting, then suggest rewrites."
+    );
+  }
   if (jd.length < 20) {
-    throw new Error("Paste the job description above again, then retry the rewrite.");
+    throw new Error("Generate the resume again for this posting, then retry the rewrite.");
   }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 180000);
@@ -317,7 +364,7 @@ async function refine(suggestion) {
   const note = (data.meta && data.meta.refine_note) || "Updated the resume from your suggestion.";
   const changed = ((data.meta && data.meta.refine_changed) || []).join(", ");
   const botText = changed ? `${note} (updated: ${changed})` : note;
-  renderResult(data, { appendChat: botText });
+  renderResult(data, { appendChat: botText, jobDescription: jd });
 }
 
 async function onBuildClick() {
@@ -369,6 +416,7 @@ async function onRefineClick() {
 }
 
 if (buildBtn) buildBtn.addEventListener("click", onBuildClick);
+if (jobInput) jobInput.addEventListener("input", syncRefineAvailability);
 if (refineBtn) {
   refineBtn.addEventListener("click", (e) => {
     e.preventDefault();
@@ -408,5 +456,7 @@ if (downloadBtn) {
 }
 
 if (latestResult && latestResult.latex) {
-  renderResult(latestResult);
+  renderResult(latestResult, { jobDescription: latestResult.built_from_jd });
+} else {
+  syncRefineAvailability();
 }
