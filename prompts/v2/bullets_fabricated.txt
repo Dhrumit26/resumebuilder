@@ -8,6 +8,22 @@ Every bullet must answer ALL THREE — or it fails:
 
 Length: more than one resume line, under two (~22–36 words, ~115–200 characters).
 
+## ROLE / PRODUCT CONTEXT — exactly 1 or 2 bullets
+Make 1–2 bullets establish the story a hiring manager needs:
+- Name a plausible FUNCTIONAL team or product area (payments backend, embedded
+  platform, agent infrastructure, frontend experience, release engineering).
+- Name the concrete product/system and who or what it serves.
+- Still include HOW and a measured RESULT; do not write a separate team-description bullet.
+- Do not copy an employer-specific team name from the JD. Fabricate a plausible
+  function aligned with the work.
+
+GOOD: "On the payments backend team, built Python settlement APIs for merchant
+payouts using PostgreSQL, cutting reconciliation time from 45 minutes to 12."
+GOOD: "Within the embedded platform team, shipped a Yocto image pipeline for
+field gateways, reducing cold-boot time from 48 seconds to 21."
+BAD: "Worked on the backend team." (no product, method, or result)
+Do this on only 1–2 bullets. The other bullets should stay focused on execution.
+
 ## STANDALONE BULLETS (critical)
 Each bullet must read cleanly alone. Do NOT chain with mechanical backrefs:
 FORBIDDEN spam: "that dashboard", "that console", "that component library", "those agents",
@@ -40,6 +56,7 @@ Frontend (TypeScript + React):
 - Overlapping bullets that restate the same deploy/telemetry win twice
 - Strong false causation: "raised coverage, which cut regressions by 60%" → use "contributing to" / "alongside"
 - Missing WHAT, HOW, or RESULT; under ~22 words; over ~36 words; no digit
+- No role/product context anchor, or repeating team/product setup in more than 2 bullets
 - Collaborated / Monitored / Enhanced code quality / seamless / language or cloud scatter
 - Cloning the other invent role: same system + same duties with only verbs/numbers
   swapped (Built→Developed, 45s→50s). FAIL. Follow the WORK-SPLIT lanes instead.

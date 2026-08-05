@@ -480,6 +480,48 @@ def t15l_secondary_lane_requires_enablement_not_product_spine():
     assert "missing-spine" not in codes, codes
 
 
+def t15m_fabricated_roles_need_one_or_two_product_context_anchors():
+    from src.verify import role_context_bullet_indices, verify_fabricated_block
+
+    jd = {
+        "domain": "backend services",
+        "domain_practices": ["API development"],
+        "concepts": ["backend development"],
+        "tools": ["Python", "PostgreSQL"],
+    }
+    missing = [
+        "Built Python settlement APIs with PostgreSQL, cutting reconciliation time from 45 minutes to 12 across 3 daily runs.",
+        "Reduced p95 request latency from 800ms to 260ms by batching Python database writes across 4 worker processes.",
+        "Raised pytest coverage from 42% to 81% by adding contract fixtures across 6 critical API handlers.",
+        "Automated deployment checks with Python scripts, shrinking release validation from 90 minutes to 25.",
+        "Rewrote PostgreSQL retry logic in Python, reducing failed transactions from 8% to 2% during peak traffic.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(missing, jd)}
+    assert "missing-role-context" in codes, codes
+
+    anchored = list(missing)
+    anchored[0] = (
+        "On the payments backend team, built Python settlement APIs for merchant "
+        "payouts with PostgreSQL, cutting reconciliation time from 45 minutes to 12."
+    )
+    assert role_context_bullet_indices(anchored) == [0]
+    anchored_codes = {i.code for i in verify_fabricated_block(anchored, jd)}
+    assert "missing-role-context" not in anchored_codes, anchored_codes
+    assert "context-spam" not in anchored_codes, anchored_codes
+
+    spam = list(anchored)
+    spam[1] = (
+        "Within the payments platform team, reduced p95 latency for merchant checkout "
+        "from 800ms to 260ms by batching Python database writes."
+    )
+    spam[2] = (
+        "For the payments API team, raised pytest coverage on a partner settlement "
+        "service from 42% to 81% by adding contract fixtures."
+    )
+    spam_codes = {i.code for i in verify_fabricated_block(spam, jd)}
+    assert "context-spam" in spam_codes, spam_codes
+
+
 def t16_frozen_pairing_must_stay_intact():
     fact = _fact("intuit", "ci-migration")
     issues = verify_bullet(

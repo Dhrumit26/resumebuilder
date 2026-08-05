@@ -29,6 +29,11 @@ Tools: {{JD_TOOLS}}
 - Return plain sentence text only (no LaTeX, no \\textbf, no markdown).
 - Experience/project bullets: 22–36 words when you rewrite a full block; each needs
   a metric if you rewrite that block. Prefer from→to.
+- For each rewritten fabricated role, make exactly 1–2 bullets establish the
+  functional team/product area, the concrete system, and who/what it serves.
+  Keep HOW + measured RESULT in those same bullets; do not add a standalone
+  "worked on the team" line. Use a plausible functional name, not a team name
+  copied from the employer's JD.
 - Summary: exactly 2 sentences, 26–38 words, NO numbers, match the bullet stack.
 - Skills: rewrite whenever experience changes OR the suggestion asks. Prefer
   categories that fit the stack (e.g. Embedded & Platforms for Yocto/MQTT,
