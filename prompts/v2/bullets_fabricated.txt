@@ -41,6 +41,10 @@ Frontend (TypeScript + React):
 - Strong false causation: "raised coverage, which cut regressions by 60%" → use "contributing to" / "alongside"
 - Missing WHAT, HOW, or RESULT; under ~22 words; over ~36 words; no digit
 - Collaborated / Monitored / Enhanced code quality / seamless / language or cloud scatter
+- Cloning the other invent role: same system + same duties with only verbs/numbers
+  swapped (Built→Developed, 45s→50s). FAIL. Follow the WORK-SPLIT lanes instead.
+- Ignoring your WORK-SPLIT lane (current steals intern CI work, or intern retells the
+  primary product with new numbers)
 
 ## METRICS
 - EVERY bullet has a real number. At least TWO from→to metrics in the block.
@@ -50,7 +54,9 @@ Frontend (TypeScript + React):
 {{JD_SPINE}}
 Related: {{JD_CONCEPTS}}
 Primary language: {{PRIMARY_LANGUAGE}} (name in bullet 1 or 2). Cloud: {{PRIMARY_CLOUD}} only.
-If RAG/agent/embeddings/LLM/inference/orchestration are listed, each MUST appear as work.
+If RAG/agent/embeddings/LLM/inference/orchestration are listed, each MUST appear as work
+somewhere across the resume — but respect WORK-SPLIT (current owns product spine;
+internship owns enablement). For THIS block, cover the spine pieces in YOUR lane.
 
 ## CRAFT
 - One sentence. 22–36 words. Verbs: Built, Shipped, Cut, Raised, Increased, Migrated, Rewrote, Fixed, Reduced, Defined, Deployed, Covered, Wired, Automated, Containerized.
@@ -67,6 +73,7 @@ Worth surfacing: {{PLACEMENT_KEYWORDS}}
 ## THIS BLOCK
 {{BLOCK_KIND}}: {{BLOCK_LABEL}}{{TENURE}}
 {{FLEX_RULE}}
+{{WORK_SPLIT}}
 {{DIFFERENTIATION}}
 
 ## OUTPUT

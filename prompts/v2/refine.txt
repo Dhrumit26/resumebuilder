@@ -36,7 +36,9 @@ Tools: {{JD_TOOLS}}
   Each line is a category name plus a list of tools.
 - If the suggestion is unclear or impossible, set changed to [] and leave fields null.
 - Fabricated invent roles (Clerxi / Intuit) may be rewritten freely to match the
-  suggestion and JD — but do not clone the same system across both companies.
+  suggestion and JD — but divide work: Clerxi owns the primary product; Intuit owns
+  enablement (tests/CI/contracts/platform). Never mad-lib the same five bullets with
+  swapped verbs/numbers. Together they should look like one interview-ready match.
 - Projects stay closer to their current content unless the suggestion targets them.
 
 ## OUTPUT

@@ -87,6 +87,11 @@
             placeholder="e.g. Make Clerxi bullets emphasize multi-agent orchestration and cut p95 latency numbers…"
           ></textarea>
           <button id="refine-btn" type="button">Rewrite with suggestion</button>
+          <div id="refine-loading" class="refine-loading hidden" aria-live="polite">
+            <div class="spinner"></div>
+            <p>Rewriting from your suggestion…</p>
+            <p class="loading-note">Usually 10–30 seconds</p>
+          </div>
           <p id="refine-status" class="stream-status hidden"></p>
         </section>
       </section>
@@ -97,6 +102,6 @@
     </footer>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=refine2"></script>
 </body>
 </html>

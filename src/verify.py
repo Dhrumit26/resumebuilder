@@ -494,8 +494,15 @@ def verify_fabricated_block(
     bullets: list[str],
     analysis: dict,
     sibling_bullets: list[str] | None = None,
+    *,
+    secondary_lane: bool = False,
 ) -> list[Issue]:
-    """Block-level checks for invent-mode roles: spine, stack, story, no fluff theater."""
+    """Block-level checks for invent-mode roles: spine, stack, story, no fluff theater.
+
+    secondary_lane: internship / enablement role that must complement a sibling
+    primary product block — spine already covered by the sibling is waived, and
+    enablement work (tests/CI/contracts) is required instead.
+    """
     issues: list[Issue] = []
     plains = [_plain(b) for b in bullets]
     plain = " ".join(plains)
@@ -523,9 +530,15 @@ def verify_fabricated_block(
         "model inference",
         "orchestration",
     )
+    sibling_hits: set[str] = set()
+    if secondary_lane and sibling_bullets:
+        sibling_hits = _spine_hits(_plain(" ".join(sibling_bullets)).lower(), analysis)
+
     for label in _must_if_jd:
         if label not in wanted_families:
             continue
+        if label in sibling_hits:
+            continue  # primary role already owns this spine piece
         if label not in hits:
             issues.append(
                 Issue(
@@ -535,16 +548,35 @@ def verify_fabricated_block(
                 )
             )
 
-    need = min(3, len(wanted_families)) if wanted_families else 0
-    if need and len(hits) < need:
-        missing = [f for f in wanted_families if f not in hits]
-        issues.append(
-            Issue(
-                "missing-spine",
-                f"block only covers {hits or 'none'} of the JD spine — need ≥{need}: "
-                f"{', '.join(wanted_families)}. Missing: {', '.join(missing)}",
-            )
+    if secondary_lane:
+        # Internship owns enablement — do not demand full product-spine density.
+        enablement = re.search(
+            r"\b(?:pytest|jest|coverage|ci\b|jenkins|github actions|gitlab|"
+            r"contract|conformance|regression|flak(?:y|e)|test suite|e2e|"
+            r"playwright|cypress|hardware-in-the-loop|hil)\b",
+            low,
         )
+        if not enablement:
+            issues.append(
+                Issue(
+                    "missing-enablement",
+                    "internship lane must show enablement work (tests, CI, coverage, "
+                    "contracts, conformance) — not a twin of the current product story",
+                )
+            )
+    else:
+        need = min(3, len(wanted_families)) if wanted_families else 0
+        # Credit spine the sibling will not cover; secondary lane credits sibling hits.
+        effective_hits = hits
+        if need and len(effective_hits) < need:
+            missing = [f for f in wanted_families if f not in effective_hits]
+            issues.append(
+                Issue(
+                    "missing-spine",
+                    f"block only covers {effective_hits or 'none'} of the JD spine — need ≥{need}: "
+                    f"{', '.join(wanted_families)}. Missing: {', '.join(missing)}",
+                )
+            )
 
     # Primary language from the JD must appear; no scatter.
     tools = [str(t) for t in (analysis.get("tools") or [])]
@@ -751,7 +783,7 @@ def verify_fabricated_block(
             overlap = sib_words & mine_words
             # High content-word overlap → paraphrased twin of the other role.
             ratio = len(overlap) / max(1, len(mine_words))
-            if ratio >= 0.45 and len(overlap) >= 12:
+            if ratio >= 0.38 and len(overlap) >= 10:
                 issues.append(
                     Issue(
                         "role-clone",
@@ -777,7 +809,10 @@ def verify_fabricated_block(
 
         product_re = re.compile(
             r"\b(?:dashboard|console|component library|retrieval service|"
-            r"agent console|ops dashboard)\b",
+            r"agent console|ops dashboard|embedded os application|"
+            r"security protocols?|mqtt(?:-based)?(?:\s+networking)?|"
+            r"yocto(?:\s+(?:image|build|layer))?|ubuntu core|armbian|"
+            r"test methods? and procedures?)\b",
             re.I,
         )
         sib_products = {m.group(0).lower() for m in product_re.finditer(sib_plain)}
@@ -792,7 +827,52 @@ def verify_fabricated_block(
                 )
             )
 
+        # Parallel mad-lib twin: same bullet shapes with only verbs/numbers swapped.
+        twin_hits = _parallel_twin_count(plains, sibling_bullets)
+        if twin_hits >= 3:
+            issues.append(
+                Issue(
+                    "parallel-clone",
+                    f"{twin_hits} bullets are near-twins of the other fabricated role "
+                    f"(same story, swapped numbers/verbs) — rewrite this internship as a "
+                    f"DIFFERENT facet (tests/CI/contracts/platform), not a mad-lib of the "
+                    f"current role",
+                )
+            )
+
     return issues
+
+
+_NUM_STRIP_RE = re.compile(r"\d+(?:\.\d+)?%?")
+
+
+def _parallel_twin_count(mine_bullets: list[str], sibling_bullets: list[str]) -> int:
+    """How many of my bullets are structural twins of a sibling bullet."""
+    sib_plains = [_plain(b) for b in sibling_bullets]
+    hits = 0
+    used_sib: set[int] = set()
+    for mine in mine_bullets:
+        mine_p = _plain(mine)
+        best_i, best_score = -1, 0.0
+        for i, sib in enumerate(sib_plains):
+            if i in used_sib:
+                continue
+            score = _structure_similarity(mine_p, sib)
+            if score > best_score:
+                best_i, best_score = i, score
+        if best_i >= 0 and best_score >= 0.52:
+            used_sib.add(best_i)
+            hits += 1
+    return hits
+
+
+def _structure_similarity(a: str, b: str) -> float:
+    """Jaccard of content words after stripping numbers — catches mad-lib twins."""
+    wa = _content_words(_NUM_STRIP_RE.sub(" ", a))
+    wb = _content_words(_NUM_STRIP_RE.sub(" ", b))
+    if not wa or not wb:
+        return 0.0
+    return len(wa & wb) / len(wa | wb)
 
 
 # --- coverage: measured in code, not guessed by a model ----------------------

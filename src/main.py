@@ -2,6 +2,7 @@ import json
 import queue
 import threading
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -40,7 +41,7 @@ class RefineRequest(BaseModel):
     job_description: str = Field(..., min_length=20, description="Target job description")
     suggestion: str = Field(..., min_length=3, description="What to change in the resume")
     sections: dict = Field(..., description="sections object from the last /api/v2/build")
-    jd_analysis: dict | None = Field(
+    jd_analysis: Optional[dict] = Field(
         default=None,
         description="Optional JD analysis from the last build (skips re-analyzing)",
     )
