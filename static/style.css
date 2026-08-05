@@ -96,6 +96,21 @@ button:disabled {
   width: 100%;
 }
 
+.secondary-btn {
+  margin-top: 0.6rem;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.secondary-btn:hover {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--text);
+}
+
 .loading {
   text-align: center;
   padding: 3rem 0;

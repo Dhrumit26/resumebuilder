@@ -33,6 +33,22 @@ if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
+# A cached page keeps running last week's JavaScript against this week's API,
+# which is indistinguishable from a server bug when reported.
+@app.middleware("http")
+async def no_store_for_the_app_shell(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        # Validators would let the browser answer from cache on a 304.
+        for validator in ("etag", "last-modified"):
+            if validator in response.headers:
+                del response.headers[validator]
+    return response
+
+
 class BuildRequest(BaseModel):
     job_description: str = Field(..., min_length=20, description="Target job description")
 
