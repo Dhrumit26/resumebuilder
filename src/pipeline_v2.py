@@ -462,15 +462,17 @@ def _allowed_fabricated_skills(
     evidenced: set[str],
     jd_tools: list[str],
 ) -> list[str]:
-    """Concrete, page-evidenced skills with stable product casing."""
+    """Verified bank skills plus concrete page evidence, with stable casing."""
     evidenced_lower = {
         str(x).strip().lower() for x in evidenced if is_concrete_skill(str(x))
     }
     preferred: dict[str, str] = {}
+    bank_lower: set[str] = set()
     for category in bank.skill_categories:
         for item in category.items:
             if is_concrete_skill(item):
                 preferred.setdefault(item.lower(), item)
+                bank_lower.add(item.lower())
     for item in jd_tools:
         if is_concrete_skill(item):
             preferred.setdefault(item.lower(), item)
@@ -482,7 +484,8 @@ def _allowed_fabricated_skills(
     allowed = [
         preferred[low]
         for low in preferred
-        if low in evidenced_lower and skill_category_for_tool(preferred[low])
+        if (low in bank_lower or low in evidenced_lower)
+        and skill_category_for_tool(preferred[low])
     ]
     return sorted(allowed, key=lambda x: (skill_category_for_tool(x) or "", x.lower()))
 
@@ -508,7 +511,7 @@ def _validate_fabricated_skills(
             category not in CANONICAL_SKILL_CATEGORIES
             or category in seen_categories
             or not isinstance(items, list)
-            or not 1 <= len(items) <= 6
+            or not 5 <= len(items) <= 6
         ):
             return None
         clean: list[str] = []
@@ -539,9 +542,13 @@ def _write_fabricated_skills(
 ) -> tuple[list[tuple[str, list[str]]], dict]:
     """Write dynamic skills, then reject vague or miscategorized output."""
     allowed = _allowed_fabricated_skills(bank, evidenced, jd_tools)
+    category_counts = {
+        category: sum(skill_category_for_tool(item) == category for item in allowed)
+        for category in CANONICAL_SKILL_CATEGORIES
+    }
     available_categories = {
-        skill_category_for_tool(item) for item in allowed
-    } - {None}
+        category for category, count in category_counts.items() if count >= 5
+    }
     if len(available_categories) < line_count:
         return fallback, {
             "status": "fallback",

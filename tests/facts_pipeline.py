@@ -661,20 +661,20 @@ class _Stub:
             if "Domain: frontend web" in prompt:
                 return {
                     "skills": [
-                        {"category": "Languages", "items": ["Python", "TypeScript"]},
-                        {"category": "Testing & QA", "items": ["Playwright", "Cypress", "pytest"]},
-                        {"category": "CI/CD & DevOps", "items": ["GitHub Actions", "GitLab CI"]},
-                        {"category": "Frontend", "items": ["React", "Next.js"]},
+                        {"category": "Languages", "items": ["Python", "TypeScript", "JavaScript", "Java", "SQL"]},
+                        {"category": "Testing & QA", "items": ["Playwright", "Cypress", "pytest", "Jest", "Postman"]},
+                        {"category": "CI/CD & DevOps", "items": ["GitHub Actions", "GitLab CI", "Jenkins", "Git", "Docker"]},
+                        {"category": "Frontend", "items": ["React", "Next.js", "Tailwind CSS", "HTML", "CSS"]},
                     ]
                 }
             return {
                 "skills": [
-                    {"category": "Languages", "items": ["Python", "TypeScript"]},
-                    {"category": "Testing & QA", "items": ["Playwright", "Cypress", "pytest"]},
-                    {"category": "CI/CD & DevOps", "items": ["GitHub Actions", "GitLab CI"]},
+                    {"category": "Languages", "items": ["Python", "TypeScript", "JavaScript", "Java", "SQL"]},
+                    {"category": "Testing & QA", "items": ["Playwright", "Cypress", "pytest", "Jest", "Postman"]},
+                    {"category": "CI/CD & DevOps", "items": ["GitHub Actions", "GitLab CI", "Jenkins", "Git", "Docker"]},
                     {
                         "category": "Backend & Cloud",
-                        "items": ["FastAPI", "REST APIs", "PostgreSQL", "AWS"],
+                        "items": ["FastAPI", "REST APIs", "PostgreSQL", "AWS", "Node.js"],
                     },
                 ]
             }
@@ -887,8 +887,8 @@ def t28_skills_section_reflects_the_bullets():
     assert "C++" not in skills, "off-domain skills should be pruned"
 
 
-def t29_skills_follow_fabricated_evidence_not_bank_filler():
-    """Invented embedded stack must not leave Playwright/RAG skills on the page."""
+def t29_skills_balance_jd_evidence_with_verified_depth():
+    """JD evidence leads each relevant line without leaving categories sparse."""
     lines = dict(
         select_skills(
             BANK,
@@ -907,10 +907,9 @@ def t29_skills_follow_fabricated_evidence_not_bank_filler():
     )
     flat = " ".join(i for items in lines.values() for i in items)
     assert "C++" in flat
-    assert "Playwright" not in flat
-    assert "Cypress" not in flat
     assert "RAG" not in flat
     assert "Yocto" in flat or "MQTT" in flat or "Jenkins" in flat
+    assert all(5 <= len(items) <= 6 for items in lines.values())
     # Short "c" must not shove Ubuntu/Yocto into Languages.
     langs = " ".join(lines.get("Languages") or []).lower()
     assert "yocto" not in langs
@@ -947,13 +946,17 @@ def t29b_fabricated_skills_reject_generic_and_miscategorized_items():
 
     good = {
         "skills": [
-            {"category": "Languages", "items": ["Python", "Java"]},
-            {"category": "Testing & QA", "items": ["Appium", "Selenium"]},
-            {"category": "CI/CD & DevOps", "items": ["Jenkins", "Git"]},
-            {"category": "Backend & Cloud", "items": ["FastAPI", "PostgreSQL"]},
+            {"category": "Languages", "items": ["Python", "Java", "TypeScript", "JavaScript", "SQL"]},
+            {"category": "Testing & QA", "items": ["Appium", "Selenium", "Playwright", "Cypress", "Jest"]},
+            {"category": "CI/CD & DevOps", "items": ["Jenkins", "Git", "GitHub Actions", "Docker", "Terraform"]},
+            {"category": "Backend & Cloud", "items": ["FastAPI", "PostgreSQL", "Node.js", "REST APIs", "AWS"]},
         ]
     }
-    assert p2._validate_fabricated_skills(good, allowed, 4)
+    expanded_allowed = allowed + [
+        "TypeScript", "JavaScript", "SQL", "Playwright", "Cypress", "Jest",
+        "GitHub Actions", "Docker", "Terraform", "Node.js", "REST APIs", "AWS",
+    ]
+    assert p2._validate_fabricated_skills(good, expanded_allowed, 4)
 
 
 def t30_refine_rewrites_requested_blocks():

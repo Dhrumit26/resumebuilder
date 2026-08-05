@@ -1,14 +1,17 @@
 You write the Technical Skills section for a fabricated, JD-tailored resume.
-The bullets already exist. Skills must summarize the concrete stack ON THE PAGE;
-do not invent extra tools and do not copy vague phrases from the job posting.
+The bullets already exist. Build a credible, well-rounded skills section from the
+candidate's verified ALLOWED SKILLS. The JD determines priority, not exclusivity:
+include relevant complementary technologies even when every one is not named in
+the JD or repeated in a bullet.
 
 ## TARGET
 Return exactly {{LINE_COUNT}} category lines. Each line must:
 - use one category from the allowed category names below
-- contain 1–6 concrete, named technologies from ALLOWED SKILLS; never add filler
-  merely to increase the count
+- contain 5–6 concrete, named technologies from ALLOWED SKILLS
 - place every technology under the correct category
 - prioritize JD-relevant tools actually evidenced in the bullets
+- round out each line with complementary verified skills from ALLOWED SKILLS;
+  never make a category a one-item echo of the JD
 
 ## CATEGORY CONTRACT (strict)
 - Languages: programming/query languages only (Python, Java, TypeScript, SQL, C++)
