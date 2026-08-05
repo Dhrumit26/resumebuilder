@@ -104,13 +104,25 @@ def _flex_rule(selection: Selection) -> str:
             "only these numbers and tools."
         )
     if selection.fabricated:
+        company = selection.owner_label
+        if "intuit" in company.lower():
+            return (
+                f"FABRICATED MODE for a PAST INTERNSHIP at {company} "
+                f"(~{selection.tenure_months or 3} months). Invent a coherent mid-level "
+                "intern story in the posting's engineering domain — a DIFFERENT system and "
+                "a DIFFERENT facet of the JD than the current role above. Prefer complementary "
+                "work: testing/CI, API contracts, platform/refactor, coverage, handoffs — "
+                "while the current role owns the primary product spine. Same domain fit, "
+                "not a clone. Company name stays real. Size scope to an internship. "
+                "Each bullet stands alone; no vague 'cloud technology'."
+            )
         return (
-            "FABRICATED MODE for this CURRENT role: invent a coherent mid-level story "
-            "natively in the posting's engineering domain. Ignore the fact bank for "
-            "grounding. Company name stays real; product follows the JD domain, not "
-            "brand tokens in the company name. Do not adopt the posting's industry. "
-            "Each bullet stands alone — no mechanical 'that dashboard' chains; name "
-            "real services instead of 'cloud technology'; soften coverage→defect claims."
+            f"FABRICATED MODE for the CURRENT role at {company}: invent the PRIMARY "
+            "product story natively in the posting's engineering domain (main spine: "
+            "RAG/agents/core stack). Ignore the fact bank for grounding. Company name "
+            "stays real; product follows the JD domain, not brand tokens. Do not adopt "
+            "the posting's industry. Each bullet stands alone — no mechanical "
+            "'that dashboard' chains; name real services; soften coverage→defect claims."
         )
     if selection.flexible:
         return (
@@ -125,6 +137,54 @@ def _flex_rule(selection: Selection) -> str:
         "This is past history and is FIXED. Keep every fact in its own domain — re-angle the "
         "emphasis toward what this posting values, but never restage the work somewhere else."
     )
+
+
+def _differentiation_block(
+    selection: Selection,
+    sibling_fabricated: dict[str, list[str]] | None,
+) -> str:
+    """Instructions so a second fabricated role complements the first, not clones it."""
+    if not selection.fabricated:
+        return ""
+    siblings = {
+        label: bullets
+        for label, bullets in (sibling_fabricated or {}).items()
+        if label != selection.owner_label and bullets
+    }
+    if not siblings:
+        if "intuit" in selection.owner_label.lower():
+            return (
+                "\n## STRATEGIC POSITIONING\n"
+                "No sibling role text yet. Still: invent an INTERNSHIP-scoped story "
+                "(testing, CI, contracts, platform) — leave the deepest product spine "
+                "for the current role when both are fabricated.\n"
+            )
+        return (
+            "\n## STRATEGIC POSITIONING\n"
+            "You write the CURRENT role first. Own the posting's primary product spine. "
+            "A later internship block will cover a complementary facet — do not try to "
+            "cover every JD duty here.\n"
+        )
+
+    lines = [
+        "",
+        "## STRATEGIC DIFFERENTIATION — DO NOT CLONE",
+        "Another fabricated role on this resume already claimed the work below.",
+        "Your block must MATCH the JD strategically but tell a DIFFERENT story:",
+        "- Different system / product (not the same dashboard, console, library, or API).",
+        "- Different JD facet (if they own RAG/agents/product UI, you own tests/CI/"
+        "contracts/platform/reliability — or the reverse).",
+        "- Different metrics (never reuse the same from→to numbers or % figures).",
+        "- Different opening verbs and sentence shapes — no paraphrased twins.",
+        "- Internship tenure: smaller scope, fewer epic claims than a current role.",
+        "",
+    ]
+    for label, bullets in siblings.items():
+        lines.append(f"### Already written for {label} — do NOT repeat this story")
+        for i, b in enumerate(bullets, 1):
+            lines.append(f"{i}. {b}")
+        lines.append("")
+    return "\n".join(lines)
 
 
 # Posting titles carry the employer's internal furniture: the team that owns the
@@ -230,6 +290,7 @@ def _write_bullets_for_block(
     selection: Selection,
     analysis: dict,
     lexicon: set,
+    sibling_fabricated: dict[str, list[str]] | None = None,
 ) -> tuple[list[str], dict]:
     """Write, verify, and repair the bullets for one job or project block."""
     facts = selection.facts
@@ -255,6 +316,7 @@ def _write_bullets_for_block(
             BLOCK_LABEL=selection.owner_label,
             TENURE=tenure,
             FLEX_RULE=_flex_rule(selection),
+            DIFFERENTIATION=_differentiation_block(selection, sibling_fabricated),
             COUNT=str(count),
             FIX_BLOCK="",
             **jd_kwargs,
@@ -283,6 +345,12 @@ def _write_bullets_for_block(
     best_bullets: list[str] | None = None
     best_error_count: int | None = None
     best_block_issues: list[Issue] = []
+    siblings = [
+        b
+        for label, blist in (sibling_fabricated or {}).items()
+        if label != selection.owner_label
+        for b in blist
+    ]
 
     while attempts <= max_rounds:
         attempts += 1
@@ -322,7 +390,11 @@ def _write_bullets_for_block(
         block_issues = []
         if selection.fabricated:
             block_issues = [
-                i for i in verify_fabricated_block(candidate, analysis) if i.severity == "error"
+                i
+                for i in verify_fabricated_block(
+                    candidate, analysis, sibling_bullets=siblings
+                )
+                if i.severity == "error"
             ]
             if block_issues:
                 issues_by_index.setdefault(0, []).extend(block_issues)
@@ -635,23 +707,54 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
             + ". Add a role/project with that exact company or project name."
         )
 
-    # --- 4. Write bullets, one call per block, in parallel ------------------
+    # --- 4. Write bullets ----------------------------------------------------
+    # Fabricated roles run SEQUENTIALLY so later ones (Intuit) see earlier ones
+    # (Clerxi) and can strategically complement instead of cloning.
+    # Grounded blocks still run in parallel.
     order = [block.label for section in ("experience", "projects") for block in blocks[section]]
-    with ThreadPoolExecutor(max_workers=max(1, len(order))) as pool:
-        futures = {
-            label: pool.submit(_write_bullets_for_block, selections[label], analysis, lexicon)
-            for label in order
-        }
-        written = {}
-        block_meta = []
-        for label in order:
-            try:
-                bullets, meta = futures[label].result()
-            except Exception as exc:
-                bullets = [_latex_text(f.core) for f in selections[label].facts]
-                meta = {"block": label, "status": f"error: {exc}", "fell_back_to_fact": "all"}
-            written[label] = bullets
-            block_meta.append(meta)
+    fab_order = [label for label in order if selections[label].fabricated]
+    grounded_order = [label for label in order if not selections[label].fabricated]
+
+    written: dict[str, list[str]] = {}
+    block_meta: list[dict] = []
+    sibling_fabricated: dict[str, list[str]] = {}
+
+    for label in fab_order:
+        try:
+            bullets, meta = _write_bullets_for_block(
+                selections[label], analysis, lexicon, sibling_fabricated
+            )
+        except Exception as exc:
+            bullets = [_latex_text(f.core) for f in selections[label].facts]
+            meta = {"block": label, "status": f"error: {exc}", "fell_back_to_fact": "all"}
+        written[label] = bullets
+        sibling_fabricated[label] = bullets
+        block_meta.append(meta)
+
+    if grounded_order:
+        with ThreadPoolExecutor(max_workers=max(1, len(grounded_order))) as pool:
+            futures = {
+                label: pool.submit(
+                    _write_bullets_for_block, selections[label], analysis, lexicon
+                )
+                for label in grounded_order
+            }
+            for label in grounded_order:
+                try:
+                    bullets, meta = futures[label].result()
+                except Exception as exc:
+                    bullets = [_latex_text(f.core) for f in selections[label].facts]
+                    meta = {
+                        "block": label,
+                        "status": f"error: {exc}",
+                        "fell_back_to_fact": "all",
+                    }
+                written[label] = bullets
+                block_meta.append(meta)
+
+    # Keep meta in document order for debugging.
+    meta_by_label = {m.get("block"): m for m in block_meta}
+    block_meta = [meta_by_label[label] for label in order if label in meta_by_label]
 
     # --- 5. Render bullets into the templates -------------------------------
     rendered: dict[str, str] = {}

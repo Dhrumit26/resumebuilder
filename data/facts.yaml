@@ -165,9 +165,12 @@ roles:
     location: San Diego, CA
     dates: Jun. 2025 -- Aug. 2025
     tenure_months: 3
-    # fixed history: facts may be re-ordered and re-worded, never re-domained.
+    # fixed history when fabricated is false: facts may be re-ordered and re-worded,
+    # never re-domained. When fabricated is true: invent a complementary internship
+    # story for the JD — DIFFERENT system and JD facet from Clerxi (written after
+    # Clerxi so it can strategically fill gaps, never clone).
     flexible: false
-    fabricated: false
+    fabricated: true
     facts:
       - id: ci-migration
         core: >-

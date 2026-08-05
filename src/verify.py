@@ -474,7 +474,11 @@ def _named_in_text(plain: str, names: tuple[str, ...]) -> list[str]:
     return found
 
 
-def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
+def verify_fabricated_block(
+    bullets: list[str],
+    analysis: dict,
+    sibling_bullets: list[str] | None = None,
+) -> list[Issue]:
     """Block-level checks for invent-mode roles: spine, stack, story, no fluff theater."""
     issues: list[Issue] = []
     plains = [_plain(b) for b in bullets]
@@ -562,7 +566,7 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
     # Product setting in bullet 1 only — later bullets stand alone (no "that X" spam).
     setting_re = re.compile(
         r"\b(?:platform|service|console|dashboard|portal|application|pipeline|"
-        r"library|tool|website|site|module|feed|API|apis)\b",
+        r"library|framework|suite|tool|website|site|module|feed|API|apis)\b",
         re.I,
     )
     if plains and not setting_re.search(plains[0]):
@@ -719,6 +723,56 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
                 f"or rewrite as 'from X to Y'",
             )
         )
+
+    # Anti-clone: another fabricated role already claimed overlapping story/metrics.
+    if sibling_bullets:
+        sib_plain = _plain(" ".join(sibling_bullets)).lower()
+        sib_words = _content_words(sib_plain)
+        mine_words = _content_words(low)
+        if sib_words and mine_words:
+            overlap = sib_words & mine_words
+            # High content-word overlap → paraphrased twin of the other role.
+            ratio = len(overlap) / max(1, len(mine_words))
+            if ratio >= 0.45 and len(overlap) >= 12:
+                issues.append(
+                    Issue(
+                        "role-clone",
+                        f"this block overlaps ~{int(ratio * 100)}% of content words with "
+                        f"another fabricated role — invent a different system and JD facet",
+                    )
+                )
+
+        sib_metrics = set(re.findall(r"\d+(?:\.\d+)?%?", sib_plain))
+        mine_metrics = set(re.findall(r"\d+(?:\.\d+)?%?", low))
+        shared_metrics = {
+            m for m in (sib_metrics & mine_metrics)
+            if m not in {"1", "2", "3", "4", "5"}  # trivial counts
+        }
+        if len(shared_metrics) >= 3:
+            issues.append(
+                Issue(
+                    "metric-clone",
+                    f"reuses metrics already on another fabricated role "
+                    f"({', '.join(sorted(shared_metrics)[:6])}) — invent different numbers",
+                )
+            )
+
+        product_re = re.compile(
+            r"\b(?:dashboard|console|component library|retrieval service|"
+            r"agent console|ops dashboard)\b",
+            re.I,
+        )
+        sib_products = {m.group(0).lower() for m in product_re.finditer(sib_plain)}
+        mine_products = {m.group(0).lower() for m in product_re.finditer(low)}
+        shared_products = sib_products & mine_products
+        if shared_products:
+            issues.append(
+                Issue(
+                    "system-clone",
+                    f"same product noun(s) as another fabricated role "
+                    f"({', '.join(sorted(shared_products))}) — pick a different system",
+                )
+            )
 
     return issues
 
