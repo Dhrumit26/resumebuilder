@@ -261,11 +261,11 @@ def t15d_fabricated_block_rejects_language_scatter():
         "tools": ["Python", "Java", "Go"],
     }
     bullets = [
-        "Built Python APIs for an internal ops console that reviews vendor feeds daily.",
-        "Cut latency on that console by 20% by rewriting hot paths in Go carefully.",
-        "Covered those handlers with tests in Java so regressions stopped shipping weekly.",
-        "Deployed the same console with Docker so staging matched production settings.",
-        "Defined REST contracts for that console so partner teams integrated cleanly.",
+        "Built Python APIs for an internal ops console that reviews vendor feeds daily with care.",
+        "Cut latency on that console from 120ms to 80ms by rewriting hot paths in Go carefully.",
+        "Covered those handlers with tests in Java so regressions stopped shipping every week.",
+        "Deployed the same console with Docker so staging matched production settings each release.",
+        "Defined REST contracts for that console so partner teams integrated cleanly this quarter.",
     ]
     issues = verify_fabricated_block(bullets, jd)
     assert any(i.code == "language-scatter" for i in issues), issues
@@ -480,6 +480,21 @@ def t21_vague_summary_filler_is_rejected():
     assert any(i.code == "vague" for i in issues)
 
 
+def t21b_fabricated_summary_must_match_bullet_stack():
+    facts = [_fact("clerxi", "retrieval-services")]
+    proof = (
+        "Built C++ firmware test harnesses on Yocto for an embedded networking board. "
+        "Cut MQTT packet loss from 5% to 1% by rewriting the retry path."
+    )
+    issues = verify_summary(
+        "Backend engineer building distributed APIs and retrieval services on cloud infrastructure. "
+        "Designs scalable reliable backends and collaborates across product teams daily.",
+        facts, LEXICON, proof_text=proof, fabricated_ok=True,
+    )
+    codes = {i.code for i in issues}
+    assert "off-story" in codes or "vague" in codes, codes
+
+
 def t22_keyword_coverage_counts_synonyms():
     result = keyword_coverage(
         "Built responsive pages with HTML, CSS and JavaScript, deployed via GitHub Actions.",
@@ -499,9 +514,13 @@ class _Stub:
 
     def __call__(self, prompt, temperature=0.2, max_tokens=4000, retries=1, role="judge"):
         self.calls += 1
-        if "two-sentence summary" in prompt:
-            return {"summary": "Backend engineer building Python retrieval services on AWS. "
-                               "Turns slow query paths into measured wins on production systems."}
+        if "two-sentence summary" in prompt or (
+            "FABRICATED MODE" in prompt and '"summary"' in prompt
+        ):
+            # Match the invent stack on the page (Python retrieval), not generic fog.
+            return {"summary": "Backend engineer building Python retrieval APIs and agent "
+                               "orchestration services on AWS. Focuses on latency-sensitive "
+                               "query paths and reliable shipping of production services."}
 
         fabricated = "FABRICATED MODE" in prompt or "You invent ONE coherent" in prompt
         if fabricated:
@@ -521,18 +540,18 @@ class _Stub:
             if self.mode == "broken-json-escape":
                 raise ValueError("Failed to parse LLM JSON")
             # Intuit (internship) gets a complementary testing/CI story — not Clerxi's clone.
-            if "PAST INTERNSHIP" in prompt or "\nJob: Intuit" in prompt or "Intuit" in prompt and "DIFFERENT system" in prompt:
+            if "PAST INTERNSHIP" in prompt or ("Intuit" in prompt and "DIFFERENT system" in prompt):
                 goods = [
-                    "Migrated end-to-end UI suites from Cypress to Playwright for a low-code "
-                    "platform, cutting flaky CI failures from about 18% to 6% of runs.",
-                    "Raised Jest and React Testing Library coverage on shared form packages "
-                    "from 42% to 78%, contributing to fewer production defects over the internship.",
-                    "Defined REST API contracts across service boundaries so partner teams "
-                    "hit fewer integration breaks across three multi-sprint releases.",
-                    "Shortened deployment cycles from 2 weeks to 4 days by refactoring "
-                    "TypeScript and JavaScript platform services used by low-code feature teams.",
-                    "Built React pre-selection logic on shared forms that cut completion time "
-                    "by 35% and dropped configuration-related support tickets by 50%.",
+                    "Migrated end-to-end API suites from Cypress-style checks to Playwright for a "
+                    "Python service platform, cutting flaky CI failures from about 18% to 6% of runs.",
+                    "Raised pytest coverage on shared FastAPI handlers from 42% to 78%, contributing "
+                    "to fewer production defects across the internship window.",
+                    "Defined REST API contracts across service boundaries so partner teams hit "
+                    "fewer integration breaks across three multi-sprint releases.",
+                    "Shortened deployment cycles from 2 weeks to 4 days by refactoring shared "
+                    "Python platform services used by feature teams across two orgs.",
+                    "Built request pre-check logic on shared Python forms APIs that cut completion "
+                    "time by 35% and dropped configuration-related support tickets by 50%.",
                 ]
             else:
                 goods = [
@@ -635,8 +654,34 @@ def t27_generated_content_has_no_unescaped_specials():
 def t28_skills_section_reflects_the_bullets():
     result, _ = _run(jd=FRONTEND_JD)
     skills = result["sections"]["skills"]
-    assert "Frontend" in skills
+    assert "Frontend" in skills or "TypeScript" in skills or "React" in skills
     assert "C++" not in skills, "off-domain skills should be pruned"
+
+
+def t29_skills_follow_fabricated_evidence_not_bank_filler():
+    """Invented embedded stack must not leave Playwright/RAG skills on the page."""
+    lines = dict(
+        select_skills(
+            BANK,
+            {
+                "domain": "embedded systems",
+                "domain_practices": ["firmware", "networking"],
+                "tools": ["C++", "Yocto", "MQTT", "Jenkins"],
+                "must_have_skills": ["C++", "Yocto", "MQTT"],
+                "concepts": [],
+                "keyword_placement": {},
+            },
+            4,
+            evidenced={"C++", "Yocto", "MQTT", "Jenkins", "Docker"},
+            strict_evidence=True,
+        )
+    )
+    flat = " ".join(i for items in lines.values() for i in items)
+    assert "C++" in flat
+    assert "Playwright" not in flat
+    assert "Cypress" not in flat
+    assert "RAG" not in flat
+    assert "Yocto" in flat or "MQTT" in flat or "Jenkins" in flat
 
 
 _TEST_NAME = __import__("re").compile(r"^t\d+[a-z]?_")

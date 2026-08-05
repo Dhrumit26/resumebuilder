@@ -465,22 +465,68 @@ def select_facts(
 
 MAX_SKILLS_PER_LINE = 6
 
+# Where to park a JD/resume tool that is not already in a skill-bank category.
+_INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
+    ("Languages", (
+        "python", "typescript", "javascript", "java", "go", "c++", "c#", "rust",
+        "kotlin", "swift", "sql", "c",
+    )),
+    ("Frontend", (
+        "react", "next.js", "angular", "vue", "html", "css", "jquery", "bootstrap",
+    )),
+    ("Backend & Cloud", (
+        "fastapi", "django", "flask", "spring", "node.js", "rest apis", "postgresql",
+        "redis", "docker", "kubernetes", "aws", "azure", "gcp", "lambda",
+    )),
+    ("AI & Data", (
+        "llm", "llms", "rag", "embeddings", "vector search", "multi-agent systems",
+    )),
+    ("Testing & CI/CD", (
+        "jest", "playwright", "cypress", "pytest", "junit", "jenkins", "github actions",
+        "gitlab ci", "git", "yocto", "mqtt", "selenium",
+    )),
+]
+
+
+def _inject_category_name(tool: str, category_names: list[str]) -> str | None:
+    low = tool.lower().strip()
+    for name, needles in _INJECT_CATEGORY_HINTS:
+        if name not in category_names:
+            continue
+        if any(n == low or n in low or low in n for n in needles):
+            return name
+    themes = _TOOL_THEMES.get(low) or []
+    if any(t.startswith("frontend") or t == "react" for t in themes) and "Frontend" in category_names:
+        return "Frontend"
+    if any(t in ("testing", "test-automation", "ci-cd") for t in themes) and "Testing & CI/CD" in category_names:
+        return "Testing & CI/CD"
+    if any(t.startswith("ai") or "search" in t for t in themes) and "AI & Data" in category_names:
+        return "AI & Data"
+    if "Languages" in category_names and low in {
+        "python", "typescript", "javascript", "java", "go", "c++", "c#", "rust", "sql", "c",
+    }:
+        return "Languages"
+    if "Backend & Cloud" in category_names:
+        return "Backend & Cloud"
+    return category_names[0] if category_names else None
+
 
 def select_skills(
     bank: FactBank,
     analysis: dict,
     line_count: int,
     evidenced: set[str] | None = None,
+    *,
+    strict_evidence: bool = False,
 ) -> list[tuple[str, list[str]]]:
     """Pick which skill lines to show, what goes on them, and in what order.
 
-    Only skills already in the fact bank are used — nothing is added to make a JD
-    happy. Lines are also PRUNED: a skills section listing every language the
-    candidate has ever touched reads as someone who claims everything and
-    specialises in nothing. Priority is JD-named first, then technologies the
-    resume's own bullets actually demonstrate, then the rest as filler.
+    Only skills already in the fact bank are used by default — nothing is added
+    to make a JD happy. When strict_evidence=True (fabricated roles on the page),
+    off-topic bank filler is dropped and JD/resume tools evidenced in bullets may
+    be injected so the skills section matches the invent story.
 
-    evidenced: tools named by the facts selected for this resume.
+    evidenced: tools named by facts and/or written bullets on this resume.
     """
     profile = theme_profile(analysis)
     jd_tools = _jd_tool_set(analysis)
@@ -491,6 +537,8 @@ def select_skills(
         for item in cat.items:
             if tool_matches(item, jd_tools):
                 score += 3.0
+            if item.lower() in evidenced_lower:
+                score += 1.5
         return score
 
     always = [c for c in bank.skill_categories if c.always]
@@ -498,9 +546,33 @@ def select_skills(
     rest.sort(key=lambda c: (category_score(c), -bank.skill_categories.index(c)), reverse=True)
 
     chosen = (always + rest)[:line_count]
+    # Mutable item lists so we can inject evidenced JD tools under fabricated mode.
+    working: list[tuple[str, list[str], SkillCategory]] = [
+        (cat.name, list(cat.items), cat) for cat in chosen
+    ]
+    names = [name for name, _, _ in working]
+
+    if strict_evidence:
+        known = {i.lower() for _, items, _ in working for i in items}
+        for raw in sorted(evidenced or set(), key=lambda s: s.lower()):
+            low = raw.lower().strip()
+            if not low or low in known:
+                continue
+            # Prefer injecting tools the JD cares about, or anything the bullets proved.
+            if not tool_matches(raw, jd_tools) and low not in evidenced_lower:
+                continue
+            target = _inject_category_name(raw, names)
+            if not target:
+                continue
+            for idx, (name, items, cat) in enumerate(working):
+                if name == target:
+                    items.append(raw)
+                    known.add(low)
+                    working[idx] = (name, items, cat)
+                    break
 
     lines: list[tuple[str, list[str]]] = []
-    for cat in chosen:
+    for name, items, cat in working:
         def item_rank(item: str, category: SkillCategory = cat) -> tuple[int, int]:
             if tool_matches(item, jd_tools):
                 tier = 0                                    # the JD asked for it
@@ -508,16 +580,30 @@ def select_skills(
                 tier = 1                                    # a bullet proves it
             else:
                 tier = 2                                    # true, but off-topic here
-            return (tier, category.items.index(item))
+            # Prefer original bank order, then injected order.
+            try:
+                pos = category.items.index(item)
+            except ValueError:
+                pos = 1000 + items.index(item)
+            return (tier, pos)
 
-        ranked = sorted(cat.items, key=item_rank)
-        keep = [i for i in ranked if item_rank(i)[0] < 2][:MAX_SKILLS_PER_LINE]
-        # Never ship an empty line; top up with the category's own ordering.
-        if len(keep) < 3:
-            for item in ranked:
-                if item not in keep:
-                    keep.append(item)
-                if len(keep) >= 3:
-                    break
-        lines.append((cat.name, keep))
+        ranked = sorted(items, key=item_rank)
+        if strict_evidence:
+            # Only JD-named or bullet-proven skills — no Playwright on an embedded invent.
+            keep = [i for i in ranked if item_rank(i)[0] < 2][:MAX_SKILLS_PER_LINE]
+            if len(keep) < 2:
+                for item in ranked:
+                    if item not in keep:
+                        keep.append(item)
+                    if len(keep) >= 2:
+                        break
+        else:
+            keep = [i for i in ranked if item_rank(i)[0] < 2][:MAX_SKILLS_PER_LINE]
+            if len(keep) < 3:
+                for item in ranked:
+                    if item not in keep:
+                        keep.append(item)
+                    if len(keep) >= 3:
+                        break
+        lines.append((name, keep))
     return lines

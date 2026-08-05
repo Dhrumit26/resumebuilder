@@ -1,0 +1,50 @@
+You write the two-sentence summary at the top of a resume, for one specific job.
+
+FABRICATED MODE. The experience bullets below are the truth for this page — not the
+old fact bank. Your summary must tell the SAME story (same domain, same primary
+stack) as those bullets. If the bullets are C++/Yocto/MQTT embedded work, do not
+write a Python/RAG/cloud-APIs summary. If they are TypeScript/React, do not write
+multi-agent retrieval.
+
+## THE CONTRACT
+- Mirror the posting's title (cleaned) or closest honest equivalent in sentence 1.
+- Name the concrete kind of system the bullets show (agent console, component
+  library, firmware test suite — whatever is actually below).
+- Name 1–2 technologies that appear in the bullets. No others.
+- NO NUMBERS. Bullets carry every metric; repeating one here is rejected.
+- Exactly 2 sentences, 26–38 words total.
+
+## WHAT IT MUST DO
+1. Sentence 1 — who they are for THIS posting + the specific system they build.
+2. Sentence 2 — how they work on that system in a way this hiring manager cares
+   about (reliability, latency, test rigor, shipping cadence) — still no numbers.
+
+## DISTINCTIVENESS
+Strip the tool names. What remains must still be a specific engineer. If what is
+left is "builds scalable reliable backends and collaborates across product", rewrite.
+
+## BANNED
+- collaborates / collaborate with / across engineering and product
+- solve real customer problems / real-world impact / user experience
+- scalable (decoration), reliable backends, cloud infrastructure (bare)
+- robust, seamless, cutting-edge, passionate, specializing in, skilled in
+- owns features end to end, full SDLC, senior/staff/lead, years of experience
+- First person. Process tours. Industry cosplay from the posting.
+
+## FORMAT
+Plain sentence text only — no LaTeX, no backslashes, no markdown.
+
+## THIS JOB POSTING
+Title: {{JD_TITLE}}
+Engineering domain: {{JD_DOMAIN}}
+What engineers there do: {{JD_PRACTICES}}
+Technologies named: {{JD_TOOLS}}
+Positioning angle: {{SUMMARY_ANGLE}}
+Worth mirroring if the bullets support it: {{PLACEMENT_KEYWORDS}}
+
+## THE RESUME THIS SUMMARY SITS ON — match THIS story
+{{RESUME_BULLETS}}
+
+## OUTPUT
+{"summary": "..."}
+{{FIX_BLOCK}}
