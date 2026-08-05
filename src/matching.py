@@ -203,8 +203,10 @@ class Selection:
     owner_label: str
     kind: str                    # "role" | "project"
     flexible: bool
+    fabricated: bool             # invent natively for the JD; skip fact grounding
     facts: list[Fact]
     scores: list[float]
+    tenure_months: int | None = None
 
 
 def _texts_from_analysis(analysis: dict) -> tuple[str, list[str]]:
@@ -451,8 +453,10 @@ def select_facts(
             owner_label=label,
             kind=kind,
             flexible=isinstance(owner, Role) and owner.flexible,
+            fabricated=isinstance(owner, Role) and owner.fabricated,
             facts=facts,
             scores=scores,
+            tenure_months=owner.tenure_months if isinstance(owner, Role) else None,
         )
     return out
 

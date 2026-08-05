@@ -38,8 +38,9 @@ _EXTRA_TECH = {
 }
 
 _BANNED_PHRASES = {
-    "leverage", "leveraging", "leveraged", "utilize", "utilized", "spearheaded",
-    "orchestrated", "championed", "robust", "seamless", "cutting-edge", "holistic",
+    "leverage", "leveraging", "leveraged", "leverages",
+    "utilize", "utilized", "utilizes", "utilizing",
+    "spearheaded", "orchestrated", "championed", "robust", "seamless", "cutting-edge", "holistic",
     "results-driven", "impact-driven", "detail-oriented", "proven track record",
     "responsible for", "helped with", "worked on", "state-of-the-art",
     "best-in-class", "mission-critical", "enterprise-grade", "at scale",
@@ -153,12 +154,17 @@ def _mentioned_tech(plain: str, lexicon: set[str]) -> set[str]:
 
 def verify_bullet(
     bullet: str,
-    fact: Fact,
+    fact: Fact | None,
     lexicon: set[str],
     min_words: int = MIN_WORDS,
     max_words: int = MAX_WORDS,
+    grounded: bool = True,
 ) -> list[Issue]:
-    """Check one written bullet against the single fact that licensed it."""
+    """Check one written bullet.
+
+    grounded=True (default): every number/tool must be licensed by `fact`.
+    grounded=False: invent mode — only craft checks apply (fabricated roles).
+    """
     issues: list[Issue] = []
     plain = _plain(bullet)
     if not plain:
@@ -167,70 +173,75 @@ def verify_bullet(
     words = _words(plain)
 
     # --- fabrication checks (the load-bearing ones) --------------------------
-    allowed_numbers = fact.numbers()
-    for number in _NUM_RE.findall(plain):
-        if number not in allowed_numbers:
+    if grounded:
+        if fact is None:
+            return [Issue("no-fact", "grounded bullet requires a licensing fact")]
+        allowed_numbers = fact.numbers()
+        for number in _NUM_RE.findall(plain):
+            if number not in allowed_numbers:
+                issues.append(
+                    Issue(
+                        "invented-number",
+                        f"'{number}' is not a number this fact records "
+                        f"(allowed: {sorted(allowed_numbers) or 'none'}) — "
+                        f"remove it or use a real one",
+                    )
+                )
+
+        # A technology the fact's own sentence names is licensed even when it is not
+        # in `tools` — "semantic caching" appears in the core text of the fact that
+        # describes it, and the bullet is allowed to repeat what the fact says.
+        allowed_tech = {t.lower() for t in fact.tools}
+        allowed_tech |= _mentioned_tech(fact.core + " " + " ".join(fact.angles), lexicon)
+        for tech in sorted(_mentioned_tech(plain, lexicon)):
+            if tech in allowed_tech:
+                continue
+            if any(tech in a or a in tech for a in allowed_tech):
+                continue
             issues.append(
                 Issue(
-                    "invented-number",
-                    f"'{number}' is not a number this fact records "
-                    f"(allowed: {sorted(allowed_numbers) or 'none'}) — "
-                    f"remove it or use a real one",
+                    "invented-tool",
+                    f"'{tech}' was not used for this work "
+                    f"(allowed: {sorted(fact.tools) or 'none'}) — drop it",
                 )
             )
 
-    # A technology the fact's own sentence names is licensed even when it is not
-    # in `tools` — "semantic caching" appears in the core text of the fact that
-    # describes it, and the bullet is allowed to repeat what the fact says.
-    allowed_tech = {t.lower() for t in fact.tools}
-    allowed_tech |= _mentioned_tech(fact.core + " " + " ".join(fact.angles), lexicon)
-    for tech in sorted(_mentioned_tech(plain, lexicon)):
-        if tech in allowed_tech:
-            continue
-        if any(tech in a or a in tech for a in allowed_tech):
-            continue
-        issues.append(
-            Issue(
-                "invented-tool",
-                f"'{tech}' was not used for this work "
-                f"(allowed: {sorted(fact.tools) or 'none'}) — drop it",
-            )
-        )
+        for pairing in fact.frozen:
+            members = [m.strip().lower() for m in re.split(r"\bto\b|->|→", pairing) if m.strip()]
+            low = plain.lower()
+            if any(m in low for m in members) and not all(m in low for m in members):
+                issues.append(
+                    Issue(
+                        "broken-pairing",
+                        f"'{pairing}' is a fixed pairing — name both sides or neither",
+                    )
+                )
 
-    for pairing in fact.frozen:
-        members = [m.strip().lower() for m in re.split(r"\bto\b|->|→", pairing) if m.strip()]
-        low = plain.lower()
-        if any(m in low for m in members) and not all(m in low for m in members):
+        anchors = _content_words(fact.core) | {t.lower() for t in fact.tools}
+        anchors |= _content_words(" ".join(fact.angles))
+        if len(_content_words(plain) & anchors) < 2:
             issues.append(
                 Issue(
-                    "broken-pairing",
-                    f"'{pairing}' is a fixed pairing — name both sides or neither",
+                    "unanchored",
+                    "bullet shares almost nothing with its fact — it must describe "
+                    f"this work: {fact.core}",
                 )
             )
 
-    anchors = _content_words(fact.core) | {t.lower() for t in fact.tools}
-    anchors |= _content_words(" ".join(fact.angles))
-    if len(_content_words(plain) & anchors) < 2:
-        issues.append(
-            Issue(
-                "unanchored",
-                "bullet shares almost nothing with its fact — it must describe "
-                f"this work: {fact.core}",
-            )
-        )
-
-    # Claiming a technical domain the fact never mentions — the model reaching
-    # for the posting's headline term (a RAG bullet becoming "deep learning").
-    fact_corpus = (fact.core + " " + " ".join(fact.angles) + " " + " ".join(fact.tools)).lower()
-    low_plain = plain.lower()
-    for claim in _PRACTICE_CLAIMS:
-        if claim in low_plain and claim not in fact_corpus:
-            issues.append(
-                Issue(
-                    "invented-domain",
-                    f"'{claim}...' is not what this work was — the fact says: {fact.core}",
+        # Claiming a technical domain the fact never mentions — the model reaching
+        # for the posting's headline term (a RAG bullet becoming "deep learning").
+        fact_corpus = (
+            fact.core + " " + " ".join(fact.angles) + " " + " ".join(fact.tools)
+        ).lower()
+        low_plain = plain.lower()
+        for claim in _PRACTICE_CLAIMS:
+            if claim in low_plain and claim not in fact_corpus:
+                issues.append(
+                    Issue(
+                        "invented-domain",
+                        f"'{claim}...' is not what this work was — the fact says: {fact.core}",
+                    )
                 )
-            )
 
     # --- craft checks --------------------------------------------------------
     if len(words) < min_words:
@@ -268,6 +279,7 @@ def verify_summary(
     lexicon: set[str],
     bullet_numbers: set[str] | None = None,
     proof_text: str = "",
+    fabricated_ok: bool = False,
 ) -> list[Issue]:
     """The summary may draw on every selected fact, but still invents nothing.
 
@@ -275,6 +287,8 @@ def verify_summary(
     inches above them, so repeating one wastes the page's most valuable lines.
     proof_text: the bullets as written, used to check that positioning claims
     have something on the page backing them up.
+    fabricated_ok: when a role was invented for the JD, technologies named in
+    proof_text are also licensed (they came from that invented block).
     """
     issues: list[Issue] = []
     plain = _plain(summary)
@@ -287,6 +301,11 @@ def verify_summary(
         allowed_numbers |= fact.numbers()
         allowed_tech |= {t.lower() for t in fact.tools}
         allowed_tech |= _mentioned_tech(fact.core + " " + " ".join(fact.angles), lexicon)
+    if fabricated_ok and proof_text:
+        allowed_tech |= _mentioned_tech(proof_text, lexicon)
+        # Numbers that already appear in fabricated bullets are real for this page;
+        # the summary still should not invent fresh ones.
+        allowed_numbers |= set(_NUM_RE.findall(proof_text))
 
     used_numbers = _NUM_RE.findall(plain)
     for number in used_numbers:
@@ -349,6 +368,266 @@ def verify_summary(
         issues.append(Issue("first-person", "no first person in a resume summary"))
     if re.search(r"(?<!\\)%", summary):
         issues.append(Issue("bare-percent", "escape percent signs as \\%"))
+
+    return issues
+
+
+# --- fabricated-role block checks --------------------------------------------
+
+_FAB_LANGUAGES = (
+    "Python", "Java", "C#", "C++", "Go", "Rust", "TypeScript", "JavaScript",
+    "Ruby", "PHP", "Kotlin", "Swift", "Scala",
+)
+_FAB_CLOUDS = ("AWS", "GCP", "Azure")
+
+# Practices that every backend JD mentions — not enough to prove domain fit.
+_GENERIC_SPINE = {
+    "api development", "apis", "api", "backend services", "backend development",
+    "backend", "full-stack", "full stack", "software testing", "testing",
+    "debugging", "system design", "collaboration", "code review", "sdlc",
+    "product mindset", "distributed systems",
+}
+
+# Distinctive domain tokens → searchable needles (substring in plain lower text).
+_SPINE_NEEDLES: list[tuple[str, tuple[str, ...]]] = [
+    ("RAG / retrieval", ("rag", "retrieval-augmented", "retrieval augmented", "retrieval")),
+    ("agent workflows", ("agentic", "agent-based", "multi-agent", "agent workflow",
+                         "agent behavior", "agent loop", "tool-calling", "tool calling",
+                         "tool execution")),
+    ("embeddings", ("embedding",)),
+    ("model inference", ("inference",)),
+    ("LLM", ("llm", "large language")),
+    ("NLP", ("nlp", "natural language")),
+    ("orchestration", ("orchestration",)),
+    ("machine learning", ("machine learning", " ml ")),
+]
+
+
+def spine_labels_from_analysis(analysis: dict) -> list[str]:
+    """Distinctive practice/concept labels the fabricated block must cover."""
+    seen: set[str] = set()
+    labels: list[str] = []
+    for key in ("domain_practices", "concepts"):
+        for raw in analysis.get(key) or []:
+            text = str(raw or "").strip()
+            if not text:
+                continue
+            low = text.lower()
+            key_id = re.sub(r"\s+", " ", low)
+            if key_id in seen:
+                continue
+            # Keep if it matches a distinctive needle family, or is not generic.
+            distinctive = any(
+                any(n.strip() in low for n in needles)
+                for _, needles in _SPINE_NEEDLES
+            )
+            generic = any(g == low or g in low for g in _GENERIC_SPINE) and not distinctive
+            if generic:
+                continue
+            seen.add(key_id)
+            labels.append(text)
+    return labels
+
+
+def _spine_hits(plain_low: str, analysis: dict) -> list[str]:
+    """Which distinctive spine families appear in the fabricated block text."""
+    # Prefer families that the JD actually asked for.
+    wanted_blob = " ".join(
+        str(x).lower()
+        for key in ("domain_practices", "concepts", "tools", "must_have_skills",
+                    "exact_keywords_for_ats", "domain")
+        for x in ([analysis.get(key)] if isinstance(analysis.get(key), str)
+                  else (analysis.get(key) or []))
+    )
+    hits: list[str] = []
+    for label, needles in _SPINE_NEEDLES:
+        # Only require families the JD mentioned (or always check if JD is silent).
+        jd_cares = any(n.strip() in wanted_blob for n in needles) or not wanted_blob.strip()
+        if not jd_cares:
+            continue
+        if any(n in plain_low for n in needles):
+            hits.append(label)
+    return hits
+
+
+def _named_in_text(plain: str, names: tuple[str, ...]) -> list[str]:
+    found: list[str] = []
+    for name in names:
+        if name == "Go":
+            pat = re.compile(r"(?<![A-Za-z])Go(?![A-Za-z])")
+        elif name == "C++":
+            pat = re.compile(r"(?<![A-Za-z])C\+\+(?![A-Za-z])")
+        elif name == "C#":
+            pat = re.compile(r"(?<![A-Za-z])C#(?![A-Za-z])")
+        else:
+            pat = re.compile(
+                r"(?<![A-Za-z0-9_])" + re.escape(name) + r"(?![A-Za-z0-9_+#])"
+            )
+        if pat.search(plain) and name not in found:
+            found.append(name)
+    return found
+
+
+def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
+    """Block-level checks for invent-mode roles: spine, stack, story, no fluff theater."""
+    issues: list[Issue] = []
+    plains = [_plain(b) for b in bullets]
+    plain = " ".join(plains)
+    low = plain.lower()
+
+    hits = _spine_hits(low, analysis)
+    jd_spine = spine_labels_from_analysis(analysis)
+    wanted_blob = " ".join(s.lower() for s in jd_spine) + " " + str(
+        analysis.get("domain") or ""
+    ).lower()
+    for key in ("tools", "must_have_skills", "exact_keywords_for_ats", "concepts",
+                "domain_practices"):
+        for x in analysis.get(key) or []:
+            wanted_blob += " " + str(x).lower()
+
+    wanted_families = [
+        label for label, needles in _SPINE_NEEDLES
+        if any(n.strip() in wanted_blob for n in needles)
+    ]
+    _must_if_jd = (
+        "RAG / retrieval",
+        "agent workflows",
+        "embeddings",
+        "LLM",
+        "model inference",
+        "orchestration",
+    )
+    for label in _must_if_jd:
+        if label not in wanted_families:
+            continue
+        if label not in hits:
+            issues.append(
+                Issue(
+                    "missing-spine",
+                    f"JD requires '{label}' — none of the bullets show it as real work. "
+                    f"Plant it on the system (see the GOLD example shape).",
+                )
+            )
+
+    need = min(3, len(wanted_families)) if wanted_families else 0
+    if need and len(hits) < need:
+        missing = [f for f in wanted_families if f not in hits]
+        issues.append(
+            Issue(
+                "missing-spine",
+                f"block only covers {hits or 'none'} of the JD spine — need ≥{need}: "
+                f"{', '.join(wanted_families)}. Missing: {', '.join(missing)}",
+            )
+        )
+
+    # Primary language from the JD must appear; no scatter.
+    tools = [str(t) for t in (analysis.get("tools") or [])]
+    lang_order = (
+        "Python", "TypeScript", "JavaScript", "Java", "Go", "C++", "C#", "Rust",
+        "Kotlin", "Swift",
+    )
+    primary = next((t for t in tools if t in lang_order), "Python")
+    langs = _named_in_text(plain, _FAB_LANGUAGES)
+    if primary not in langs:
+        issues.append(
+            Issue(
+                "missing-primary-language",
+                f"primary language '{primary}' never appears — name it in bullet 1 or 2",
+            )
+        )
+    if len(langs) > 2:
+        issues.append(
+            Issue(
+                "language-scatter",
+                f"named {', '.join(langs)} across one job — pick '{primary}' "
+                f"(+ at most one secondary) and rebuild every bullet",
+            )
+        )
+
+    clouds = _named_in_text(plain, _FAB_CLOUDS)
+    if len(clouds) > 1:
+        issues.append(
+            Issue(
+                "cloud-scatter",
+                f"named {', '.join(clouds)} — pick ONE cloud and drop the others",
+            )
+        )
+
+    # Product story: bullet 1 needs a setting; later bullets need back-references.
+    setting_re = re.compile(
+        r"\b(?:platform|service|console|dashboard|portal|application|pipeline|"
+        r"tool|website|site|module|feed|API|apis)\b",
+        re.I,
+    )
+    backref_re = re.compile(
+        r"\b(?:that|the|those|this|same)\s+"
+        r"(?:platform|service|console|dashboard|portal|application|app|API|apis|"
+        r"pipeline|tool|website|site|module|feed|handlers?|endpoints?|"
+        r"agents?|retrieval|RAG|system|workflows?)\b",
+        re.I,
+    )
+    if plains and not setting_re.search(plains[0]) and not backref_re.search(plains[0]):
+        issues.append(
+            Issue(
+                "story-thin",
+                "bullet 1 must plant the product setting "
+                "(e.g. 'agent console', 'retrieval service') — not a bare keyword list",
+            )
+        )
+    anchored = sum(1 for t in plains if setting_re.search(t) or backref_re.search(t))
+    if plains and anchored < max(2, (len(plains) + 1) // 2):
+        issues.append(
+            Issue(
+                "story-thin",
+                f"only {anchored}/{len(plains)} bullets mention the system — "
+                f"refer back ('that console', 'those agents', 'the same retrieval path')",
+            )
+        )
+
+    # Fluff / meeting theater / empty JD cosplay.
+    fluff_open = re.compile(
+        r"(?i)^(facilitated|collaborated|conducted|participated|helped|ensured|"
+        r"boosted|enhanced usability)\b"
+    )
+    fluff_phrase = re.compile(
+        r"(?i)\b(?:ai-powered product features|user experience|real-world impact|"
+        r"scalable cloud solutions|growing user demands|ai-first product teams|"
+        r"context-aware ai responses|technical discussions?|"
+        r"significantly improving|ensuring efficient operation)\b"
+    )
+    for i, text in enumerate(plains):
+        if fluff_open.search(text.strip()):
+            issues.append(
+                Issue(
+                    "fluff-bullet",
+                    f"bullet {i + 1} opens with meeting/process theater — rewrite as "
+                    f"Built/Shipped/Cut work on the same system",
+                )
+            )
+        if fluff_phrase.search(text):
+            issues.append(
+                Issue(
+                    "fluff-bullet",
+                    f"bullet {i + 1} uses empty recruiter phrases — replace with concrete "
+                    f"engineering (tool + change + system back-reference)",
+                )
+            )
+
+    # Bare percent theater: "by 25%" with no from→to baseline.
+    bare_pct = 0
+    for text in plains:
+        if re.search(r"\bby\s+\d+%", text.lower()) and not re.search(
+            r"\bfrom\b.+\bto\b", text.lower()
+        ):
+            bare_pct += 1
+    if bare_pct > 1:
+        issues.append(
+            Issue(
+                "metric-theater",
+                f"{bare_pct} bullets use bare 'by N%' with no from→to — keep at most one, "
+                f"or rewrite as 'from X to Y'",
+            )
+        )
 
     return issues
 

@@ -1,0 +1,64 @@
+You invent ONE coherent mid-level engineering role for this posting. Facts are ignored.
+Write exactly {{COUNT}} bullets for {{BLOCK_LABEL}}.
+
+## GOLD STANDARD — copy this SHAPE (not the words) when the JD is AI/LLM/agentic
+Bullet 1 plants WHO/WHAT/WHERE + spine. Later bullets refer back. One language. Real verbs.
+
+GOOD (Python + AWS + RAG/agent spine, ~3 months of work):
+1. Built Python RAG retrieval APIs for an internal agent console that answers support questions over product docs on AWS.
+2. Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by rewriting the embedding lookup and inference batching.
+3. Shipped tool-calling orchestration for those agents so they could read tickets and draft replies without leaving the console.
+4. Covered those LLM workflow handlers with pytest so retrieval regressions stopped shipping into the agent loop.
+5. Deployed that same retrieval service with Docker on AWS so staging matched production inference settings before each release.
+
+BAD (keyword cosplay — automatic fail, even if every spine word appears):
+1. Developed a RAG system enhancing LLM workflows for AI-powered product features.
+2. Implemented model inference techniques, significantly improving system performance and user experience.
+3. Boosted reliability by integrating scalable cloud solutions on AWS.
+4. Enhanced usability by refining prompting strategies for context-aware AI responses.
+5. Facilitated technical discussions with AI-first product teams on orchestration frameworks.
+
+Why BAD fails: no product setting, no primary language, vague %/adjectives, meeting/process theater, every bullet is a JD keyword wearing a costume.
+
+## BEFORE YOU WRITE (private)
+1. Name ONE system in one sentence: who uses it, what it does, where it lives.
+2. Primary language MUST be {{PRIMARY_LANGUAGE}}. Name it in bullet 1 or 2. At most one other language. ONE cloud: {{PRIMARY_CLOUD}}.
+3. Map bullets to spine practices — each bullet is a different facet of THAT system.
+
+## SPINE — mandatory when listed (mechanical check)
+{{JD_SPINE}}
+
+Related: {{JD_CONCEPTS}}
+
+If RAG/retrieval, agent, embeddings, LLM, model inference, or orchestration appear above,
+each MUST show up as concrete work on the system. Do not skip RAG for a fluff "AI platform".
+
+## HARD BANS — any of these fails the block
+- Opening with: Facilitated, Collaborated, Conducted, Participated, Helped, Ensured, Boosted, Enhanced usability
+- Empty phrases: AI-powered product features, user experience, real-world impact, scalable cloud solutions, growing user demands, AI-first product teams, context-aware AI responses, system performance and reliability (with no measured change)
+- Vague percent with no baseline: "by 25%" / "by 30%" without from→to (use "from X to Y" or skip the number)
+- Language scatter (Python+Java+Go+TypeScript). Cloud scatter (AWS+GCP+Azure).
+- led / owned / spearheaded / leveraged / utilized / robust / seamless
+- Industry cosplay from the posting. Hyperscale. Invented team names.
+- At most 2–3 hard metrics in the whole block; other bullets = concrete delivery, no fake scoreboard
+
+## CRAFT
+- XYZ: outcome first, then how. 18–30 words. One sentence. Never end on by/to/with/using/and.
+- Verbs: Built, Shipped, Cut, Raised, Migrated, Rewrote, Fixed, Reduced, Defined, Deployed, Covered.
+- 2–3 technologies per bullet max. Bullets 2–{{COUNT}} must refer back ("that console", "those agents", "the same retrieval path").
+- Plain prose. No LaTeX, no \\textbf, no markdown. Write % plainly.
+
+## THIS JOB POSTING
+Title: {{JD_TITLE}}
+Domain: {{JD_DOMAIN}}
+Practices: {{JD_PRACTICES}}
+Tools: {{JD_TOOLS}}
+Worth surfacing: {{PLACEMENT_KEYWORDS}}
+
+## THIS BLOCK
+{{BLOCK_KIND}}: {{BLOCK_LABEL}}{{TENURE}}
+{{FLEX_RULE}}
+
+## OUTPUT
+{"bullets": ["...", "..."]}  — exactly {{COUNT}} strings, plain text only.
+{{FIX_BLOCK}}

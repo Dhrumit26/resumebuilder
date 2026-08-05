@@ -1,11 +1,13 @@
-"""Fact-grounded pipeline.
+"""Fact-grounded pipeline (with optional fabricated current role).
 
     JD analysis -> select real facts (code) -> write bullets -> verify (code)
     -> targeted repair -> render into the LaTeX templates -> measure
 
 Differences from the v1 pipeline that matter:
-- Writers never invent. Every bullet is licensed by one fact in data/facts.yaml,
-  and verify.py checks that mechanically instead of hunting for known lies.
+- By default, writers never invent. Every bullet is licensed by one fact in
+  data/facts.yaml, and verify.py checks that mechanically.
+- When a role has fabricated: true (Clerxi), that block invents natively in the
+  JD's domain — craft checks only; Intuit and projects stay fact-grounded.
 - The model never emits LaTeX. skeleton.py fills the shipped templates, so the
   layout and the bullet counts are the templates', not the model's.
 - Quality is MEASURED (keyword coverage, metric density, domain match), not
@@ -42,15 +44,21 @@ from .skeleton import (
 )
 from .verify import (
     Issue,
+    _mentioned_tech,
+    _plain,
     keyword_coverage,
+    spine_labels_from_analysis,
     tech_lexicon,
     verify_bullet,
+    verify_fabricated_block,
     verify_summary,
 )
 
 BULLET_TEMPERATURE = 0.35
-REPAIR_TEMPERATURE = 0.2
+FABRICATED_TEMPERATURE = 0.2
+REPAIR_TEMPERATURE = 0.15
 MAX_REPAIR_ROUNDS = 2
+MAX_FABRICATED_REPAIR_ROUNDS = 4
 
 
 def _fill(template: str, **kwargs: str) -> str:
@@ -93,6 +101,13 @@ def _flex_rule(selection: Selection) -> str:
             "A personal project. Same contract as everything else: only these facts, "
             "only these numbers and tools."
         )
+    if selection.fabricated:
+        return (
+            "FABRICATED MODE for this CURRENT role: invent a coherent mid-level story "
+            "natively in the posting's engineering domain. Ignore the fact bank for "
+            "grounding. Company name stays real; product follows the JD domain, not "
+            "brand tokens in the company name. Do not adopt the posting's industry."
+        )
     if selection.flexible:
         return (
             "This is the candidate's CURRENT role and the most flexible part of the resume. "
@@ -129,20 +144,55 @@ def clean_role_title(title: str) -> str:
     return re.sub(r"\s+", " ", cleaned).strip() or (title or "").strip()
 
 
-def _jd_fields(analysis: dict, section: str) -> dict[str, str]:
+def _jd_fields(analysis: dict, section: str, *, fabricated: bool = False) -> dict[str, str]:
     placement = (analysis.get("keyword_placement") or {}).get(section) or []
     if not placement:
         placement = (analysis.get("must_have_skills") or [])[:6]
+    practices = [str(p) for p in (analysis.get("domain_practices") or []) if str(p).strip()]
+    concepts = [str(c) for c in (analysis.get("concepts") or []) if str(c).strip()]
+    tools = [str(t) for t in (analysis.get("tools") or []) if str(t).strip()]
+
+    # Primary language / cloud: first JD-named one, else a safe default.
+    lang_order = (
+        "Python", "TypeScript", "JavaScript", "Java", "Go", "C++", "C#", "Rust", "Kotlin", "Swift",
+    )
+    primary_lang = next((t for t in tools if t in lang_order), None) or next(
+        (l for l in lang_order if any(l.lower() == t.lower() for t in tools)),
+        "Python",
+    )
+    cloud_order = ("AWS", "GCP", "Azure")
+    primary_cloud = next((t for t in tools if t in cloud_order), "AWS")
+
+    spine = spine_labels_from_analysis(analysis)
+    if not spine:
+        spine = practices[:6] or concepts[:6]
+
+    # Fabricated experience should surface the spine, not the weak "backend/APIs"
+    # placement the JD agent often puts under experience.
+    if fabricated:
+        placement = spine[:8] or placement
+
     return {
         "JD_TITLE": clean_role_title(str(analysis.get("role_title") or "")) or "(not stated)",
         "JD_DOMAIN": str(analysis.get("domain") or "(not stated)"),
-        "JD_PRACTICES": ", ".join(analysis.get("domain_practices") or []) or "(not stated)",
-        "JD_TOOLS": ", ".join(analysis.get("tools") or []) or "(none identified)",
+        "JD_PRACTICES": ", ".join(practices) or "(not stated)",
+        "JD_TOOLS": ", ".join(tools) or "(none identified)",
+        "JD_CONCEPTS": ", ".join(concepts) or "(none identified)",
+        "JD_SPINE": ", ".join(spine) or ", ".join(practices) or "(use domain practices)",
+        "PRIMARY_LANGUAGE": primary_lang,
+        "PRIMARY_CLOUD": primary_cloud,
         "PLACEMENT_KEYWORDS": ", ".join(placement) or "(use your judgment)",
     }
 
 
-def _issue_block(bullets: list[str], facts: list[Fact], issues_by_index: dict[int, list[Issue]]) -> str:
+def _issue_block(
+    bullets: list[str],
+    facts: list[Fact],
+    issues_by_index: dict[int, list[Issue]],
+    *,
+    fabricated: bool = False,
+    block_issues: list[Issue] | None = None,
+) -> str:
     lines = [
         "",
         "## YOUR PREVIOUS ATTEMPT FAILED MECHANICAL CHECKS",
@@ -150,11 +200,23 @@ def _issue_block(bullets: list[str], facts: list[Fact], issues_by_index: dict[in
         "exactly as they are; rewrite only the flagged ones so they pass.",
         "",
     ]
+    if block_issues:
+        lines.append("## BLOCK-LEVEL FAILURES — rewrite the WHOLE set to fix these")
+        for issue in block_issues:
+            lines.append(f"  PROBLEM [{issue.code}]: {issue.message}")
+        lines.append("")
     for idx, issues in sorted(issues_by_index.items()):
+        # Block-level issues are already listed above; skip duplicating on bullet 0.
+        per_bullet = [i for i in issues if not block_issues or i not in block_issues]
+        if not per_bullet:
+            continue
         previous = bullets[idx] if idx < len(bullets) else ""
-        lines.append(f"BULLET {idx + 1} (fact: {facts[idx].core[:70]}...)")
+        if fabricated:
+            lines.append(f"BULLET {idx + 1}")
+        else:
+            lines.append(f"BULLET {idx + 1} (fact: {facts[idx].core[:70]}...)")
         lines.append(f'  you wrote: "{previous}"')
-        for issue in issues:
+        for issue in per_bullet:
             lines.append(f"  PROBLEM [{issue.code}]: {issue.message}")
         lines.append("")
     return "\n".join(lines)
@@ -171,27 +233,51 @@ def _write_bullets_for_block(
     if not count:
         return [], {"block": selection.owner_label, "status": "no-facts"}
 
-    template = _load_v2_prompt("bullets.txt")
     tenure = ""
-    base_prompt = _fill(
-        template,
-        BLOCK_KIND="Job" if selection.kind == "role" else "Project",
-        BLOCK_LABEL=selection.owner_label,
-        TENURE=tenure,
-        FLEX_RULE=_flex_rule(selection),
-        FACTS=_format_facts(facts),
-        COUNT=str(count),
-        FIX_BLOCK="",
-        **_jd_fields(analysis, "experience" if selection.kind == "role" else "projects"),
+    if selection.tenure_months:
+        tenure = f"\nTenure on the resume: about {selection.tenure_months} months"
+
+    jd_kwargs = _jd_fields(
+        analysis,
+        "experience" if selection.kind == "role" else "projects",
+        fabricated=selection.fabricated,
     )
+
+    if selection.fabricated:
+        template = _load_v2_prompt("bullets_fabricated.txt")
+        base_prompt = _fill(
+            template,
+            BLOCK_KIND="Job" if selection.kind == "role" else "Project",
+            BLOCK_LABEL=selection.owner_label,
+            TENURE=tenure,
+            FLEX_RULE=_flex_rule(selection),
+            COUNT=str(count),
+            FIX_BLOCK="",
+            **jd_kwargs,
+        )
+    else:
+        template = _load_v2_prompt("bullets.txt")
+        base_prompt = _fill(
+            template,
+            BLOCK_KIND="Job" if selection.kind == "role" else "Project",
+            BLOCK_LABEL=selection.owner_label,
+            TENURE=tenure,
+            FLEX_RULE=_flex_rule(selection),
+            FACTS=_format_facts(facts),
+            COUNT=str(count),
+            FIX_BLOCK="",
+            **jd_kwargs,
+        )
 
     bullets: list[str] = []
     attempts = 0
     prompt = base_prompt
-    temperature = BULLET_TEMPERATURE
+    temperature = FABRICATED_TEMPERATURE if selection.fabricated else BULLET_TEMPERATURE
     issues_by_index: dict[int, list[Issue]] = {}
+    block_issues: list[Issue] = []
+    max_rounds = MAX_FABRICATED_REPAIR_ROUNDS if selection.fabricated else MAX_REPAIR_ROUNDS
 
-    while attempts <= MAX_REPAIR_ROUNDS:
+    while attempts <= max_rounds:
         attempts += 1
         try:
             raw = call_llm_json(prompt, temperature=temperature, max_tokens=1600, role="writer")
@@ -209,27 +295,47 @@ def _write_bullets_for_block(
             candidate.append("")
 
         issues_by_index = {}
-        for i, (bullet, fact) in enumerate(zip(candidate, facts)):
-            found = verify_bullet(bullet, fact, lexicon)
+        for i, bullet in enumerate(candidate):
+            fact = None if selection.fabricated else facts[i]
+            found = verify_bullet(
+                bullet, fact, lexicon, grounded=not selection.fabricated
+            )
             errors = [x for x in found if x.severity == "error"]
             if errors:
                 issues_by_index[i] = errors
+
+        block_issues = []
+        if selection.fabricated:
+            block_issues = [
+                i for i in verify_fabricated_block(candidate, analysis) if i.severity == "error"
+            ]
+            if block_issues:
+                issues_by_index.setdefault(0, []).extend(block_issues)
 
         bullets = candidate
         if not issues_by_index:
             break
 
-        prompt = base_prompt + _issue_block(candidate, facts, issues_by_index)
+        prompt = base_prompt + _issue_block(
+            candidate,
+            facts,
+            issues_by_index,
+            fabricated=selection.fabricated,
+            block_issues=block_issues,
+        )
         temperature = REPAIR_TEMPERATURE
 
-    # Anything still failing falls back to the plain fact — always true, never pretty.
     fallbacks: list[str] = []
     if not bullets:
         bullets = [""] * count
         issues_by_index = {i: [Issue("no-output", "writer produced nothing")] for i in range(count)}
-    for idx in list(issues_by_index.keys()):
-        bullets[idx] = _latex_text(facts[idx].core)
-        fallbacks.append(facts[idx].id)
+
+    # Grounded blocks: anything still failing falls back to the plain fact.
+    # Fabricated blocks keep the last candidate — invent mode has no fact text to fall to.
+    if not selection.fabricated:
+        for idx in list(issues_by_index.keys()):
+            bullets[idx] = _latex_text(facts[idx].core)
+            fallbacks.append(facts[idx].id)
 
     meta = {
         "block": selection.owner_label,
@@ -237,6 +343,8 @@ def _write_bullets_for_block(
         "facts": [f.id for f in facts],
         "fact_scores": selection.scores,
         "fell_back_to_fact": fallbacks,
+        "fabricated": selection.fabricated,
+        "block_issues": [i.code for i in block_issues] if selection.fabricated else [],
     }
     _debug_dump(f"v2_{selection.owner_id}_bullets", json.dumps({**meta, "bullets": bullets}, indent=2))
     return bullets, meta
@@ -250,6 +358,7 @@ def _write_summary(
     fallback: str,
 ) -> tuple[str, dict]:
     facts = [f for sel in selections.values() for f in sel.facts]
+    fabricated_ok = any(sel.fabricated for sel in selections.values())
     bullet_numbers = set(re.findall(r"\d+(?:\.\d+)?", " ".join(rendered_bullets)))
     template = _load_v2_prompt("summary.txt")
     base_prompt = _fill(
@@ -275,7 +384,12 @@ def _write_summary(
         issues = [
             i
             for i in verify_summary(
-                summary, facts, lexicon, bullet_numbers, " ".join(rendered_bullets)
+                summary,
+                facts,
+                lexicon,
+                bullet_numbers,
+                " ".join(rendered_bullets),
+                fabricated_ok=fabricated_ok,
             )
             if i.severity == "error"
         ]
@@ -415,6 +529,9 @@ def measure(
     profile = theme_profile(analysis)
     wanted = {t for t, w in profile.items() if w >= 2.0}
     covered = {t for sel in selections.values() for f in sel.facts for t in f.themes}
+    # Fabricated roles are written natively for the JD — credit the posting's themes.
+    if any(sel.fabricated for sel in selections.values()):
+        covered |= wanted
     domain_match = len(wanted & covered) / len(wanted) if wanted else 1.0
 
     skill_items = [i for _, items in skills_lines for i in items]
@@ -522,7 +639,12 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
     # --- 6. Skills: selection from the bank, no LLM -------------------------
     # Constrained by the facts that actually made the page, so the skills line
     # backs up the bullets instead of claiming every technology at once.
+    # Fabricated blocks also license tools named in the invented bullets.
     evidenced = {t for sel in selections.values() for f in sel.facts for t in f.tools}
+    for label, bullets in written.items():
+        if selections[label].fabricated:
+            for bullet in bullets:
+                evidenced |= _mentioned_tech(_plain(bullet), lexicon)
     skills_lines = select_skills(
         bank, analysis, skills_line_count(templates["skills"]), evidenced
     )

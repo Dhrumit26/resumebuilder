@@ -12,12 +12,23 @@ phrase them for the posting.
 
 ### The one rule
 
-`data/facts.yaml` is the only source of truth for what may appear on the resume.
+`data/facts.yaml` is the only source of truth for what may appear on the resume —
+**except** when a role sets `fabricated: true`.
+
 A writer agent may **select**, **order**, and **rephrase** facts. It may never
 invent a system, a tool, or a number. That is enforced in code, not by asking the
 model nicely: [`src/verify.py`](src/verify.py) rejects any bullet containing a
 number or technology its own fact does not license, and a bullet that cannot pass
 falls back to the plain fact text.
+
+**`flexible: true`** (Clerxi) — aggressive *truthful* reframing of confirmed facts
+toward the JD's vocabulary. Still fact-grounded.
+
+**`fabricated: true`** (Clerxi, when you want invent mode) — ignore the fact bank
+for that role's bullets and invent a coherent mid-level story natively in the JD's
+engineering domain (v1-style). Intuit and projects stay fact-grounded. Craft
+checks still apply; fact-license checks do not. Set `fabricated: false` to return
+to select/order/rephrase-only for Clerxi.
 
 ### How tailoring happens
 

@@ -95,6 +95,9 @@ class Role:
     dates: str
     facts: list[Fact]
     flexible: bool = False
+    # When True, this role's bullets may be invented natively in the JD's domain
+    # (Clerxi-style). Facts are ignored for grounding; only craft checks apply.
+    fabricated: bool = False
     tenure_months: int | None = None
 
 
@@ -231,6 +234,7 @@ def load_fact_bank(path: Path | None = None) -> FactBank:
                 location=_clean(str(raw.get("location") or "")),
                 dates=_clean(str(raw.get("dates") or "")),
                 flexible=bool(raw.get("flexible")),
+                fabricated=bool(raw.get("fabricated")),
                 tenure_months=raw.get("tenure_months"),
                 facts=_parse_facts(raw.get("facts"), role_id, company, errors),
             )

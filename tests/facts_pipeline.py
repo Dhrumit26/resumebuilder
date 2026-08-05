@@ -66,7 +66,9 @@ def _fact(owner: str, fact_id: str):
 def t01_fact_bank_loads_and_validates():
     assert [r.id for r in BANK.roles] == ["clerxi", "intuit"]
     assert BANK.role("clerxi").flexible is True
+    assert BANK.role("clerxi").fabricated is True
     assert BANK.role("intuit").flexible is False
+    assert BANK.role("intuit").fabricated is False
     assert len(BANK.role("clerxi").facts) == 5
 
 
@@ -136,6 +138,7 @@ def t08_domain_changes_fact_priority():
 def t09_flexible_role_reorders_for_domain():
     be = select_facts(BANK, BACKEND_JD, SLOTS)["Clerxi AI"]
     assert be.flexible is True
+    assert be.fabricated is True
     assert be.facts[0].id in ("retrieval-services", "agent-orchestration-api")
     assert be.scores[0] >= be.scores[-1], "facts must be ordered by relevance"
 
@@ -190,6 +193,95 @@ def t15_invented_tool_is_rejected():
     codes = [i.message for i in issues if i.code == "invented-tool"]
     assert any("kubernetes" in m for m in codes)
     assert any("datadog" in m for m in codes)
+
+
+def t15b_fabricated_mode_skips_tool_grounding():
+    """When fabricated=true, invent mode only enforces craft — tools may be new."""
+    issues = verify_bullet(
+        "Built Kubernetes APIs for an internal ops console that lets engineers review "
+        "vendor feed errors before customers see them in production.",
+        None, LEXICON, grounded=False,
+    )
+    assert not any(i.code == "invented-tool" for i in issues), issues
+    assert not any(i.severity == "error" for i in issues), issues
+
+
+def t15c_fabricated_block_requires_jd_spine():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "AI/LLM platform",
+        "domain_practices": ["LLM workflows", "agent-based workflows", "orchestration"],
+        "concepts": ["RAG architecture", "embeddings", "model inference"],
+        "tools": ["Python", "AWS"],
+    }
+    generic = [
+        "Built Python APIs for a backend service that serves client applications on AWS.",
+        "Improved system performance by 25% through optimizing algorithms with Python.",
+        "Enhanced API security by implementing authentication protocols on AWS.",
+        "Deployed new services to production using AWS with minimal downtime each release.",
+        "Defined REST contracts so teams could integrate without breaking changes weekly.",
+    ]
+    issues = verify_fabricated_block(generic, jd)
+    assert any(i.code == "missing-spine" for i in issues), issues
+
+    good = [
+        "Built Python RAG retrieval APIs for an internal agent console over product docs on AWS.",
+        "Cut multi-agent query latency on that console from 1.8s to 1.1s by rewriting the embedding path.",
+        "Shipped tool-calling orchestration so those agents could read tickets and draft replies.",
+        "Covered those LLM workflow handlers with tests so inference regressions stopped shipping.",
+        "Deployed that retrieval service with Docker on AWS so staging matched production.",
+    ]
+    assert not verify_fabricated_block(good, jd), verify_fabricated_block(good, jd)
+
+    no_rag = [
+        "Built Python APIs for an internal agent console over product docs on AWS.",
+        "Cut multi-agent query latency on that console by 40% by rewriting the embedding path.",
+        "Shipped tool-calling orchestration so those agents could read tickets and draft replies.",
+        "Covered those LLM workflow handlers with tests so inference regressions stopped shipping.",
+        "Deployed that service with Docker on AWS so staging matched production settings.",
+    ]
+    assert any(i.code == "missing-spine" for i in verify_fabricated_block(no_rag, jd))
+
+
+def t15d_fabricated_block_rejects_language_scatter():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "backend",
+        "domain_practices": ["API development"],
+        "concepts": ["backend development"],
+        "tools": ["Python", "Java", "Go"],
+    }
+    bullets = [
+        "Built Python APIs for an internal ops console that reviews vendor feeds daily.",
+        "Cut latency on that console by 20% by rewriting hot paths in Go carefully.",
+        "Covered those handlers with tests in Java so regressions stopped shipping weekly.",
+        "Deployed the same console with Docker so staging matched production settings.",
+        "Defined REST contracts for that console so partner teams integrated cleanly.",
+    ]
+    issues = verify_fabricated_block(bullets, jd)
+    assert any(i.code == "language-scatter" for i in issues), issues
+
+
+def t15e_fabricated_block_rejects_fluff_and_requires_python():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "AI/LLM platform",
+        "domain_practices": ["LLM workflows", "agent-based workflows", "orchestration"],
+        "concepts": ["RAG architecture", "embeddings", "model inference"],
+        "tools": ["Python", "AWS"],
+    }
+    fluff = [
+        "Developed a RAG system enhancing LLM workflows for AI-powered product features.",
+        "Implemented model inference techniques, significantly improving user experience.",
+        "Boosted reliability by integrating scalable cloud solutions on AWS.",
+        "Enhanced usability by refining prompting strategies for context-aware AI responses.",
+        "Facilitated technical discussions with AI-first product teams on orchestration.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(fluff, jd)}
+    assert "fluff-bullet" in codes or "missing-primary-language" in codes, codes
 
 
 def t16_frozen_pairing_must_stay_intact():
@@ -311,6 +403,34 @@ class _Stub:
         if "two-sentence summary" in prompt:
             return {"summary": "Backend engineer building Python retrieval services on AWS. "
                                "Turns slow query paths into measured wins on production systems."}
+
+        fabricated = "FABRICATED MODE" in prompt or "You invent ONE coherent role" in prompt
+        if fabricated:
+            import re as _re
+            m = _re.search(r"Return ONLY this JSON object, (\d+) bullets", prompt)
+            count = int(m.group(1)) if m else 5
+            if self.mode == "fabricate":
+                return {"bullets": [
+                    "Rebuilt the Kubernetes control plane to serve nine hundred million "
+                    "requests a day for the platform team with careful rollout gates."
+                    for _ in range(count)
+                ]}
+            if self.mode == "broken-json-escape":
+                raise ValueError("Failed to parse LLM JSON")
+            goods = [
+                "Built Python RAG retrieval APIs for an internal agent console that answers "
+                "support questions over product docs on AWS.",
+                "Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by "
+                "rewriting the embedding lookup and inference batching.",
+                "Shipped tool-calling orchestration for those agents so they could read "
+                "tickets and draft replies without leaving the console.",
+                "Covered those LLM workflow handlers with pytest so retrieval regressions "
+                "stopped shipping into the agent loop.",
+                "Deployed that same retrieval service with Docker on AWS so staging matched "
+                "production inference settings before each release.",
+            ]
+            return {"bullets": goods[:count]}
+
         count = prompt.count("WHAT HAPPENED:")
         if self.mode == "fabricate":
             return {"bullets": ["Rebuilt the Kubernetes control plane to serve 900 million "
@@ -343,13 +463,24 @@ def t23_pipeline_preserves_template_structure():
     assert [b.bullet_count for b in proj] == [2, 2]
 
 
-def t24_fabricated_output_never_reaches_the_resume():
+def t24_grounded_blocks_reject_invention():
+    """Intuit/projects stay fact-grounded; Clerxi fabricated may keep invented tools."""
     result, _ = _run(mode="fabricate")
-    plain = result["latex"].lower()
-    assert "kubernetes" not in plain, "invented tool leaked onto the resume"
-    assert "900 million" not in plain, "invented scale leaked onto the resume"
     for block in result["meta"]["blocks"]:
-        assert block["fell_back_to_fact"], "fabrication should force fact fallback"
+        if block.get("fabricated"):
+            assert not block["fell_back_to_fact"]
+            continue
+        assert block["fell_back_to_fact"], (
+            f"{block['block']}: fabrication should force fact fallback"
+        )
+    exp = parse_section(result["sections"]["experience"])
+    intuit = next(b for b in exp if b.label == "Intuit")
+    for slot in intuit.slots:
+        assert "kubernetes" not in slot.body.lower()
+        assert "900 million" not in slot.body.lower()
+    for block in parse_section(result["sections"]["projects"]):
+        for slot in block.slots:
+            assert "kubernetes" not in slot.body.lower()
 
 
 def t25_writer_failure_still_ships_a_full_resume():

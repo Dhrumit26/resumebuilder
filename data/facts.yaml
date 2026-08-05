@@ -77,7 +77,13 @@ roles:
     # selected, re-ordered, combined, compressed, and re-framed toward the JD's
     # domain. Missing experience must become a verification question, never a
     # fabricated resume bullet. Every published claim must trace to a fact below.
+    #
+    # fabricated: true — IGNORE the fact bank for this role's bullets. Invent a
+    # coherent Clerxi story natively in the JD's engineering domain (tools,
+    # practices, metrics sized to tenure). Intuit and projects stay fact-grounded.
+    # Set false to return to select/order/rephrase-only mode.
     flexible: true
+    fabricated: true
     facts:
       - id: retrieval-services
         core: >-
@@ -161,6 +167,7 @@ roles:
     tenure_months: 3
     # fixed history: facts may be re-ordered and re-worded, never re-domained.
     flexible: false
+    fabricated: false
     facts:
       - id: ci-migration
         core: >-
