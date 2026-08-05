@@ -291,6 +291,24 @@ TECH_SYNONYMS: dict[str, list[str]] = {
     "aws lambda": ["lambda", "aws"],
     "containerization": ["docker"],
     "containers": ["docker"],
+    # Capability phrasings. A posting asks for "Distributed Systems"; the resume
+    # says "distributed vector search backend". Same evidence, different noun —
+    # scoring it as a gap understates the match and invites keyword stuffing.
+    "distributed systems": ["distributed"],
+    "backend development": ["backend"],
+    "backend services": ["backend"],
+    "full-stack development": ["full-stack"],
+    "model inference": ["inference"],
+    "agentic systems": ["multi-agent", "agent orchestration", "agent infrastructure"],
+    "agent-based workflows": ["multi-agent", "agent orchestration"],
+    "orchestration frameworks": ["agent orchestration", "orchestration"],
+    "rag": ["retrieval", "semantic reranking"],
+    "rag architecture": ["rag", "retrieval"],
+    "retrieval augmented generation": ["rag", "retrieval"],
+    "software testing": ["test coverage", "jest", "playwright", "cypress"],
+    "system design": ["service-oriented", "api design", "api contracts"],
+    "embeddings": ["embedding"],
+    "apis": ["api", "rest apis"],
 }
 
 

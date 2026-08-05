@@ -52,6 +52,12 @@ _VAGUE_SUMMARY = {
     "various technologies", "a wide range", "a variety of", "significantly",
     "a range of", "numerous", "cutting edge", "state of the art",
     "industry best practices", "best practices", "latest technologies",
+    # Job-board voice. The prompt bans these; models reach for them anyway, so
+    # the check has to be mechanical. An engineer says what they build, not what
+    # they "specialize in".
+    "specializing in", "specialising in", "skilled in", "proficient in",
+    "adept at", "expertise in", "experienced in", "well-versed",
+    "passionate about", "seeking to", "a strong background in",
 }
 
 # Practice claims a summary may only make when the resume actually shows them.
@@ -358,7 +364,11 @@ def keyword_coverage(resume_plain: str, jd_keywords: list[str]) -> dict:
     low = resume_plain.lower()
 
     def present(term: str) -> bool:
-        return re.search(token_pattern(term), low) is not None
+        if re.search(token_pattern(term), low):
+            return True
+        # "APIs" vs "API", "embeddings" vs "embedding" — a plural is not a gap.
+        variant = term[:-1] if term.endswith("s") else term + "s"
+        return re.search(token_pattern(variant), low) is not None
 
     matched: list[str] = []
     missing: list[str] = []
