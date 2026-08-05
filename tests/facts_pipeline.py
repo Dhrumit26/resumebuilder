@@ -229,7 +229,7 @@ def t15c_fabricated_block_requires_jd_spine():
         "Built Python RAG retrieval APIs for an internal agent console over product docs on AWS.",
         "Cut multi-agent query latency on that console from 1.8s to 1.1s by rewriting the embedding path.",
         "Shipped tool-calling orchestration so those agents could read tickets and draft replies.",
-        "Covered those LLM workflow handlers with tests so inference regressions stopped shipping.",
+        "Raised pytest coverage on those LLM workflow handlers from 48% to 82% so inference regressions stopped.",
         "Deployed that retrieval service with Docker on AWS so staging matched production.",
     ]
     assert not verify_fabricated_block(good, jd), verify_fabricated_block(good, jd)
@@ -282,6 +282,27 @@ def t15e_fabricated_block_rejects_fluff_and_requires_python():
     ]
     codes = {i.code for i in verify_fabricated_block(fluff, jd)}
     assert "fluff-bullet" in codes or "missing-primary-language" in codes, codes
+
+
+def t15f_fabricated_block_rejects_metric_starved_frontend_fluff():
+    """The screenshot failure: React dashboard cosplay with zero numbers."""
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "frontend web",
+        "domain_practices": ["frontend development", "UI testing"],
+        "concepts": ["React", "TypeScript"],
+        "tools": ["TypeScript", "React", "AWS"],
+    }
+    thin = [
+        "Developed a TypeScript-based interactive dashboard for Clerxi AI's frontend web application using React and AWS.",
+        "Enhanced code quality by implementing Jest tests, reducing bugs in the dashboard's user interface.",
+        "Integrated Kubernetes for deployment of the dashboard to ensure consistent performance across all environments.",
+        "Collaborated with the team to refine cloud technology integration, improving the dashboard's scalability on AWS.",
+        "Monitored telemetry data to optimize the dashboard's performance, ensuring seamless user interactions.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(thin, jd)}
+    assert "metric-starved" in codes or "fluff-bullet" in codes, codes
 
 
 def t16_frozen_pairing_must_stay_intact():
@@ -424,8 +445,8 @@ class _Stub:
                 "rewriting the embedding lookup and inference batching.",
                 "Shipped tool-calling orchestration for those agents so they could read "
                 "tickets and draft replies without leaving the console.",
-                "Covered those LLM workflow handlers with pytest so retrieval regressions "
-                "stopped shipping into the agent loop.",
+                "Raised pytest coverage on those LLM workflow handlers from 48% to 82% so "
+                "retrieval regressions stopped shipping into the agent loop.",
                 "Deployed that same retrieval service with Docker on AWS so staging matched "
                 "production inference settings before each release.",
             ]
