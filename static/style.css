@@ -418,3 +418,74 @@ footer code {
   0%, 100% { opacity: 0.25; }
   50% { opacity: 1; }
 }
+
+.refine-panel {
+  margin-top: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.refine-panel h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+}
+
+.refine-panel .tagline {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.refine-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 0.85rem;
+}
+
+.refine-chat:empty {
+  display: none;
+}
+
+.refine-msg {
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.refine-msg.user {
+  background: #22263a;
+  border: 1px solid var(--border);
+  align-self: flex-end;
+  max-width: 92%;
+}
+
+.refine-msg.bot {
+  background: #161922;
+  border: 1px solid #2f3348;
+  align-self: flex-start;
+  max-width: 92%;
+  color: #c4c4cc;
+}
+
+#refine-btn {
+  margin-top: 0.75rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

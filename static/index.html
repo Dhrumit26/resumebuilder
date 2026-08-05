@@ -75,6 +75,20 @@
           </div>
           <pre id="latex-output"><code></code></pre>
         </div>
+
+        <section id="refine-panel" class="refine-panel">
+          <h2>Suggest a rewrite</h2>
+          <p class="tagline">Tell it what to change — stronger metrics, more RAG language, shorter summary, swap a skill — and it rewrites the generated resume.</p>
+          <div id="refine-chat" class="refine-chat" aria-live="polite"></div>
+          <label for="refine-input" class="sr-only">Rewrite suggestion</label>
+          <textarea
+            id="refine-input"
+            rows="3"
+            placeholder="e.g. Make Clerxi bullets emphasize multi-agent orchestration and cut p95 latency numbers…"
+          ></textarea>
+          <button id="refine-btn" type="button">Rewrite with suggestion</button>
+          <p id="refine-status" class="stream-status hidden"></p>
+        </section>
       </section>
     </main>
 

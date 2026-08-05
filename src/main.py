@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .pipeline import build_tailored_resume
-from .pipeline_v2 import build_resume_v2
+from .pipeline_v2 import build_resume_v2, refine_resume_v2
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -34,6 +34,16 @@ if STATIC_DIR.exists():
 
 class BuildRequest(BaseModel):
     job_description: str = Field(..., min_length=20, description="Target job description")
+
+
+class RefineRequest(BaseModel):
+    job_description: str = Field(..., min_length=20, description="Target job description")
+    suggestion: str = Field(..., min_length=3, description="What to change in the resume")
+    sections: dict = Field(..., description="sections object from the last /api/v2/build")
+    jd_analysis: dict | None = Field(
+        default=None,
+        description="Optional JD analysis from the last build (skips re-analyzing)",
+    )
 
 
 class BuildResponse(BaseModel):
@@ -86,6 +96,21 @@ def build_resume_facts(request: BuildRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Resume generation failed: {exc}") from exc
+
+
+@app.post("/api/v2/refine")
+def refine_resume_facts(request: RefineRequest):
+    try:
+        return refine_resume_v2(
+            request.job_description,
+            request.sections,
+            request.suggestion,
+            request.jd_analysis,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Resume refine failed: {exc}") from exc
 
 
 _STREAM_DONE = object()

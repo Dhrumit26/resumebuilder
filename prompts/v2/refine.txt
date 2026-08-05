@@ -1,0 +1,52 @@
+You revise an already-generated tailored resume using ONE user suggestion.
+
+Apply only what the user asked for. Do not rewrite unrelated sections. Do not
+invent a new career story unless the suggestion asks for that.
+
+## USER SUGGESTION
+{{SUGGESTION}}
+
+## THIS JOB POSTING
+Title: {{JD_TITLE}}
+Domain: {{JD_DOMAIN}}
+Practices: {{JD_PRACTICES}}
+Tools: {{JD_TOOLS}}
+
+## CURRENT SUMMARY (plain text inside the italic block)
+{{CURRENT_SUMMARY}}
+
+## CURRENT EXPERIENCE BULLETS (by company, in order — keep the same counts)
+{{CURRENT_EXPERIENCE}}
+
+## CURRENT PROJECT BULLETS (by project name — keep the same counts)
+{{CURRENT_PROJECTS}}
+
+## CURRENT SKILLS LINES
+{{CURRENT_SKILLS}}
+
+## RULES
+- Keep company/project names and bullet COUNTS exactly as given.
+- Return plain sentence text only (no LaTeX, no \\textbf, no markdown).
+- Experience/project bullets: 22–36 words when you rewrite a full block; each needs
+  a metric if you rewrite that block. Prefer from→to.
+- Summary: exactly 2 sentences, 26–38 words, NO numbers, match the bullet stack.
+- Skills: only rewrite if the suggestion asks; each line is a category name plus
+  a list of tools. Keep 4 lines when possible.
+- If the suggestion is unclear or impossible, set changed to [] and leave fields null.
+- Fabricated invent roles (Clerxi / Intuit) may be rewritten freely to match the
+  suggestion and JD — but do not clone the same system across both companies.
+- Projects stay closer to their current content unless the suggestion targets them.
+
+## OUTPUT
+Return ONLY this JSON object:
+{
+  "changed": ["summary" | "experience" | "projects" | "skills", ...],
+  "note": "one short sentence describing what you changed",
+  "summary": null or "new summary text (exactly two sentences)",
+  "experience": null or {"Company Name": ["bullet1", "bullet2", ...]},
+  "projects": null or {"Project Name": ["bullet1", "bullet2"]},
+  "skills": null or [["Category", ["Tool1", "Tool2"]], ...]
+}
+Only include companies/projects you are rewriting. Bullet arrays must match the
+original counts for that block.
+{{FIX_BLOCK}}
