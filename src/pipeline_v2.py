@@ -870,3 +870,292 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
     }
     emit("final", payload)
     return payload
+
+
+# ---------------------------------------------------------------------------
+# Refine: apply a user suggestion to an already-built resume, then reassemble.
+# ---------------------------------------------------------------------------
+
+_BOLD_RE = re.compile(r"\\textbf\{([^}]*)\}")
+_SKILLS_PARSE_RE = re.compile(r"\\textbf\{([^}]*)\}\s*\{:\s*([^}]*)\}")
+
+
+def _strip_tex_markup(text: str) -> str:
+    out = _BOLD_RE.sub(r"\1", text or "")
+    out = out.replace("\\%", "%").replace("\\&", "&").replace("\\_", "_")
+    out = out.replace("\\$", "$").replace("\\#", "#")
+    return re.sub(r"\s+", " ", out).strip()
+
+
+def _extract_summary_plain(summary_tex: str) -> str:
+    open_idx = summary_tex.find("\\textit{")
+    if open_idx == -1:
+        return latex_to_plain(summary_tex)
+    brace_idx = summary_tex.index("{", open_idx)
+    depth = 0
+    i = brace_idx
+    while i < len(summary_tex):
+        ch = summary_tex[i]
+        if ch == "\\":
+            i += 2
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return _strip_tex_markup(summary_tex[brace_idx + 1 : i])
+        i += 1
+    return latex_to_plain(summary_tex)
+
+
+def _extract_block_bullets(section_tex: str) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for block in parse_section(section_tex):
+        out[block.label] = [_strip_tex_markup(slot.body) for slot in block.slots]
+    return out
+
+
+def _extract_skills_lines(skills_tex: str) -> list[tuple[str, list[str]]]:
+    lines: list[tuple[str, list[str]]] = []
+    for m in _SKILLS_PARSE_RE.finditer(skills_tex or ""):
+        items = [x.strip() for x in m.group(2).split(",") if x.strip()]
+        lines.append((_strip_tex_markup(m.group(1)), items))
+    return lines
+
+
+def _format_block_bullets(blocks: dict[str, list[str]]) -> str:
+    parts: list[str] = []
+    for label, bullets in blocks.items():
+        parts.append(f"### {label} ({len(bullets)} bullets)")
+        for i, b in enumerate(bullets, 1):
+            parts.append(f"{i}. {b}")
+        parts.append("")
+    return "\n".join(parts).strip() or "(none)"
+
+
+def _format_skills_for_prompt(lines: list[tuple[str, list[str]]]) -> str:
+    if not lines:
+        return "(none)"
+    return "\n".join(f"- {name}: {', '.join(items)}" for name, items in lines)
+
+
+def _pad_bullets(new: list, count: int, fallback: list[str]) -> list[str]:
+    cleaned = [str(b).strip() for b in (new or []) if str(b).strip()]
+    out = cleaned[:count]
+    while len(out) < count:
+        out.append(fallback[len(out)] if len(out) < len(fallback) else fallback[-1])
+    return [_latex_text(b) for b in out]
+
+
+def refine_resume_v2(
+    job_description: str,
+    sections: dict,
+    suggestion: str,
+    jd_analysis: dict | None = None,
+) -> dict:
+    """Rewrite an existing v2 resume using one user suggestion."""
+    suggestion = (suggestion or "").strip()
+    if len(suggestion) < 3:
+        raise ValueError("Suggestion is too short — say what you want changed.")
+    if not sections or not all(
+        sections.get(k) for k in ("summary", "experience", "projects", "skills")
+    ):
+        raise ValueError("Refine needs the full sections object from the last build.")
+
+    jd = sanitize_jd(job_description)
+    bank = load_fact_bank()
+
+    if jd_analysis and isinstance(jd_analysis, dict) and jd_analysis.get("role_title"):
+        analysis = jd_analysis
+        jd_ok = True
+    else:
+        analysis, jd_ok = run_jd_agent(jd)
+
+    current_summary = _extract_summary_plain(sections["summary"])
+    current_exp = _extract_block_bullets(sections["experience"])
+    current_proj = _extract_block_bullets(sections["projects"])
+    current_skills = _extract_skills_lines(sections["skills"])
+
+    templates = {name: load_template(name) for name in ("summary", "experience", "projects", "skills")}
+    exp_blocks = parse_section(templates["experience"])
+    proj_blocks = parse_section(templates["projects"])
+    slots_by_label = {
+        block.label: block.bullet_count
+        for section_blocks in (exp_blocks, proj_blocks)
+        for block in section_blocks
+    }
+    selections = select_facts(bank, analysis, slots_by_label)
+
+    prompt = _fill(
+        _load_v2_prompt("refine.txt"),
+        SUGGESTION=suggestion,
+        JD_TITLE=str(analysis.get("role_title") or ""),
+        JD_DOMAIN=str(analysis.get("domain") or ""),
+        JD_PRACTICES=", ".join(analysis.get("practices") or []),
+        JD_TOOLS=", ".join(analysis.get("tools") or []),
+        CURRENT_SUMMARY=current_summary,
+        CURRENT_EXPERIENCE=_format_block_bullets(current_exp),
+        CURRENT_PROJECTS=_format_block_bullets(current_proj),
+        CURRENT_SKILLS=_format_skills_for_prompt(current_skills),
+        FIX_BLOCK="",
+    )
+    raw = call_llm_json(prompt, temperature=0.25, max_tokens=3500)
+    if not isinstance(raw, dict):
+        raise ValueError("Refine model returned unexpected output. Try again.")
+
+    changed = {str(c).lower() for c in (raw.get("changed") or []) if c}
+    note = str(raw.get("note") or "Applied your suggestion.").strip()
+
+    # Start from current rendered sections; overwrite only what the model rewrote.
+    rendered = {
+        "summary": sections["summary"],
+        "experience": sections["experience"],
+        "projects": sections["projects"],
+        "skills": sections["skills"],
+    }
+
+    written: dict[str, list[str]] = {}
+    for label, bullets in {**current_exp, **current_proj}.items():
+        written[label] = [_latex_text(b) for b in bullets]
+
+    if "summary" in changed and raw.get("summary"):
+        summary_text = _latex_text(_strip_tex_markup(str(raw["summary"])))
+        rendered["summary"] = render_summary(templates["summary"], summary_text)
+    else:
+        summary_text = _latex_text(current_summary)
+        rendered["summary"] = render_summary(templates["summary"], summary_text)
+
+    if "experience" in changed and isinstance(raw.get("experience"), dict):
+        for block in exp_blocks:
+            if block.label in raw["experience"]:
+                written[block.label] = _pad_bullets(
+                    raw["experience"][block.label],
+                    block.bullet_count,
+                    current_exp.get(block.label, [""] * block.bullet_count),
+                )
+        bullets_by_block = {
+            idx: written.get(block.label, []) for idx, block in enumerate(exp_blocks)
+        }
+        rendered["experience"] = render_section(templates["experience"], bullets_by_block)
+
+    if "projects" in changed and isinstance(raw.get("projects"), dict):
+        for block in proj_blocks:
+            if block.label in raw["projects"]:
+                written[block.label] = _pad_bullets(
+                    raw["projects"][block.label],
+                    block.bullet_count,
+                    current_proj.get(block.label, [""] * block.bullet_count),
+                )
+        bullets_by_block = {
+            idx: written.get(block.label, []) for idx, block in enumerate(proj_blocks)
+        }
+        rendered["projects"] = render_section(templates["projects"], bullets_by_block)
+
+    skills_lines = current_skills
+    llm_skills_applied = False
+    if "skills" in changed and isinstance(raw.get("skills"), list) and raw["skills"]:
+        parsed: list[tuple[str, list[str]]] = []
+        for row in raw["skills"]:
+            if not isinstance(row, (list, tuple)) or len(row) < 2:
+                continue
+            name = str(row[0]).strip()
+            items = [str(x).strip() for x in (row[1] or []) if str(x).strip()]
+            if name and items:
+                parsed.append((name, items))
+        if parsed:
+            skills_lines = parsed
+            llm_skills_applied = True
+
+    # When invent bullets change, re-pick skill categories from the page evidence so
+    # Yocto/MQTT land under Embedded & Platforms — not leftover Languages/Frontend.
+    suggestion_wants_skills = bool(
+        re.search(r"\bskills?\b|\bcategor(?:y|ies)\b", suggestion, re.I)
+    )
+    if not llm_skills_applied and (
+        "experience" in changed or "skills" in changed or suggestion_wants_skills
+    ):
+        fabricated_any = any(sel.fabricated for sel in selections.values())
+        lexicon = tech_lexicon(bank)
+        jd_tool_names = [
+            str(t).strip()
+            for key in ("tools", "must_have_skills", "exact_keywords_for_ats")
+            for t in (analysis.get(key) or [])
+            if str(t).strip()
+        ]
+        scan_lexicon = set(lexicon) | {t.lower() for t in jd_tool_names} | {
+            "yocto", "mqtt", "amqp", "jenkins", "armbian", "ubuntu", "ubuntu core",
+            "c++", "c++11", "c++17", "c++20",
+        }
+        evidenced: set[str] = {
+            t for sel in selections.values() for f in sel.facts for t in f.tools
+        }
+        for label, bullets in written.items():
+            for bullet in bullets:
+                evidenced |= _mentioned_tech(_plain(bullet), scan_lexicon)
+            if selections.get(label) and selections[label].fabricated:
+                plain = _plain(" ".join(bullets)).lower()
+                for tool in jd_tool_names:
+                    if re.search(
+                        r"(?<![A-Za-z0-9_])" + re.escape(tool) + r"(?![A-Za-z0-9_+#])",
+                        plain,
+                        re.I,
+                    ):
+                        evidenced.add(tool)
+        skills_lines = select_skills(
+            bank,
+            analysis,
+            skills_line_count(templates["skills"]),
+            evidenced,
+            strict_evidence=fabricated_any,
+        )
+        changed.add("skills")
+        if "skills" not in note.lower():
+            note = (note.rstrip(".") + "; refreshed skills to match the bullets.").strip()
+
+    rendered["skills"] = render_skills(templates["skills"], skills_lines)
+
+    keywords = jd_keywords_of(analysis)
+    for section in ("experience", "projects"):
+        if section not in changed:
+            continue
+        rendered[section] = bold_metrics_in_bullets(rendered[section])
+        rendered[section] = bold_keywords_in_bullets(rendered[section], keywords)
+
+    full_latex = assemble_full_resume(
+        load_full_template(),
+        rendered["summary"],
+        rendered["experience"],
+        rendered["projects"],
+        rendered["skills"],
+    )
+    resume_plain = latex_to_plain(full_latex)
+    order = [b.label for b in exp_blocks] + [b.label for b in proj_blocks]
+    all_bullets = [b for label in order for b in written.get(label, [])]
+    measurement = measure(resume_plain, analysis, selections, all_bullets, skills_lines)
+    questions = verification_questions(bank, analysis)
+    missing_tools, missing_themes = capability_gaps(bank, analysis)
+
+    return {
+        "latex": full_latex,
+        "sections": rendered,
+        "jd_analysis": analysis,
+        "meta": {
+            "architecture": "facts-v3-refine",
+            "final": True,
+            "jd_agent_ok": jd_ok,
+            "llm_calls": 1 if jd_analysis else 2,
+            "final_score": measurement["score"],
+            "refine_note": note,
+            "refine_changed": sorted(changed),
+            "suggestion": suggestion,
+            "skills_lines": [name for name, _ in skills_lines],
+            "summary_words": word_count(latex_to_plain(rendered["summary"])),
+        },
+        "measurement": measurement,
+        "gaps": {
+            "questions": questions,
+            "missing_tools": missing_tools,
+            "missing_capabilities": [t.replace("-", " ") for t in missing_themes],
+        },
+    }

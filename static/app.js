@@ -6,8 +6,13 @@ const results = document.getElementById("results");
 const latexOutput = document.querySelector("#latex-output code");
 const copyBtn = document.getElementById("copy-btn");
 const downloadBtn = document.getElementById("download-btn");
+const refineInput = document.getElementById("refine-input");
+const refineBtn = document.getElementById("refine-btn");
+const refineChat = document.getElementById("refine-chat");
+const refineStatus = document.getElementById("refine-status");
 
 let latestLatex = "";
+let latestResult = null;
 
 function show(el) { el.classList.remove("hidden"); }
 function hide(el) { el.classList.add("hidden"); }
@@ -48,6 +53,7 @@ function renderBuildMeta(meta) {
     <p class="positioning">
       ${meta.llm_calls ?? "—"} model calls · summary ${meta.summary_words ?? "—"} words ·
       skills lines: ${esc(lines)}
+      ${meta.refine_note ? `<br>${esc(meta.refine_note)}` : ""}
     </p>
   `;
 }
@@ -151,7 +157,8 @@ function renderGapQuestions(gaps) {
     `<ul>${questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
 }
 
-function renderResult(data) {
+function renderResult(data, { appendChat } = {}) {
+  latestResult = data;
   latestLatex = data.latex;
   latexOutput.textContent = data.latex;
   renderRoleTarget(data.jd_analysis);
@@ -160,7 +167,24 @@ function renderResult(data) {
   renderGapQuestions(data.gaps || {});
   renderFallbacks(data.meta || {});
   renderSelectedFacts(data.meta || {});
+  if (appendChat) {
+    appendRefineMessage("bot", appendChat);
+  }
   show(results);
+}
+
+function appendRefineMessage(role, text) {
+  const div = document.createElement("div");
+  div.className = `refine-msg ${role}`;
+  div.textContent = text;
+  refineChat.appendChild(div);
+  refineChat.scrollTop = refineChat.scrollHeight;
+}
+
+function clearRefineChat() {
+  refineChat.innerHTML = "";
+  refineInput.value = "";
+  hide(refineStatus);
 }
 
 async function build(jobDescription) {
@@ -177,7 +201,37 @@ async function build(jobDescription) {
     } catch (_) { /* keep the status-code message */ }
     throw new Error(detail);
   }
+  clearRefineChat();
   renderResult(await res.json());
+}
+
+async function refine(suggestion) {
+  if (!latestResult || !latestResult.sections) {
+    throw new Error("Generate a resume first, then suggest a rewrite.");
+  }
+  const res = await fetch("/api/v2/refine", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      job_description: jobInput.value.trim(),
+      suggestion,
+      sections: latestResult.sections,
+      jd_analysis: latestResult.jd_analysis || null,
+    }),
+  });
+  if (!res.ok) {
+    let detail = `Rewrite failed (HTTP ${res.status})`;
+    try {
+      const body = await res.json();
+      detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail) || detail;
+    } catch (_) { /* keep the status-code message */ }
+    throw new Error(detail);
+  }
+  const data = await res.json();
+  const note = (data.meta && data.meta.refine_note) || "Updated the resume from your suggestion.";
+  const changed = ((data.meta && data.meta.refine_changed) || []).join(", ");
+  const botText = changed ? `${note} (updated: ${changed})` : note;
+  renderResult(data, { appendChat: botText });
 }
 
 buildBtn.addEventListener("click", async () => {
@@ -201,6 +255,41 @@ buildBtn.addEventListener("click", async () => {
   } finally {
     hide(loading);
     buildBtn.disabled = false;
+  }
+});
+
+refineBtn.addEventListener("click", async () => {
+  const suggestion = refineInput.value.trim();
+  if (suggestion.length < 3) {
+    errorEl.textContent = "Write a short suggestion for what to rewrite.";
+    show(errorEl);
+    return;
+  }
+  hide(errorEl);
+  appendRefineMessage("user", suggestion);
+  refineInput.value = "";
+  refineBtn.disabled = true;
+  refineStatus.textContent = "Rewriting from your suggestion…";
+  refineStatus.classList.add("refining");
+  show(refineStatus);
+
+  try {
+    await refine(suggestion);
+  } catch (err) {
+    appendRefineMessage("bot", `Could not rewrite: ${err.message}`);
+    errorEl.textContent = err.message;
+    show(errorEl);
+  } finally {
+    hide(refineStatus);
+    refineStatus.classList.remove("refining");
+    refineBtn.disabled = false;
+  }
+});
+
+refineInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    refineBtn.click();
   }
 });
 

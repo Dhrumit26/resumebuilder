@@ -306,6 +306,10 @@ skills:
       items: [Jest, Playwright, Cypress, React Testing Library, GitHub Actions, GitLab CI, Jenkins, Git]
       themes: [testing, test-automation, ci-cd, quality, developer-experience]
 
+    - name: Embedded & Platforms
+      items: [Yocto, MQTT, AMQP, Ubuntu Core, Armbian, Linux]
+      themes: [embedded-systems, systems-programming, networking, containers-devops]
+
     - name: Frontend
       items: [React, Next.js, HTML, CSS]
       themes: [frontend-ui, react, typescript-js, full-stack, ux-performance]
