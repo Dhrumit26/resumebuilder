@@ -61,12 +61,13 @@ _VAGUE_SUMMARY = {
     "various technologies", "a wide range", "a variety of", "significantly",
     "a range of", "numerous", "cutting edge", "state of the art",
     "industry best practices", "best practices", "latest technologies",
-    # Job-board voice. The prompt bans these; models reach for them anyway, so
-    # the check has to be mechanical. An engineer says what they build, not what
-    # they "specialize in".
     "specializing in", "specialising in", "skilled in", "proficient in",
     "adept at", "expertise in", "experienced in", "well-versed",
     "passionate about", "seeking to", "a strong background in",
+    # Generic invent-summary fog that survives tool swaps.
+    "cloud infrastructure", "real customer problems", "customer problems",
+    "scalable, reliable", "reliable backends", "designs scalable",
+    "collaborates across", "collaborate across", "ships production services",
 }
 
 # Practice claims a summary may only make when the resume actually shows them.
@@ -336,6 +337,19 @@ def verify_summary(
         if tech in allowed_tech or any(tech in a or a in tech for a in allowed_tech):
             continue
         issues.append(Issue("invented-tool", f"'{tech}' is not in the candidate's evidence — drop it"))
+
+    # Fabricated pages: summary must name at least one tech the bullets already show.
+    if fabricated_ok and proof_text:
+        proof_tech = _mentioned_tech(proof_text, lexicon)
+        summary_tech = _mentioned_tech(plain, lexicon)
+        if proof_tech and not (summary_tech & proof_tech):
+            issues.append(
+                Issue(
+                    "off-story",
+                    "summary names none of the technologies in the bullets below — "
+                    "mirror the invent stack on this page (same domain, same tools)",
+                )
+            )
 
     words = _words(plain)
     if len(words) < SUMMARY_MIN_WORDS:

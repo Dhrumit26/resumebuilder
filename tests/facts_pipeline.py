@@ -480,6 +480,21 @@ def t21_vague_summary_filler_is_rejected():
     assert any(i.code == "vague" for i in issues)
 
 
+def t21b_fabricated_summary_must_match_bullet_stack():
+    facts = [_fact("clerxi", "retrieval-services")]
+    proof = (
+        "Built C++ firmware test harnesses on Yocto for an embedded networking board. "
+        "Cut MQTT packet loss from 5% to 1% by rewriting the retry path."
+    )
+    issues = verify_summary(
+        "Backend engineer building distributed APIs and retrieval services on cloud infrastructure. "
+        "Designs scalable reliable backends and collaborates across product teams daily.",
+        facts, LEXICON, proof_text=proof, fabricated_ok=True,
+    )
+    codes = {i.code for i in issues}
+    assert "off-story" in codes or "vague" in codes, codes
+
+
 def t22_keyword_coverage_counts_synonyms():
     result = keyword_coverage(
         "Built responsive pages with HTML, CSS and JavaScript, deployed via GitHub Actions.",
@@ -499,9 +514,13 @@ class _Stub:
 
     def __call__(self, prompt, temperature=0.2, max_tokens=4000, retries=1, role="judge"):
         self.calls += 1
-        if "two-sentence summary" in prompt:
-            return {"summary": "Backend engineer building Python retrieval services on AWS. "
-                               "Turns slow query paths into measured wins on production systems."}
+        if "two-sentence summary" in prompt or (
+            "FABRICATED MODE" in prompt and '"summary"' in prompt
+        ):
+            # Match the invent stack on the page (Python retrieval), not generic fog.
+            return {"summary": "Backend engineer building Python retrieval APIs and agent "
+                               "orchestration services on AWS. Focuses on latency-sensitive "
+                               "query paths and reliable shipping of production services."}
 
         fabricated = "FABRICATED MODE" in prompt or "You invent ONE coherent" in prompt
         if fabricated:

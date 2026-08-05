@@ -457,21 +457,25 @@ def _write_summary(
     facts = [f for sel in selections.values() for f in sel.facts]
     fabricated_ok = any(sel.fabricated for sel in selections.values())
     bullet_numbers = set(re.findall(r"\d+(?:\.\d+)?", " ".join(rendered_bullets)))
-    template = _load_v2_prompt("summary.txt")
-    base_prompt = _fill(
-        template,
+    template = _load_v2_prompt(
+        "summary_fabricated.txt" if fabricated_ok else "summary.txt"
+    )
+    fill_kwargs = dict(
         SUMMARY_ANGLE=str(analysis.get("ideal_summary_angle") or "(none given)"),
         RESUME_BULLETS="\n".join(f"- {b}" for b in rendered_bullets),
-        FACTS=_format_facts(facts),
         FIX_BLOCK="",
-        **_jd_fields(analysis, "summary"),
+        **_jd_fields(analysis, "summary", fabricated=fabricated_ok),
     )
+    if not fabricated_ok:
+        fill_kwargs["FACTS"] = _format_facts(facts)
+    base_prompt = _fill(template, **fill_kwargs)
 
     prompt = base_prompt
-    temperature = BULLET_TEMPERATURE
+    temperature = FABRICATED_TEMPERATURE if fabricated_ok else BULLET_TEMPERATURE
     summary = ""
     issues: list[Issue] = []
-    for attempt in range(MAX_REPAIR_ROUNDS + 1):
+    max_rounds = MAX_FABRICATED_REPAIR_ROUNDS if fabricated_ok else MAX_REPAIR_ROUNDS
+    for attempt in range(max_rounds + 1):
         try:
             raw = call_llm_json(prompt, temperature=temperature, max_tokens=600, role="writer")
         except Exception as exc:
@@ -491,7 +495,7 @@ def _write_summary(
             if i.severity == "error"
         ]
         if summary and not issues:
-            return summary, {"attempts": attempt + 1, "fell_back": False}
+            return summary, {"attempts": attempt + 1, "fell_back": False, "fabricated": fabricated_ok}
         prompt = base_prompt + (
             "\n\n## YOUR PREVIOUS ATTEMPT FAILED MECHANICAL CHECKS\n"
             f'you wrote: "{summary}"\n'
@@ -501,8 +505,9 @@ def _write_summary(
         temperature = REPAIR_TEMPERATURE
 
     return fallback, {
-        "attempts": MAX_REPAIR_ROUNDS + 1,
+        "attempts": max_rounds + 1,
         "fell_back": True,
+        "fabricated": fabricated_ok,
         "issues": [i.message for i in issues],
     }
 
