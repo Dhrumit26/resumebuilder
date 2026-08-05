@@ -559,36 +559,67 @@ def verify_fabricated_block(bullets: list[str], analysis: dict) -> list[Issue]:
             )
         )
 
-    # Product story: bullet 1 needs a setting; later bullets need back-references.
+    # Product setting in bullet 1 only — later bullets stand alone (no "that X" spam).
     setting_re = re.compile(
         r"\b(?:platform|service|console|dashboard|portal|application|pipeline|"
-        r"tool|website|site|module|feed|API|apis)\b",
+        r"library|tool|website|site|module|feed|API|apis)\b",
         re.I,
     )
+    if plains and not setting_re.search(plains[0]):
+        issues.append(
+            Issue(
+                "story-thin",
+                "bullet 1 must name the product setting "
+                "(e.g. 'internal dashboard', 'agent console', 'component library')",
+            )
+        )
+
     backref_re = re.compile(
-        r"\b(?:that|the|those|this|same)\s+"
+        r"\b(?:that|those|the same)\s+"
         r"(?:platform|service|console|dashboard|portal|application|app|API|apis|"
-        r"pipeline|tool|website|site|module|feed|handlers?|endpoints?|"
-        r"agents?|retrieval|RAG|system|workflows?)\b",
+        r"pipeline|library|tool|website|site|module|feed|handlers?|endpoints?|"
+        r"agents?|retrieval|RAG|system|workflows?|component library)\b",
         re.I,
     )
-    if plains and not setting_re.search(plains[0]) and not backref_re.search(plains[0]):
+    backref_hits = sum(1 for t in plains if backref_re.search(t))
+    if backref_hits > 1:
         issues.append(
             Issue(
-                "story-thin",
-                "bullet 1 must plant the product setting "
-                "(e.g. 'agent console', 'retrieval service') — not a bare keyword list",
+                "backref-spam",
+                f"{backref_hits} bullets use mechanical 'that/those/the same …' backrefs — "
+                f"keep at most one; each bullet should stand alone "
+                f"(e.g. 'Built a TypeScript/React component library for an internal dashboard…')",
             )
         )
-    anchored = sum(1 for t in plains if setting_re.search(t) or backref_re.search(t))
-    if plains and anchored < max(2, (len(plains) + 1) // 2):
-        issues.append(
-            Issue(
-                "story-thin",
-                f"only {anchored}/{len(plains)} bullets mention the system — "
-                f"refer back ('that console', 'those agents', 'the same retrieval path')",
+
+    vague_cloud = re.compile(
+        r"(?i)\b(?:cloud technology|cloud technologies|cloud integration|"
+        r"cloud services(?!\s+with\b)|integrate(?:d)?\s+cloud)\b"
+    )
+    for i, text in enumerate(plains):
+        if vague_cloud.search(text):
+            issues.append(
+                Issue(
+                    "vague-cloud",
+                    f"bullet {i + 1} says vague 'cloud technology/integration' — name the "
+                    f"real approach (CodePipeline, S3, Docker, ECS, Lambda, …) or drop it",
+                )
             )
-        )
+
+    # Coverage/tests → defect claims: ban "which cut/reduced" causation theater.
+    false_cause = re.compile(
+        r"(?i)\b(?:coverage|tests?|jest|pytest|testing library)\b.{0,80}\bwhich\s+"
+        r"(?:cut|reduced|decreased|dropped|eliminated)\b"
+    )
+    for i, text in enumerate(plains):
+        if false_cause.search(text):
+            issues.append(
+                Issue(
+                    "false-causation",
+                    f"bullet {i + 1} overclaims causation (coverage 'which cut' regressions) — "
+                    f"use 'contributing to' / 'alongside' instead of 'which cut'",
+                )
+            )
 
     # Fluff / meeting theater / empty JD cosplay.
     fluff_open = re.compile(

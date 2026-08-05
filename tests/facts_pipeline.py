@@ -228,13 +228,13 @@ def t15c_fabricated_block_requires_jd_spine():
     good = [
         "Built Python RAG retrieval APIs for an internal agent console that answers support "
         "questions over product docs on AWS, cutting first-response draft time from 12 minutes to under 4.",
-        "Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by rewriting the "
-        "embedding lookup path and batching model inference calls under load.",
-        "Shipped tool-calling orchestration for those agents so they could read tickets and "
-        "draft replies in-console, raising successful auto-drafts from 40% to 72% of sampled threads.",
-        "Raised pytest coverage on those LLM workflow handlers from 48% to 82%, which cut "
-        "retrieval regressions reaching staging by more than half over six weeks.",
-        "Deployed that same retrieval service with Docker on AWS so staging matched production "
+        "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the embedding "
+        "lookup path and batching model inference calls under load.",
+        "Shipped tool-calling orchestration so support agents could read tickets and draft "
+        "replies in-console, raising successful auto-drafts from 40% to 72% of sampled threads.",
+        "Increased pytest coverage on LLM workflow handlers from 48% to 82%, contributing to "
+        "fewer retrieval regressions reaching staging across six release cycles.",
+        "Containerized the retrieval service with Docker on AWS so staging matched production "
         "inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
     ]
     assert not verify_fabricated_block(good, jd), verify_fabricated_block(good, jd)
@@ -328,9 +328,30 @@ def t15g_fabricated_block_rejects_short_lines_missing_result():
         "Deployed the dashboard using Kubernetes on AWS, reducing deployment time from 3 hours to 45 minutes.",
     ]
     codes = {i.code for i in verify_fabricated_block(short, jd)}
-    # Bullet 1/4 may lack digits or length; block must not pass as-is.
     assert codes, "expected density/metric failures on short screenshot-style bullets"
-    assert "too-thin" in codes or "metric-starved" in codes, codes
+    assert "too-thin" in codes or "metric-starved" in codes or "backref-spam" in codes, codes
+
+
+def t15h_fabricated_rejects_backref_spam_vague_cloud_and_false_cause():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "frontend web",
+        "domain_practices": ["frontend development"],
+        "concepts": ["React", "TypeScript"],
+        "tools": ["TypeScript", "React", "AWS"],
+    }
+    spam = [
+        "Built a TypeScript React component library for an internal dashboard, cutting feature time from 5 days to 2.",
+        "Optimized that dashboard rendering with React memoization, cutting load time from 1.2s to 0.6s for users.",
+        "Built a telemetry pipeline for that dashboard on AWS, cutting incident response from 45 minutes to 15.",
+        "Integrated cloud technology using AWS for that component library, cutting update downtime from 2 hours to 30 minutes.",
+        "Raised Jest coverage on that component library from 50% to 85%, which cut UI regressions reaching production by 60%.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(spam, jd)}
+    assert "backref-spam" in codes, codes
+    assert "vague-cloud" in codes, codes
+    assert "false-causation" in codes, codes
 
 
 def t16_frozen_pairing_must_stay_intact():
@@ -470,14 +491,14 @@ class _Stub:
                 "Built Python RAG retrieval APIs for an internal agent console that answers "
                 "support questions over product docs on AWS, cutting first-response draft "
                 "time from 12 minutes to under 4.",
-                "Cut p95 multi-agent query latency on that console from 1.8s to 1.1s by "
-                "rewriting the embedding lookup path and batching model inference calls under load.",
-                "Shipped tool-calling orchestration for those agents so they could read "
-                "tickets and draft replies in-console, raising successful auto-drafts from "
-                "40% to 72% of sampled threads.",
-                "Raised pytest coverage on those LLM workflow handlers from 48% to 82%, which "
-                "cut retrieval regressions reaching staging by more than half over six weeks.",
-                "Deployed that same retrieval service with Docker on AWS so staging matched "
+                "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the "
+                "embedding lookup path and batching model inference calls under load.",
+                "Shipped tool-calling orchestration so support agents could read tickets and "
+                "draft replies in-console, raising successful auto-drafts from 40% to 72% "
+                "of sampled threads.",
+                "Increased pytest coverage on LLM workflow handlers from 48% to 82%, "
+                "contributing to fewer retrieval regressions reaching staging across six release cycles.",
+                "Containerized the retrieval service with Docker on AWS so staging matched "
                 "production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
             ]
             return {"bullets": goods[:count]}
