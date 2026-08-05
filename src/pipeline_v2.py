@@ -21,8 +21,18 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 
 from .facts import Fact, load_fact_bank
-from .llm import call_llm_json
-from .matching import Selection, select_facts, select_skills, theme_profile, tool_matches
+from .llm import call_llm_json, call_web_research_json
+from .matching import (
+    CANONICAL_SKILL_CATEGORIES,
+    Selection,
+    is_concrete_skill,
+    select_facts,
+    select_skills,
+    skill_allowed_in_category,
+    skill_category_for_tool,
+    theme_profile,
+    tool_matches,
+)
 from .pipeline import jd_keywords_of, run_jd_agent, sanitize_jd
 from .resume_builder import (
     _debug_dump,
@@ -140,12 +150,27 @@ def _flex_rule(selection: Selection) -> str:
     )
 
 
-def plan_work_split(analysis: dict) -> dict[str, list[str]]:
+def plan_work_split(
+    analysis: dict,
+    research: dict | None = None,
+) -> dict[str, list[str]]:
     """Split the JD into current-role vs internship lanes for invent mode.
 
     Goal: together the two roles read as one interview-ready match — complementary
     evidence in the same domain, not twin bullets with swapped numbers.
     """
+    if research:
+        primary = [
+            str(x).strip() for x in (research.get("primary_product_lane") or [])
+            if str(x).strip()
+        ]
+        enablement = [
+            str(x).strip() for x in (research.get("enablement_lane") or [])
+            if str(x).strip()
+        ]
+        if primary and enablement:
+            return {"current": primary[:5], "intern": enablement[:5]}
+
     blob = " ".join(
         str(x).lower()
         for key in (
@@ -219,11 +244,15 @@ def plan_work_split(analysis: dict) -> dict[str, list[str]]:
     }
 
 
-def _work_split_block(selection: Selection, analysis: dict) -> str:
+def _work_split_block(
+    selection: Selection,
+    analysis: dict,
+    research: dict | None = None,
+) -> str:
     """Prompt text: divide JD work so both invent roles hire as one package."""
     if not selection.fabricated:
         return ""
-    split = plan_work_split(analysis)
+    split = plan_work_split(analysis, research)
     current = "\n".join(f"  - {x}" for x in split["current"])
     intern = "\n".join(f"  - {x}" for x in split["intern"])
     is_intern = "intuit" in selection.owner_label.lower()
@@ -234,7 +263,7 @@ def _work_split_block(selection: Selection, analysis: dict) -> str:
             "A hiring manager should read BOTH roles and want to interview: same domain, "
             "divided work, zero twin bullets.\n"
             "In 1–2 bullets, establish a plausible functional team/product context and "
-            "who it serves (for example, release engineering for firmware teams). "
+            "who it serves, using the researched role patterns. "
             "Do not copy an employer-specific team name from the posting.\n"
             "YOUR LANE (internship — own these):\n"
             f"{intern}\n"
@@ -247,7 +276,7 @@ def _work_split_block(selection: Selection, analysis: dict) -> str:
         "Write so that WHEN paired with the internship block, the resume covers the JD "
         "without repeating the same five stories.\n"
         "In 1–2 bullets, establish a plausible functional team/product context and "
-        "who it serves (for example, payments backend for merchant payouts). "
+        "who it serves, using the researched role patterns. "
         "Do not copy an employer-specific team name from the posting.\n"
         "YOUR LANE (current role — own these):\n"
         f"{current}\n"
@@ -370,6 +399,194 @@ def _jd_fields(analysis: dict, section: str, *, fabricated: bool = False) -> dic
     }
 
 
+_RESEARCH_LIST_KEYS = (
+    "team_functions",
+    "product_surfaces",
+    "systems_and_components",
+    "methods_and_patterns",
+    "concrete_tools",
+    "users_and_workflows",
+    "impact_dimensions",
+    "primary_product_lane",
+    "enablement_lane",
+)
+
+
+def _run_role_research(analysis: dict) -> tuple[dict, bool]:
+    """Web-grounded role research used as planning context, never as evidence."""
+    fields = _jd_fields(analysis, "experience", fabricated=True)
+    prompt = _fill(_load_v2_prompt("role_research.txt"), **fields)
+    try:
+        raw = call_web_research_json(prompt)
+    except Exception as exc:
+        _debug_dump("v2_role_research_error", str(exc))
+        return {}, False
+
+    cleaned: dict = {}
+    for key in _RESEARCH_LIST_KEYS:
+        values = raw.get(key) or []
+        if isinstance(values, list):
+            cleaned[key] = [
+                re.sub(r"\s+", " ", str(v)).strip()
+                for v in values[:10]
+                if str(v).strip()
+            ]
+    sources = []
+    for source in (raw.get("sources") or [])[:8]:
+        if not isinstance(source, dict):
+            continue
+        title = str(source.get("title") or "").strip()
+        url = str(source.get("url") or "").strip()
+        if title and url.startswith(("http://", "https://")):
+            sources.append({"title": title, "url": url})
+    cleaned["sources"] = sources
+    return cleaned, bool(any(cleaned.get(k) for k in _RESEARCH_LIST_KEYS))
+
+
+def _format_research_context(research: dict | None) -> str:
+    if not research:
+        return "(web research unavailable — derive a coherent plan from the JD)"
+    lines = [
+        "Use this as technical planning context, not as proof that the candidate "
+        "worked for any named company or team."
+    ]
+    for key in _RESEARCH_LIST_KEYS:
+        values = research.get(key) or []
+        if values:
+            lines.append(f"{key.replace('_', ' ').upper()}: " + "; ".join(values))
+    return "\n".join(lines)
+
+
+def _allowed_fabricated_skills(
+    bank,
+    evidenced: set[str],
+    jd_tools: list[str],
+) -> list[str]:
+    """Concrete, page-evidenced skills with stable product casing."""
+    evidenced_lower = {
+        str(x).strip().lower() for x in evidenced if is_concrete_skill(str(x))
+    }
+    preferred: dict[str, str] = {}
+    for category in bank.skill_categories:
+        for item in category.items:
+            if is_concrete_skill(item):
+                preferred.setdefault(item.lower(), item)
+    for item in jd_tools:
+        if is_concrete_skill(item):
+            preferred.setdefault(item.lower(), item)
+    for item in evidenced:
+        text = str(item).strip()
+        if is_concrete_skill(text):
+            preferred.setdefault(text.lower(), text)
+
+    allowed = [
+        preferred[low]
+        for low in preferred
+        if low in evidenced_lower and skill_category_for_tool(preferred[low])
+    ]
+    return sorted(allowed, key=lambda x: (skill_category_for_tool(x) or "", x.lower()))
+
+
+def _validate_fabricated_skills(
+    raw: dict,
+    allowed: list[str],
+    line_count: int,
+) -> list[tuple[str, list[str]]] | None:
+    rows = raw.get("skills") if isinstance(raw, dict) else None
+    if not isinstance(rows, list) or len(rows) != line_count:
+        return None
+    canonical = {item.lower(): item for item in allowed}
+    lines: list[tuple[str, list[str]]] = []
+    seen_categories: set[str] = set()
+    seen_items: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            return None
+        category = str(row.get("category") or "").strip()
+        items = row.get("items")
+        if (
+            category not in CANONICAL_SKILL_CATEGORIES
+            or category in seen_categories
+            or not isinstance(items, list)
+            or not 1 <= len(items) <= 6
+        ):
+            return None
+        clean: list[str] = []
+        for raw_item in items:
+            low = str(raw_item).strip().lower()
+            item = canonical.get(low)
+            if (
+                not item
+                or low in seen_items
+                or not skill_allowed_in_category(item, category)
+            ):
+                return None
+            clean.append(item)
+            seen_items.add(low)
+        seen_categories.add(category)
+        lines.append((category, clean))
+    return lines
+
+
+def _write_fabricated_skills(
+    bank,
+    analysis: dict,
+    bullets: list[str],
+    evidenced: set[str],
+    jd_tools: list[str],
+    line_count: int,
+    fallback: list[tuple[str, list[str]]],
+) -> tuple[list[tuple[str, list[str]]], dict]:
+    """Write dynamic skills, then reject vague or miscategorized output."""
+    allowed = _allowed_fabricated_skills(bank, evidenced, jd_tools)
+    available_categories = {
+        skill_category_for_tool(item) for item in allowed
+    } - {None}
+    if len(available_categories) < line_count:
+        return fallback, {
+            "status": "fallback",
+            "reason": "not enough evidenced skill categories",
+            "allowed": allowed,
+        }
+
+    prompt = _fill(
+        _load_v2_prompt("skills_fabricated.txt"),
+        LINE_COUNT=str(line_count),
+        JD_DOMAIN=str(analysis.get("domain") or "(not stated)"),
+        JD_TOOLS=", ".join(jd_tools) or "(none identified)",
+        BULLETS="\n".join(f"- {_plain(b)}" for b in bullets),
+        CATEGORIES=", ".join(
+            c for c in CANONICAL_SKILL_CATEGORIES if c in available_categories
+        ),
+        ALLOWED_SKILLS=", ".join(allowed),
+        WEB_RESEARCH=_format_research_context(analysis.get("web_research") or {}),
+    )
+    try:
+        raw = call_llm_json(
+            prompt,
+            temperature=0.1,
+            max_tokens=1000,
+            role="writer",
+        )
+    except Exception as exc:
+        _debug_dump("v2_fabricated_skills_error", str(exc))
+        return fallback, {
+            "status": "fallback",
+            "reason": f"writer error: {exc}",
+            "allowed": allowed,
+        }
+
+    validated = _validate_fabricated_skills(raw, allowed, line_count)
+    if not validated:
+        _debug_dump("v2_fabricated_skills_rejected", json.dumps(raw, indent=2))
+        return fallback, {
+            "status": "fallback",
+            "reason": "vague, unsupported, or miscategorized skills",
+            "allowed": allowed,
+        }
+    return validated, {"status": "written", "allowed": allowed}
+
+
 def _issue_block(
     bullets: list[str],
     facts: list[Fact],
@@ -412,6 +629,7 @@ def _write_bullets_for_block(
     analysis: dict,
     lexicon: set,
     sibling_fabricated: dict[str, list[str]] | None = None,
+    research: dict | None = None,
 ) -> tuple[list[str], dict]:
     """Write, verify, and repair the bullets for one job or project block."""
     facts = selection.facts
@@ -438,7 +656,8 @@ def _write_bullets_for_block(
             TENURE=tenure,
             FLEX_RULE=_flex_rule(selection),
             DIFFERENTIATION=_differentiation_block(selection, sibling_fabricated),
-            WORK_SPLIT=_work_split_block(selection, analysis),
+            WORK_SPLIT=_work_split_block(selection, analysis, research),
+            WEB_RESEARCH=_format_research_context(research),
             COUNT=str(count),
             FIX_BLOCK="",
             **jd_kwargs,
@@ -589,6 +808,7 @@ def _write_summary(
     fill_kwargs = dict(
         SUMMARY_ANGLE=str(analysis.get("ideal_summary_angle") or "(none given)"),
         RESUME_BULLETS="\n".join(f"- {b}" for b in rendered_bullets),
+        WEB_RESEARCH=_format_research_context(analysis.get("web_research") or {}),
         FIX_BLOCK="",
         **_jd_fields(analysis, "summary", fabricated=fabricated_ok),
     )
@@ -838,6 +1058,22 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
             + ". Add a role/project with that exact company or project name."
         )
 
+    fabricated_any = any(sel.fabricated for sel in selections.values())
+    research: dict = {}
+    research_ok = False
+    if fabricated_any:
+        research, research_ok = _run_role_research(analysis)
+        # Keep it with the JD analysis so refine requests can reuse the same
+        # researched role plan without a second web call.
+        analysis["web_research"] = research
+        emit(
+            "research",
+            {
+                "web_research_ok": research_ok,
+                "source_count": len(research.get("sources") or []),
+            },
+        )
+
     # --- 4. Write bullets ----------------------------------------------------
     # Fabricated roles run SEQUENTIALLY so later ones (Intuit) see earlier ones
     # (Clerxi) and can strategically complement instead of cloning.
@@ -853,7 +1089,11 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
     for label in fab_order:
         try:
             bullets, meta = _write_bullets_for_block(
-                selections[label], analysis, lexicon, sibling_fabricated
+                selections[label],
+                analysis,
+                lexicon,
+                sibling_fabricated,
+                research,
             )
         except Exception as exc:
             bullets = [_latex_text(f.core) for f in selections[label].facts]
@@ -899,8 +1139,13 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
     # Constrained by what the resume actually shows. When inventing roles,
     # skills must follow fabricated bullets + JD tools on the page — not leftover
     # Playwright/RAG bank filler from a different domain.
-    fabricated_any = any(sel.fabricated for sel in selections.values())
-    evidenced = {t for sel in selections.values() for f in sel.facts for t in f.tools}
+    evidenced = {
+        t
+        for sel in selections.values()
+        if not sel.fabricated
+        for f in sel.facts
+        for t in f.tools
+    }
     # Expand lexicon with JD tools so invent stacks (C++, Yocto, MQTT, …) count.
     jd_tool_names = [
         str(t).strip()
@@ -924,17 +1169,30 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
                     re.I,
                 ):
                     evidenced.add(tool)
-    skills_lines = select_skills(
+    fallback_skills_lines = select_skills(
         bank,
         analysis,
         skills_line_count(templates["skills"]),
         evidenced,
         strict_evidence=fabricated_any,
     )
+    all_bullets = [b for label in order for b in written.get(label, [])]
+    skills_meta = {"status": "deterministic"}
+    if fabricated_any:
+        skills_lines, skills_meta = _write_fabricated_skills(
+            bank,
+            analysis,
+            all_bullets,
+            evidenced,
+            jd_tool_names,
+            skills_line_count(templates["skills"]),
+            fallback_skills_lines,
+        )
+    else:
+        skills_lines = fallback_skills_lines
     rendered["skills"] = render_skills(templates["skills"], skills_lines)
 
     # --- 7. Summary, written against the bullets that now exist -------------
-    all_bullets = [b for label in order for b in written.get(label, [])]
     summary_text, summary_meta = _write_summary(
         analysis, selections, all_bullets, lexicon, _original_summary_text()
     )
@@ -973,7 +1231,13 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
             "architecture": "facts-v3",
             "final": True,
             "jd_agent_ok": jd_ok,
-            "llm_calls": 1 + len(order) + summary_meta.get("attempts", 1),
+            "llm_calls": (
+                1
+                + len(order)
+                + summary_meta.get("attempts", 1)
+                + (1 if research_ok else 0)
+                + (1 if skills_meta.get("status") == "written" else 0)
+            ),
             "final_score": measurement["score"],
             "blocks": block_meta,
             "summary": summary_meta,
@@ -985,6 +1249,11 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
                 for label, sel in selections.items()
             },
             "skills_lines": [name for name, _ in skills_lines],
+            "skills": skills_meta,
+            "web_research": {
+                "ok": research_ok,
+                "sources": research.get("sources") or [],
+            },
             "summary_words": word_count(latex_to_plain(rendered["summary"])),
         },
         "measurement": measurement,
@@ -1179,26 +1448,11 @@ def refine_resume_v2(
         rendered["projects"] = render_section(templates["projects"], bullets_by_block)
 
     skills_lines = current_skills
-    llm_skills_applied = False
-    if "skills" in changed and isinstance(raw.get("skills"), list) and raw["skills"]:
-        parsed: list[tuple[str, list[str]]] = []
-        for row in raw["skills"]:
-            if not isinstance(row, (list, tuple)) or len(row) < 2:
-                continue
-            name = str(row[0]).strip()
-            items = [str(x).strip() for x in (row[1] or []) if str(x).strip()]
-            if name and items:
-                parsed.append((name, items))
-        if parsed:
-            skills_lines = parsed
-            llm_skills_applied = True
-
-    # When invent bullets change, re-pick skill categories from the page evidence so
-    # Yocto/MQTT land under Embedded & Platforms — not leftover Languages/Frontend.
+    skills_meta = {"status": "unchanged"}
     suggestion_wants_skills = bool(
         re.search(r"\bskills?\b|\bcategor(?:y|ies)\b", suggestion, re.I)
     )
-    if not llm_skills_applied and (
+    if (
         "experience" in changed or "skills" in changed or suggestion_wants_skills
     ):
         fabricated_any = any(sel.fabricated for sel in selections.values())
@@ -1214,7 +1468,11 @@ def refine_resume_v2(
             "c++", "c++11", "c++17", "c++20",
         }
         evidenced: set[str] = {
-            t for sel in selections.values() for f in sel.facts for t in f.tools
+            t
+            for sel in selections.values()
+            if not sel.fabricated
+            for f in sel.facts
+            for t in f.tools
         }
         for label, bullets in written.items():
             for bullet in bullets:
@@ -1228,13 +1486,31 @@ def refine_resume_v2(
                         re.I,
                     ):
                         evidenced.add(tool)
-        skills_lines = select_skills(
+        fallback_skills = select_skills(
             bank,
             analysis,
             skills_line_count(templates["skills"]),
             evidenced,
             strict_evidence=fabricated_any,
         )
+        if fabricated_any:
+            all_current_bullets = [
+                b
+                for label in [b.label for b in exp_blocks + proj_blocks]
+                for b in written.get(label, [])
+            ]
+            skills_lines, skills_meta = _write_fabricated_skills(
+                bank,
+                analysis,
+                all_current_bullets,
+                evidenced,
+                jd_tool_names,
+                skills_line_count(templates["skills"]),
+                fallback_skills,
+            )
+        else:
+            skills_lines = fallback_skills
+            skills_meta = {"status": "deterministic"}
         changed.add("skills")
         if "skills" not in note.lower():
             note = (note.rstrip(".") + "; refreshed skills to match the bullets.").strip()
@@ -1276,6 +1552,7 @@ def refine_resume_v2(
             "refine_changed": sorted(changed),
             "suggestion": suggestion,
             "skills_lines": [name for name, _ in skills_lines],
+            "skills": skills_meta,
             "summary_words": word_count(latex_to_plain(rendered["summary"])),
         },
         "measurement": measurement,

@@ -27,18 +27,20 @@ Tools: {{JD_TOOLS}}
 ## RULES
 - Keep company/project names and bullet COUNTS exactly as given.
 - Return plain sentence text only (no LaTeX, no \\textbf, no markdown).
-- Experience/project bullets: 22–36 words when you rewrite a full block; each needs
-  a metric if you rewrite that block. Prefer from→to.
+- Fabricated experience bullets: 28–42 words and roughly two useful printed
+  lines. Spend added space on concrete scope, system boundaries, users,
+  constraints, integrations, or operational ownership—not filler.
+- Project bullets: 22–36 words when rewritten. Every rewritten bullet needs a
+  metric; prefer from→to.
 - For each rewritten fabricated role, make exactly 1–2 bullets establish the
   functional team/product area, the concrete system, and who/what it serves.
   Keep HOW + measured RESULT in those same bullets; do not add a standalone
   "worked on the team" line. Use a plausible functional name, not a team name
   copied from the employer's JD.
 - Summary: exactly 2 sentences, 26–38 words, NO numbers, match the bullet stack.
-- Skills: rewrite whenever experience changes OR the suggestion asks. Prefer
-  categories that fit the stack (e.g. Embedded & Platforms for Yocto/MQTT,
-  Languages for C++/Python — never put Yocto under Languages). Keep 4 lines.
-  Each line is a category name plus a list of tools.
+- Skills: whenever experience changes OR the suggestion asks, include "skills"
+  in changed. A dedicated web-informed skills stage will choose and validate
+  concrete categories/items from the finished bullets; leave skills null here.
 - If the suggestion is unclear or impossible, set changed to [] and leave fields null.
 - Fabricated invent roles (Clerxi / Intuit) may be rewritten freely to match the
   suggestion and JD — but divide work: Clerxi owns the primary product; Intuit owns

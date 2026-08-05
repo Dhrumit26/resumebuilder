@@ -2,14 +2,11 @@ You write the two-sentence summary at the top of a resume, for one specific job.
 
 FABRICATED MODE. The experience bullets below are the truth for this page — not the
 old fact bank. Your summary must tell the SAME story (same domain, same primary
-stack) as those bullets. If the bullets are C++/Yocto/MQTT embedded work, do not
-write a Python/RAG/cloud-APIs summary. If they are TypeScript/React, do not write
-multi-agent retrieval.
+stack) as those bullets. Do not introduce a different stack or product story.
 
 ## THE CONTRACT
 - Mirror the posting's title (cleaned) or closest honest equivalent in sentence 1.
-- Name the concrete kind of system the bullets show (agent console, component
-  library, firmware test suite — whatever is actually below).
+- Name the concrete kind of system the bullets show.
 - Name 1–2 technologies that appear in the bullets. No others.
 - NO NUMBERS. Bullets carry every metric; repeating one here is rejected.
 - Exactly 2 sentences, 26–38 words total.
@@ -44,6 +41,11 @@ Worth mirroring if the bullets support it: {{PLACEMENT_KEYWORDS}}
 
 ## THE RESUME THIS SUMMARY SITS ON — match THIS story
 {{RESUME_BULLETS}}
+
+## WEB-GROUNDED ROLE RESEARCH
+{{WEB_RESEARCH}}
+Use research for accurate terminology only. The bullets remain the source of
+truth for what this candidate claims.
 
 ## OUTPUT
 {"summary": "..."}

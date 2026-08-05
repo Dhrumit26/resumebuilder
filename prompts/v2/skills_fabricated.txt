@@ -1,0 +1,48 @@
+You write the Technical Skills section for a fabricated, JD-tailored resume.
+The bullets already exist. Skills must summarize the concrete stack ON THE PAGE;
+do not invent extra tools and do not copy vague phrases from the job posting.
+
+## TARGET
+Return exactly {{LINE_COUNT}} category lines. Each line must:
+- use one category from the allowed category names below
+- contain 1–6 concrete, named technologies from ALLOWED SKILLS; never add filler
+  merely to increase the count
+- place every technology under the correct category
+- prioritize JD-relevant tools actually evidenced in the bullets
+
+## CATEGORY CONTRACT (strict)
+- Languages: programming/query languages only (Python, Java, TypeScript, SQL, C++)
+- Testing & QA: Appium, Selenium, Playwright, Cypress, Jest, pytest, Postman,
+  Newman, React Testing Library, test frameworks
+- CI/CD & DevOps: Jenkins, GitHub Actions, GitLab CI, Git, Docker, Kubernetes
+- Backend & Cloud: FastAPI, REST APIs, Node.js, PostgreSQL, Redis, AWS
+- Frontend: React, Next.js, Angular, HTML, CSS
+- AI & Data: LLMs, RAG, embeddings, vector search, multi-agent systems
+- Embedded & Platforms: Yocto, MQTT, AMQP, Ubuntu Core, Armbian, Linux
+
+NEVER output vague placeholders such as "test management tools", "testing tools",
+"cloud technologies", "automation tools", "frameworks", or "APIs".
+NEVER put Appium/Selenium/testing tools under Backend & Cloud.
+NEVER put Yocto/MQTT/Ubuntu under Languages.
+Preserve normal product casing: Appium, Selenium, GitHub Actions, REST APIs.
+
+## JOB
+Domain: {{JD_DOMAIN}}
+Requested tools: {{JD_TOOLS}}
+
+## BULLETS ON THIS RESUME
+{{BULLETS}}
+
+## WEB-GROUNDED ROLE RESEARCH
+{{WEB_RESEARCH}}
+
+## ALLOWED CATEGORY NAMES
+{{CATEGORIES}}
+
+## ALLOWED SKILLS (only these; exact spelling)
+{{ALLOWED_SKILLS}}
+
+## OUTPUT
+Return ONLY a JSON object with key "skills". Its value is an array of objects;
+each object has string key "category" and array key "items".
+Exactly {{LINE_COUNT}} objects. No markdown, no commentary.

@@ -228,16 +228,20 @@ def t15c_fabricated_block_requires_jd_spine():
     assert any(i.code == "missing-spine" for i in issues), issues
 
     good = [
-        "Built Python RAG retrieval APIs for an internal agent console that answers support "
-        "questions over product docs on AWS, cutting first-response draft time from 12 minutes to under 4.",
+        "On the agent infrastructure team, built Python RAG retrieval APIs for an internal "
+        "console that answers support questions over product docs on AWS, cutting first-response "
+        "draft time from 12 minutes to under 4.",
         "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the embedding "
-        "lookup path and batching model inference calls under load.",
+        "lookup path and batching model inference calls across peak support traffic periods.",
         "Shipped tool-calling orchestration so support agents could read tickets and draft "
-        "replies in-console, raising successful auto-drafts from 40% to 72% of sampled threads.",
+        "replies in-console without manual queue handoffs, raising successful auto-drafts "
+        "from 40% to 72% of sampled threads.",
         "Increased pytest coverage on LLM workflow handlers from 48% to 82%, contributing to "
-        "fewer retrieval regressions reaching staging across six release cycles.",
+        "fewer retrieval regressions reaching staging before weekly production releases "
+        "consistently across six successful release cycles.",
         "Containerized the retrieval service with Docker on AWS so staging matched production "
-        "inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
+        "inference settings across six service deployments, shrinking release dry-runs "
+        "from 3 hours to 45 minutes.",
     ]
     assert not verify_fabricated_block(good, jd), verify_fabricated_block(good, jd)
 
@@ -653,6 +657,27 @@ class _Stub:
 
     def __call__(self, prompt, temperature=0.2, max_tokens=4000, retries=1, role="judge"):
         self.calls += 1
+        if "Technical Skills section for a fabricated" in prompt:
+            if "Domain: frontend web" in prompt:
+                return {
+                    "skills": [
+                        {"category": "Languages", "items": ["Python", "TypeScript"]},
+                        {"category": "Testing & QA", "items": ["Playwright", "Cypress", "pytest"]},
+                        {"category": "CI/CD & DevOps", "items": ["GitHub Actions", "GitLab CI"]},
+                        {"category": "Frontend", "items": ["React", "Next.js"]},
+                    ]
+                }
+            return {
+                "skills": [
+                    {"category": "Languages", "items": ["Python", "TypeScript"]},
+                    {"category": "Testing & QA", "items": ["Playwright", "Cypress", "pytest"]},
+                    {"category": "CI/CD & DevOps", "items": ["GitHub Actions", "GitLab CI"]},
+                    {
+                        "category": "Backend & Cloud",
+                        "items": ["FastAPI", "REST APIs", "PostgreSQL", "AWS"],
+                    },
+                ]
+            }
         if "You revise an already-generated tailored resume" in prompt:
             if self.mode == "refine-noop":
                 return {
@@ -719,31 +744,39 @@ class _Stub:
             # Intuit (internship) gets a complementary testing/CI story — not Clerxi's clone.
             if "PAST INTERNSHIP" in prompt or ("Intuit" in prompt and "DIFFERENT system" in prompt):
                 goods = [
-                    "Migrated end-to-end API suites from Cypress-style checks to Playwright for a "
-                    "Python service platform, cutting flaky CI failures from about 18% to 6% of runs.",
+                    "On the test platform team, migrated end-to-end API suites from Cypress-style "
+                    "checks to Playwright for a Python service used by three feature teams, cutting "
+                    "flaky CI failures from about 18% to 6% of pre-merge runs.",
                     "Raised pytest coverage on shared FastAPI handlers from 42% to 78%, contributing "
-                    "to fewer production defects across the internship window.",
+                    "to fewer production defects by adding contract fixtures for 6 critical "
+                    "request paths across the internship window.",
                     "Defined REST API contracts across service boundaries so partner teams hit "
-                    "fewer integration breaks across three multi-sprint releases.",
+                    "fewer integration breaks across 3 multi-sprint releases while preserving "
+                    "backward compatibility for existing clients during scheduled releases.",
                     "Shortened deployment cycles from 2 weeks to 4 days by refactoring shared "
-                    "Python platform services used by feature teams across two orgs.",
+                    "Python platform services used by feature teams across 2 orgs without "
+                    "creating release coordination bottlenecks during the internship.",
                     "Built request pre-check logic on shared Python forms APIs that cut completion "
-                    "time by 35% and dropped configuration-related support tickets by 50%.",
+                    "time by 35% and dropped configuration-related support tickets by 50% "
+                    "before customer configuration reached production.",
                 ]
             else:
                 goods = [
-                    "Built Python RAG retrieval APIs for an internal agent console that answers "
-                    "support questions over product docs on AWS, cutting first-response draft "
-                    "time from 12 minutes to under 4.",
+                    "On the agent infrastructure team, built Python RAG retrieval APIs for an "
+                    "internal console that answers support questions over product docs on AWS, "
+                    "cutting first-response draft time from 12 minutes to under 4 across 3 queues.",
                     "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the "
-                    "embedding lookup path and batching model inference calls under load.",
+                    "embedding lookup path and batching model inference calls across peak "
+                    "support traffic without reducing retrieval depth.",
                     "Shipped tool-calling orchestration so support agents could read tickets and "
                     "draft replies in-console, raising successful auto-drafts from 40% to 72% "
-                    "of sampled threads.",
+                    "of sampled threads while preserving human approval for outbound responses.",
                     "Increased pytest coverage on LLM workflow handlers from 48% to 82%, "
-                    "contributing to fewer retrieval regressions reaching staging across six release cycles.",
+                    "contributing to fewer retrieval regressions reaching staging before weekly "
+                    "production releases across 6 consecutive successful release cycles.",
                     "Containerized the retrieval service with Docker on AWS so staging matched "
-                    "production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
+                    "production inference settings across 6 service deployments, shrinking "
+                    "release dry-runs from 3 hours to 45 minutes.",
                 ]
             return {"bullets": goods[:count]}
 
@@ -760,14 +793,30 @@ class _Stub:
 
 
 def _run(mode="good", jd=None):
-    original_json, original_jd = p2.call_llm_json, p2.run_jd_agent
+    original_json = p2.call_llm_json
+    original_web = p2.call_web_research_json
+    original_jd = p2.run_jd_agent
     stub = _Stub(mode)
     p2.call_llm_json = stub
+    p2.call_web_research_json = lambda _prompt: {
+        "team_functions": ["product engineering", "release engineering"],
+        "product_surfaces": ["service platform"],
+        "systems_and_components": ["API service", "CI pipeline"],
+        "methods_and_patterns": ["contract testing", "batching"],
+        "concrete_tools": ["Python", "FastAPI", "pytest", "Docker"],
+        "users_and_workflows": ["support agents", "feature teams"],
+        "impact_dimensions": ["latency", "release reliability"],
+        "primary_product_lane": ["API product and runtime performance"],
+        "enablement_lane": ["CI, contracts, and regression testing"],
+        "sources": [{"title": "Test source", "url": "https://example.com"}],
+    }
     p2.run_jd_agent = lambda _jd: (jd or BACKEND_JD, True)
     try:
         return p2.build_resume_v2("A backend engineering role. " * 10), stub
     finally:
-        p2.call_llm_json, p2.run_jd_agent = original_json, original_jd
+        p2.call_llm_json = original_json
+        p2.call_web_research_json = original_web
+        p2.run_jd_agent = original_jd
 
 
 def t23_pipeline_preserves_template_structure():
@@ -777,6 +826,10 @@ def t23_pipeline_preserves_template_structure():
     assert [b.label for b in exp] == ["Clerxi AI", "Intuit"]
     proj = parse_section(result["sections"]["projects"])
     assert [b.bullet_count for b in proj] == [2, 2]
+    for block in result["meta"]["blocks"]:
+        if block.get("fabricated"):
+            assert not block.get("block_issues"), block
+    assert result["meta"]["skills"]["status"] == "written", result["meta"]["skills"]
 
 
 def t24_grounded_blocks_reject_invention():
@@ -865,6 +918,44 @@ def t29_skills_follow_fabricated_evidence_not_bank_filler():
     assert "Embedded & Platforms" in lines or "Yocto" in flat
 
 
+def t29b_fabricated_skills_reject_generic_and_miscategorized_items():
+    from src.matching import (
+        is_concrete_skill,
+        skill_allowed_in_category,
+        skill_category_for_tool,
+    )
+
+    assert not is_concrete_skill("test management tools")
+    assert not is_concrete_skill("cloud technologies")
+    assert skill_category_for_tool("Appium") == "Testing & QA"
+    assert skill_category_for_tool("Selenium") == "Testing & QA"
+    assert not skill_allowed_in_category("Appium", "Backend & Cloud")
+
+    allowed = [
+        "Python", "Java", "Appium", "Selenium", "Jenkins", "Git",
+        "FastAPI", "PostgreSQL", "React", "Next.js",
+    ]
+    bad = {
+        "skills": [
+            {"category": "Languages", "items": ["Python", "Java"]},
+            {"category": "Testing & QA", "items": ["Selenium", "Jenkins"]},
+            {"category": "Backend & Cloud", "items": ["Appium", "FastAPI"]},
+            {"category": "Frontend", "items": ["React", "Next.js"]},
+        ]
+    }
+    assert p2._validate_fabricated_skills(bad, allowed, 4) is None
+
+    good = {
+        "skills": [
+            {"category": "Languages", "items": ["Python", "Java"]},
+            {"category": "Testing & QA", "items": ["Appium", "Selenium"]},
+            {"category": "CI/CD & DevOps", "items": ["Jenkins", "Git"]},
+            {"category": "Backend & Cloud", "items": ["FastAPI", "PostgreSQL"]},
+        ]
+    }
+    assert p2._validate_fabricated_skills(good, allowed, 4)
+
+
 def t30_refine_rewrites_requested_blocks():
     built, _ = _run()
     original_json, original_jd = p2.call_llm_json, p2.run_jd_agent
@@ -888,7 +979,7 @@ def t30_refine_rewrites_requested_blocks():
     )
     assert any("multi-agent orchestration" in s.body.lower() for s in clerxi.slots)
     assert [b.bullet_count for b in parse_section(refined["sections"]["experience"])] == [5, 5]
-    assert refine_stub.calls == 1  # jd_analysis reused — one refine call only
+    assert refine_stub.calls == 2  # refine writer + dedicated fabricated-skills writer
 
 
 def t31_refine_noop_keeps_sections_stable():

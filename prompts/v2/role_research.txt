@@ -1,0 +1,34 @@
+Research the public web for current engineering practices relevant to this job.
+Use technical documentation, engineering blogs, product documentation, and
+credible role descriptions. Do not copy another person's resume or invent that
+the candidate worked for a named team found online.
+
+The output will guide a fabricated-but-coherent resume story. Find realistic:
+- functional team types and product surfaces for this role
+- systems/components such teams commonly own
+- architecture patterns, engineering methods, and concrete technologies
+- operational constraints, users/workflows served, and credible impact dimensions
+- a clean division between primary product work and enablement/test/platform work
+
+Do not provide ready-made resume bullets. Do not provide fabricated metric values.
+Do not use the target employer's proprietary claims as candidate experience.
+
+JOB TITLE: {{JD_TITLE}}
+DOMAIN: {{JD_DOMAIN}}
+PRACTICES: {{JD_PRACTICES}}
+TOOLS: {{JD_TOOLS}}
+CONCEPTS: {{JD_CONCEPTS}}
+
+Return ONLY JSON:
+{
+  "team_functions": ["..."],
+  "product_surfaces": ["..."],
+  "systems_and_components": ["..."],
+  "methods_and_patterns": ["..."],
+  "concrete_tools": ["..."],
+  "users_and_workflows": ["..."],
+  "impact_dimensions": ["..."],
+  "primary_product_lane": ["..."],
+  "enablement_lane": ["..."],
+  "sources": [{"title": "...", "url": "..."}]
+}
