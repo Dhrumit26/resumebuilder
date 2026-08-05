@@ -67,6 +67,7 @@ Worth surfacing: {{PLACEMENT_KEYWORDS}}
 ## THIS BLOCK
 {{BLOCK_KIND}}: {{BLOCK_LABEL}}{{TENURE}}
 {{FLEX_RULE}}
+{{DIFFERENTIATION}}
 
 ## OUTPUT
 {"bullets": ["...", "..."]}  — exactly {{COUNT}} strings, plain text only.

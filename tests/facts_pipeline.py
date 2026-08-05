@@ -68,7 +68,7 @@ def t01_fact_bank_loads_and_validates():
     assert BANK.role("clerxi").flexible is True
     assert BANK.role("clerxi").fabricated is True
     assert BANK.role("intuit").flexible is False
-    assert BANK.role("intuit").fabricated is False
+    assert BANK.role("intuit").fabricated is True
     assert len(BANK.role("clerxi").facts) == 5
 
 
@@ -139,8 +139,10 @@ def t09_flexible_role_reorders_for_domain():
     be = select_facts(BANK, BACKEND_JD, SLOTS)["Clerxi AI"]
     assert be.flexible is True
     assert be.fabricated is True
+    assert select_facts(BANK, BACKEND_JD, SLOTS)["Intuit"].fabricated is True
     assert be.facts[0].id in ("retrieval-services", "agent-orchestration-api")
     assert be.scores[0] >= be.scores[-1], "facts must be ordered by relevance"
+
 
 
 def t10_lead_fact_goes_first():
@@ -354,6 +356,33 @@ def t15h_fabricated_rejects_backref_spam_vague_cloud_and_false_cause():
     assert "false-causation" in codes, codes
 
 
+def t15i_fabricated_rejects_cloning_sibling_role():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "frontend web",
+        "domain_practices": ["frontend development"],
+        "concepts": ["React", "TypeScript"],
+        "tools": ["TypeScript", "React", "AWS"],
+    }
+    clerxi = [
+        "Built a TypeScript React ops dashboard for internal support on AWS, cutting triage time from 5 days to 2.",
+        "Cut the slowest dashboard filter path from 900ms to 320ms by memoizing React list virtualization on hot views.",
+        "Increased Jest coverage on dashboard components from 40% to 78%, contributing to fewer UI regressions over two sprints.",
+        "Wired typed TypeScript clients to REST ticket APIs, dropping related production incidents from 6 per month to 1.",
+        "Automated dashboard releases with AWS CodePipeline, shrinking release dry-runs from 3 hours to 45 minutes.",
+    ]
+    clone = [
+        "Built a TypeScript React ops dashboard for internal support on AWS, cutting triage time from 5 days to 2.",
+        "Cut the slowest dashboard filter path from 900ms to 320ms by memoizing React list virtualization on hot views.",
+        "Increased Jest coverage on dashboard components from 40% to 78%, contributing to fewer UI regressions over two sprints.",
+        "Wired typed TypeScript clients to REST ticket APIs, dropping related production incidents from 6 per month to 1.",
+        "Automated dashboard releases with AWS CodePipeline, shrinking release dry-runs from 3 hours to 45 minutes.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(clone, jd, sibling_bullets=clerxi)}
+    assert "system-clone" in codes or "role-clone" in codes or "metric-clone" in codes, codes
+
+
 def t16_frozen_pairing_must_stay_intact():
     fact = _fact("intuit", "ci-migration")
     issues = verify_bullet(
@@ -474,10 +503,14 @@ class _Stub:
             return {"summary": "Backend engineer building Python retrieval services on AWS. "
                                "Turns slow query paths into measured wins on production systems."}
 
-        fabricated = "FABRICATED MODE" in prompt or "You invent ONE coherent role" in prompt
+        fabricated = "FABRICATED MODE" in prompt or "You invent ONE coherent" in prompt
         if fabricated:
             import re as _re
-            m = _re.search(r"Return ONLY this JSON object, (\d+) bullets", prompt)
+            m = (
+                _re.search(r"[Ee]xactly (\d+) bullets", prompt)
+                or _re.search(r"exactly (\d+) strings", prompt)
+                or _re.search(r"Return ONLY this JSON object, (\d+) bullets", prompt)
+            )
             count = int(m.group(1)) if m else 5
             if self.mode == "fabricate":
                 return {"bullets": [
@@ -487,20 +520,35 @@ class _Stub:
                 ]}
             if self.mode == "broken-json-escape":
                 raise ValueError("Failed to parse LLM JSON")
-            goods = [
-                "Built Python RAG retrieval APIs for an internal agent console that answers "
-                "support questions over product docs on AWS, cutting first-response draft "
-                "time from 12 minutes to under 4.",
-                "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the "
-                "embedding lookup path and batching model inference calls under load.",
-                "Shipped tool-calling orchestration so support agents could read tickets and "
-                "draft replies in-console, raising successful auto-drafts from 40% to 72% "
-                "of sampled threads.",
-                "Increased pytest coverage on LLM workflow handlers from 48% to 82%, "
-                "contributing to fewer retrieval regressions reaching staging across six release cycles.",
-                "Containerized the retrieval service with Docker on AWS so staging matched "
-                "production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
-            ]
+            # Intuit (internship) gets a complementary testing/CI story — not Clerxi's clone.
+            if "PAST INTERNSHIP" in prompt or "\nJob: Intuit" in prompt or "Intuit" in prompt and "DIFFERENT system" in prompt:
+                goods = [
+                    "Migrated end-to-end UI suites from Cypress to Playwright for a low-code "
+                    "platform, cutting flaky CI failures from about 18% to 6% of runs.",
+                    "Raised Jest and React Testing Library coverage on shared form packages "
+                    "from 42% to 78%, contributing to fewer production defects over the internship.",
+                    "Defined REST API contracts across service boundaries so partner teams "
+                    "hit fewer integration breaks across three multi-sprint releases.",
+                    "Shortened deployment cycles from 2 weeks to 4 days by refactoring "
+                    "TypeScript and JavaScript platform services used by low-code feature teams.",
+                    "Built React pre-selection logic on shared forms that cut completion time "
+                    "by 35% and dropped configuration-related support tickets by 50%.",
+                ]
+            else:
+                goods = [
+                    "Built Python RAG retrieval APIs for an internal agent console that answers "
+                    "support questions over product docs on AWS, cutting first-response draft "
+                    "time from 12 minutes to under 4.",
+                    "Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the "
+                    "embedding lookup path and batching model inference calls under load.",
+                    "Shipped tool-calling orchestration so support agents could read tickets and "
+                    "draft replies in-console, raising successful auto-drafts from 40% to 72% "
+                    "of sampled threads.",
+                    "Increased pytest coverage on LLM workflow handlers from 48% to 82%, "
+                    "contributing to fewer retrieval regressions reaching staging across six release cycles.",
+                    "Containerized the retrieval service with Docker on AWS so staging matched "
+                    "production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.",
+                ]
             return {"bullets": goods[:count]}
 
         count = prompt.count("WHAT HAPPENED:")
@@ -536,7 +584,7 @@ def t23_pipeline_preserves_template_structure():
 
 
 def t24_grounded_blocks_reject_invention():
-    """Intuit/projects stay fact-grounded; Clerxi fabricated may keep invented tools."""
+    """Projects stay fact-grounded; fabricated Clerxi/Intuit may keep invented tools."""
     result, _ = _run(mode="fabricate")
     for block in result["meta"]["blocks"]:
         if block.get("fabricated"):
@@ -545,11 +593,6 @@ def t24_grounded_blocks_reject_invention():
         assert block["fell_back_to_fact"], (
             f"{block['block']}: fabrication should force fact fallback"
         )
-    exp = parse_section(result["sections"]["experience"])
-    intuit = next(b for b in exp if b.label == "Intuit")
-    for slot in intuit.slots:
-        assert "kubernetes" not in slot.body.lower()
-        assert "900 million" not in slot.body.lower()
     for block in parse_section(result["sections"]["projects"]):
         for slot in block.slots:
             assert "kubernetes" not in slot.body.lower()
