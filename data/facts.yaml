@@ -311,5 +311,5 @@ skills:
       themes: [embedded-systems, systems-programming, networking, containers-devops]
 
     - name: Frontend
-      items: [React, Next.js, HTML, CSS]
+      items: [React, Next.js, Tailwind CSS, HTML, CSS]
       themes: [frontend-ui, react, typescript-js, full-stack, ux-performance]

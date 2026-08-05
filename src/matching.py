@@ -466,6 +466,7 @@ def select_facts(
 
 # --- skills ------------------------------------------------------------------
 
+MIN_SKILLS_PER_LINE = 5
 MAX_SKILLS_PER_LINE = 6
 
 _GENERIC_SKILL_PHRASES = {
@@ -493,6 +494,7 @@ _INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
     )),
     ("Frontend", (
         "react", "next.js", "angular", "vue", "html", "css", "jquery", "bootstrap",
+        "tailwind css",
     )),
     ("Backend & Cloud", (
         "fastapi", "django", "flask", "spring", "node.js", "rest apis", "postgresql",
@@ -500,6 +502,7 @@ _INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
     )),
     ("AI & Data", (
         "llm", "llms", "rag", "embeddings", "vector search", "multi-agent systems",
+        "semantic caching",
     )),
     ("Embedded & Platforms", (
         "yocto", "mqtt", "amqp", "ubuntu core", "ubuntu", "armbian", "linux",
@@ -701,19 +704,19 @@ def select_skills(
         if strict_evidence:
             # Only JD-named or bullet-proven skills — no Playwright on an embedded invent.
             keep = [i for i in ranked if item_rank(i)[0] < 2][:MAX_SKILLS_PER_LINE]
-            if len(keep) < 2:
+            if len(keep) < MIN_SKILLS_PER_LINE:
                 for item in ranked:
                     if item not in keep:
                         keep.append(item)
-                    if len(keep) >= 2:
+                    if len(keep) >= MIN_SKILLS_PER_LINE:
                         break
         else:
             keep = [i for i in ranked if item_rank(i)[0] < 2][:MAX_SKILLS_PER_LINE]
-            if len(keep) < 3:
+            if len(keep) < MIN_SKILLS_PER_LINE:
                 for item in ranked:
                     if item not in keep:
                         keep.append(item)
-                    if len(keep) >= 3:
+                    if len(keep) >= MIN_SKILLS_PER_LINE:
                         break
         lines.append((name, keep))
     return lines
