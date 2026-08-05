@@ -185,3 +185,33 @@ def call_llm_json(
         f"Failed to parse LLM JSON ({type(last_error).__name__}: {last_error}). "
         f"Raw preview: {preview!r}"
     ) from last_error
+
+
+def call_web_research_json(prompt: str, max_tokens: int = 3000) -> dict:
+    """Run one web-grounded research call through OpenAI Responses.
+
+    The regular writer path remains provider-compatible Chat Completions. Web
+    research is intentionally separate because tool syntax is provider-specific.
+    Callers must catch failures and fall back to JD-only planning.
+    """
+    if LLM_PROVIDER != "openai":
+        raise ValueError("Web research currently requires LLM_PROVIDER=openai")
+
+    client = _get_client()
+    response = client.responses.create(
+        model=_get_model("writer"),
+        input=prompt,
+        tools=[{"type": "web_search_preview"}],
+        max_output_tokens=min(max_tokens, MAX_JSON_TOKEN_CAP),
+    )
+    raw = getattr(response, "output_text", None)
+    if not raw:
+        raise ValueError("Empty web research response")
+    cleaned = _extract_json_text(raw)
+    try:
+        data = json.loads(cleaned)
+    except json.JSONDecodeError:
+        data = json.loads(_fix_invalid_escapes(cleaned))
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected research JSON object, got {type(data).__name__}")
+    return data

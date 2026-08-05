@@ -468,6 +468,23 @@ def select_facts(
 
 MAX_SKILLS_PER_LINE = 6
 
+_GENERIC_SKILL_PHRASES = {
+    "test management tools", "testing tools", "automation tools", "cloud tools",
+    "cloud technologies", "cloud technology", "web technologies", "databases",
+    "frameworks", "apis", "ci/cd tools", "devops tools", "monitoring tools",
+}
+
+
+def is_concrete_skill(tool: str) -> bool:
+    """Reject vague placeholders that do not belong on a technical-skills line."""
+    low = re.sub(r"\s+", " ", (tool or "").strip().lower())
+    if not low or low in _GENERIC_SKILL_PHRASES:
+        return False
+    if low.endswith(" tools") or low.endswith(" technologies"):
+        return False
+    return bool(re.search(r"[a-z0-9+#.]", low))
+
+
 # Where to park a JD/resume tool that is not already in a skill-bank category.
 _INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
     ("Languages", (
@@ -490,7 +507,8 @@ _INJECT_CATEGORY_HINTS: list[tuple[str, tuple[str, ...]]] = [
     )),
     ("Testing & CI/CD", (
         "jest", "playwright", "cypress", "pytest", "junit", "jenkins", "github actions",
-        "gitlab ci", "git", "selenium",
+        "gitlab ci", "git", "selenium", "appium", "postman", "newman",
+        "react testing library", "testng", "mocha", "vitest",
     )),
 ]
 
@@ -521,6 +539,13 @@ def _needle_hits_tool(needle: str, tool: str) -> bool:
 
 def _inject_category_name(tool: str, category_names: list[str]) -> str | None:
     low = tool.lower().strip()
+    if not is_concrete_skill(tool):
+        return None
+    if low in {
+        "appium", "selenium", "playwright", "cypress", "jest", "pytest",
+        "postman", "newman", "react testing library", "testng", "mocha", "vitest",
+    } and "Testing & CI/CD" in category_names:
+        return "Testing & CI/CD"
     for name, needles in _INJECT_CATEGORY_HINTS:
         if name not in category_names:
             continue
@@ -549,6 +574,51 @@ def _inject_category_name(tool: str, category_names: list[str]) -> str | None:
     return category_names[0] if category_names else None
 
 
+CANONICAL_SKILL_CATEGORIES = (
+    "Languages",
+    "Testing & QA",
+    "CI/CD & DevOps",
+    "Backend & Cloud",
+    "Frontend",
+    "AI & Data",
+    "Embedded & Platforms",
+)
+
+
+def skill_category_for_tool(tool: str) -> str | None:
+    """Canonical category for a concrete skill used by fabricated-skills validation."""
+    low = (tool or "").strip().lower()
+    if not is_concrete_skill(tool):
+        return None
+    if low in {
+        "appium", "selenium", "playwright", "cypress", "jest", "pytest",
+        "postman", "newman", "react testing library", "testng", "mocha", "vitest",
+    }:
+        return "Testing & QA"
+    if low in {
+        "jenkins", "github actions", "gitlab ci", "git", "circleci",
+        "azure devops", "docker", "kubernetes", "terraform",
+    }:
+        return "CI/CD & DevOps"
+    for name, needles in _INJECT_CATEGORY_HINTS:
+        if any(_needle_hits_tool(n, low) for n in needles):
+            if name == "Testing & CI/CD":
+                return "Testing & QA"
+            return name
+    return None
+
+
+def skill_allowed_in_category(tool: str, category: str) -> bool:
+    """Whether a skill is semantically valid under a generated category."""
+    actual = skill_category_for_tool(tool)
+    if not actual:
+        return False
+    normalized = (category or "").strip()
+    if normalized == "Testing & CI/CD":
+        return actual in {"Testing & QA", "CI/CD & DevOps"}
+    return actual == normalized
+
+
 def select_skills(
     bank: FactBank,
     analysis: dict,
@@ -568,7 +638,9 @@ def select_skills(
     """
     profile = theme_profile(analysis)
     jd_tools = _jd_tool_set(analysis)
-    evidenced_lower = {t.lower() for t in (evidenced or set())}
+    evidenced_lower = {
+        t.lower() for t in (evidenced or set()) if is_concrete_skill(t)
+    }
 
     def category_score(cat: SkillCategory) -> float:
         score = sum(profile.get(t, 0.0) for t in cat.themes if t != "any")
@@ -594,7 +666,7 @@ def select_skills(
         known = {i.lower() for _, items, _ in working for i in items}
         for raw in sorted(evidenced or set(), key=lambda s: s.lower()):
             low = raw.lower().strip()
-            if not low or low in known:
+            if not is_concrete_skill(raw) or low in known:
                 continue
             # Prefer injecting tools the JD cares about, or anything the bullets proved.
             if not tool_matches(raw, jd_tools) and low not in evidenced_lower:

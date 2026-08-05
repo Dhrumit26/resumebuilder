@@ -6,56 +6,36 @@ Every bullet must answer ALL THREE — or it fails:
 2. HOW — the tech / method (name real tools/services, never "cloud technology")
 3. WHY / RESULT — measured impact (number or from→to)
 
-Length: more than one resume line, under two (~22–36 words, ~115–200 characters).
+Length: use the available page width (~28–42 words, ~145–240 characters).
+Aim for two useful printed lines, not 1.5 lines followed by empty space. Spend the
+extra words on one concrete recruiter/ATS signal: system boundary, user workflow,
+scale, failure mode, integration, rollout constraint, or operational ownership.
+Never pad with adjectives or generic process language.
 
 ## ROLE / PRODUCT CONTEXT — exactly 1 or 2 bullets
 Make 1–2 bullets establish the story a hiring manager needs:
-- Name a plausible FUNCTIONAL team or product area (payments backend, embedded
-  platform, agent infrastructure, frontend experience, release engineering).
+- Bullet 1 MUST explicitly contain the word "team" and name that team's
+  functional ownership. A block without this is mechanically rejected.
+- Name a plausible FUNCTIONAL team or product area derived from the research.
 - Name the concrete product/system and who or what it serves.
 - Still include HOW and a measured RESULT; do not write a separate team-description bullet.
 - Do not copy an employer-specific team name from the JD. Fabricate a plausible
   function aligned with the work.
 
-GOOD: "On the payments backend team, built Python settlement APIs for merchant
-payouts using PostgreSQL, cutting reconciliation time from 45 minutes to 12."
-GOOD: "Within the embedded platform team, shipped a Yocto image pipeline for
-field gateways, reducing cold-boot time from 48 seconds to 21."
-BAD: "Worked on the backend team." (no product, method, or result)
 Do this on only 1–2 bullets. The other bullets should stay focused on execution.
 
 ## STANDALONE BULLETS (critical)
 Each bullet must read cleanly alone. Do NOT chain with mechanical backrefs:
-FORBIDDEN spam: "that dashboard", "that console", "that component library", "those agents",
-"the same dashboard", "that same retrieval service" on most lines.
-OK: name the product once in natural English when needed ("an internal dashboard",
-"the component library", "a RAG retrieval service") — at most ONE "that/those/the same …"
-backref in the whole block.
-BAD: five bullets that all say "that dashboard…"
-GOOD: each bullet states its own subject + result.
-
-## GOLD — what + how + why, independent lines
-
-AI/LLM/agentic (Python + AWS):
-1. Built Python RAG retrieval APIs for an internal agent console over product docs on AWS, cutting first-response draft time from 12 minutes to under 4.
-2. Cut p95 multi-agent query latency from 1.8s to 1.1s by rewriting the embedding lookup path and batching model inference under load.
-3. Shipped tool-calling orchestration so support agents could read tickets and draft replies in-console, raising successful auto-drafts from 40% to 72% of sampled threads.
-4. Increased pytest coverage on LLM workflow handlers from 48% to 82%, contributing to fewer retrieval regressions reaching staging over six weeks.
-5. Containerized the retrieval service with Docker on AWS so staging matched production inference settings, shrinking release dry-runs from 3 hours to 45 minutes.
-
-Frontend (TypeScript + React):
-1. Built a TypeScript/React component library for an internal dashboard, reducing average feature-development time from five days to two.
-2. Cut the slowest dashboard filter path from 900ms to 320ms by memoizing list virtualization and trimming React re-renders on hot queue views.
-3. Increased Jest and React Testing Library coverage from 40% to 78%, contributing to a roughly 40% drop in UI regressions shipped to staging sprint over sprint.
-4. Wired typed TypeScript clients to REST ticket APIs so broken payload shapes failed in CI, dropping related production incidents from 6 per month to 1.
-5. Automated dashboard releases with AWS CodePipeline behind a feature flag, rolling to 100% of internal users over two weeks with zero rollback after canary.
+Use at most ONE mechanical back-reference ("that", "those", "the same") in the
+whole block. Each bullet must state its own subject and result.
 
 ## INSTANT FAIL
 - Mechanical "that dashboard / that console / that library" repeated across bullets
-- Vague "cloud technology", "cloud integration", "cloud services" without naming how (EC2, S3, Lambda, CodePipeline, Docker, ECS, …) — or drop the cloud claim
+- Vague "cloud technology", "cloud integration", or "cloud services" without a
+  concrete service/method — name it or drop the cloud claim
 - Overlapping bullets that restate the same deploy/telemetry win twice
 - Strong false causation: "raised coverage, which cut regressions by 60%" → use "contributing to" / "alongside"
-- Missing WHAT, HOW, or RESULT; under ~22 words; over ~36 words; no digit
+- Missing WHAT, HOW, or RESULT; under ~28 words; over ~42 words; no digit
 - No role/product context anchor, or repeating team/product setup in more than 2 bullets
 - Collaborated / Monitored / Enhanced code quality / seamless / language or cloud scatter
 - Cloning the other invent role: same system + same duties with only verbs/numbers
@@ -76,9 +56,14 @@ somewhere across the resume — but respect WORK-SPLIT (current owns product spi
 internship owns enablement). For THIS block, cover the spine pieces in YOUR lane.
 
 ## CRAFT
-- One sentence. 22–36 words. Verbs: Built, Shipped, Cut, Raised, Increased, Migrated, Rewrote, Fixed, Reduced, Defined, Deployed, Covered, Wired, Automated, Containerized.
+- One sentence. 28–42 words. Use a precise action verb appropriate to the work.
 - Never: Collaborated, Facilitated, Conducted, Participated, Helped, Ensured, Boosted, Monitored, leveraged, utilized, robust, seamless, "cloud technology".
 - Plain prose. No LaTeX, no \\textbf, no markdown. Write % plainly.
+
+## WEB-GROUNDED ROLE RESEARCH
+{{WEB_RESEARCH}}
+Use this to choose realistic systems, methods, users, and constraints. Synthesize;
+do not copy source wording, named teams, or unsupported employer-specific claims.
 
 ## THIS JOB POSTING
 Title: {{JD_TITLE}}

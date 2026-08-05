@@ -19,11 +19,12 @@ from .matching import _TOOL_THEMES, TECH_SYNONYMS, token_pattern
 
 MIN_WORDS = 14
 MAX_WORDS = 34
-# Fabricated Clerxi bullets must match Intuit density on the page: >1 line, ≤2 lines.
-FAB_MIN_WORDS = 22
-FAB_MAX_WORDS = 36
-FAB_MIN_CHARS = 115
-FAB_MAX_CHARS = 210
+# Fabricated experience has page room: use roughly two useful printed lines.
+# Extra density must be concrete scope/context, never generic filler.
+FAB_MIN_WORDS = 28
+FAB_MAX_WORDS = 42
+FAB_MIN_CHARS = 145
+FAB_MAX_CHARS = 245
 SUMMARY_MIN_WORDS = 24
 SUMMARY_MAX_WORDS = 40
 
@@ -38,7 +39,8 @@ _EXTRA_TECH = {
     "pytest", "circleci", "rabbitmq", "nginx", "kibana", "splunk", "helm",
     "ansible", "openshift", "dynamodb", "firebase", "supabase", "vercel",
     "sqlalchemy", "celery", "webpack", "vite", "babel", "eslint", "storybook",
-    "cypress", "playwright", "jest", "redis", "postgresql", "mysql", "docker",
+    "cypress", "playwright", "appium", "selenium", "postman", "newman", "pytest",
+    "react testing library", "jest", "redis", "postgresql", "mysql", "docker",
     "aws", "lambda", "s3", "ec2", "ecs", "eks", "rds", "sqs", "sns",
     "yocto", "mqtt", "amqp", "jenkins", "armbian", "ubuntu", "zephyr",
     "c++", "c++11", "c++17", "c++20",
@@ -502,24 +504,14 @@ _PRODUCT_CONTEXT_RE = re.compile(
     r"component library|test harness|test suite)\b",
     re.I,
 )
-_AUDIENCE_PURPOSE_RE = re.compile(
-    r"\b(?:used by|serving|supporting|powering|for|so|so that|to help|enabling)\s+"
-    r"(?:internal\s+)?(?:customers?|users?|merchants?|support agents?|engineers?|"
-    r"developers?|partners?|operators?|analysts?|finance teams?|feature teams?|"
-    r"field teams?|qa teams?|release teams?)\b",
-    re.I,
-)
-
-
 def role_context_bullet_indices(bullets: list[str]) -> list[int]:
-    """Bullets that establish team/product ownership and the product's purpose."""
+    """Bullets that explicitly establish functional-team and product ownership."""
     found: list[int] = []
     for idx, bullet in enumerate(bullets):
         plain = _plain(bullet)
         has_team = bool(_TEAM_CONTEXT_RE.search(plain))
         has_product = bool(_PRODUCT_CONTEXT_RE.search(plain))
-        has_audience = bool(_AUDIENCE_PURPOSE_RE.search(plain))
-        if has_product and (has_team or has_audience):
+        if has_team and has_product:
             found.append(idx)
     return found
 
@@ -547,9 +539,9 @@ def verify_fabricated_block(
         issues.append(
             Issue(
                 "missing-role-context",
-                "add 1–2 context-anchor bullets that name the functional team or product "
-                "area, the concrete product/system, and who or what it serves; keep the "
-                "existing what/how/measured-result structure",
+                "bullet 1 must explicitly name a plausible functional team (use the word "
+                "'team') and its concrete product/system; keep what/how/measured-result "
+                "in that same bullet",
             )
         )
     elif len(context_indices) > 2:
@@ -779,7 +771,7 @@ def verify_fabricated_block(
                     "too-thin",
                     f"bullet {i + 1} is too short ({words} words / {chars} chars) — "
                     f"need ≥{FAB_MIN_WORDS} words and ≥{FAB_MIN_CHARS} chars so it fills "
-                    f"more than one resume line with what/how/result",
+                    f"roughly two useful lines with scope/context plus what/how/result",
                 )
             )
         if words > FAB_MAX_WORDS or chars > FAB_MAX_CHARS:
@@ -787,7 +779,7 @@ def verify_fabricated_block(
                 Issue(
                     "too-long",
                     f"bullet {i + 1} is too long ({words} words / {chars} chars) — "
-                    f"keep ≤{FAB_MAX_WORDS} words and ≤{FAB_MAX_CHARS} chars (under two lines)",
+                    f"keep ≤{FAB_MAX_WORDS} words and ≤{FAB_MAX_CHARS} chars",
                 )
             )
         if not re.search(r"\d", text):

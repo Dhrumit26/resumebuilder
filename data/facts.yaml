@@ -303,7 +303,7 @@ skills:
       themes: [ai-ml, search-retrieval, caching]
 
     - name: Testing & CI/CD
-      items: [Jest, Playwright, Cypress, React Testing Library, GitHub Actions, GitLab CI, Jenkins, Git]
+      items: [Appium, Selenium, Playwright, Cypress, Jest, React Testing Library, pytest, Postman, Newman, GitHub Actions, GitLab CI, Jenkins, Git]
       themes: [testing, test-automation, ci-cd, quality, developer-experience]
 
     - name: Embedded & Platforms
