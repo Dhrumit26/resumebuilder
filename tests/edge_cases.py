@@ -46,8 +46,8 @@ TAILORED = {
             "Dropped flaky CI failures 65\\% and shrank pipeline time 45 to 28 minutes by moving e2e tests to Playwright, unlocking releases 2 days sooner.",
         )
         .replace(
-            "Tripled iteration speed and shortened deployment cycles from 2 weeks to 4 days by refactoring \\textbf{TypeScript} and \\textbf{JavaScript} platform services powering low-code features across teams.",
-            "Boosted iteration 3x and cut deploy cycles from 2 weeks to 4 days by refactoring \\textbf{TypeScript}/\\textbf{JavaScript} platform services for low-code teams.",
+            "Shortened deployment cycles from 2 weeks to 4 days by refactoring \\textbf{TypeScript} and \\textbf{JavaScript} platform services powering low-code features across teams.",
+            "Cut deploy cycles from 2 weeks to 4 days by refactoring \\textbf{TypeScript}/\\textbf{JavaScript} platform services for low-code teams.",
         )
         .replace(
             "Raised unit and integration \\textbf{test coverage} from 42\\% to 78\\% with \\textbf{Jest} and React Testing Library, reducing production defects by 40\\% and catching regressions earlier in development.",

@@ -184,12 +184,11 @@ roles:
 
       - id: platform-refactor
         core: >-
-          Tripled iteration speed and shortened deployment cycles from 2 weeks to 4 days
-          by refactoring TypeScript and JavaScript platform services that power low-code
-          features used across teams.
+          Shortened deployment cycles from 2 weeks to 4 days by refactoring TypeScript
+          and JavaScript platform services that power low-code features used across teams.
         tools: [TypeScript, JavaScript]
         themes: [refactoring, typescript-js, backend-services, ci-cd, developer-experience, collaboration-process]
-        metrics: ["Tripled", "3x", "2 weeks to 4 days"]
+        metrics: ["2 weeks to 4 days"]
         angles:
           - Refactoring shared services other teams depend on
           - Release cadence and developer velocity

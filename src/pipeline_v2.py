@@ -108,7 +108,9 @@ def _flex_rule(selection: Selection) -> str:
             "FABRICATED MODE for this CURRENT role: invent a coherent mid-level story "
             "natively in the posting's engineering domain. Ignore the fact bank for "
             "grounding. Company name stays real; product follows the JD domain, not "
-            "brand tokens in the company name. Do not adopt the posting's industry."
+            "brand tokens in the company name. Do not adopt the posting's industry. "
+            "Each bullet stands alone — no mechanical 'that dashboard' chains; name "
+            "real services instead of 'cloud technology'; soften coverage→defect claims."
         )
     if selection.flexible:
         return (
