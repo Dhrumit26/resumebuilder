@@ -46,6 +46,8 @@ Tools: {{JD_TOOLS}}
   suggestion and JD — but divide work: Clerxi owns the primary product; Intuit owns
   enablement (tests/CI/contracts/platform). Never mad-lib the same five bullets with
   swapped verbs/numbers. Together they should look like one interview-ready match.
+- Never start bullets with Led/Managed/Headed or claim you led a team — IC verbs only
+  (Built/Shipped/Implemented). One CI product and one primary story per role.
 - Projects stay closer to their current content unless the suggestion targets them.
 
 ## OUTPUT

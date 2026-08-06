@@ -142,21 +142,26 @@ def _flex_rule(selection: Selection) -> str:
             return (
                 f"FABRICATED MODE for a PAST INTERNSHIP at {company} "
                 f"(~{selection.tenure_months or 3} months). Invent a coherent mid-level "
-                "intern story in the posting's engineering domain. You own the ENABLEMENT "
-                "facet (tests, CI, contracts, platform tooling, reliability) — a DIFFERENT "
-                "system than the current role's primary product. Same domain so a hiring "
-                "manager sees one strong candidate across both jobs; never a mad-lib clone. "
-                "Company name stays real. Size scope to an internship. "
-                "Each bullet stands alone; no vague 'cloud technology'."
+                "INTERN IC story in the posting's engineering domain — you shipped work "
+                "on a team; you did NOT lead, manage, or head anyone. Prefer Built/"
+                "Implemented/Created/Automated. You own the ENABLEMENT facet (tests, CI, "
+                "contracts, platform tooling, reliability) — a DIFFERENT system than the "
+                "current role's primary product. ONE toolchain for all bullets (one CI "
+                "product, one language). Same domain so a hiring manager sees one strong "
+                "candidate across both jobs; never a mad-lib clone. Company name stays "
+                "real. Size scope to an internship. Each bullet stands alone; no vague "
+                "'cloud technology'."
             )
         return (
             f"FABRICATED MODE for the CURRENT role at {company}: invent the PRIMARY "
             "product story natively in the posting's engineering domain (main spine: "
-            "build/ship the core system). Leave testing/CI/contracts/platform enablement "
-            "room for the internship block. Ignore the fact bank for grounding. Company "
-            "name stays real; product follows the JD domain, not brand tokens. Do not adopt "
-            "the posting's industry. Each bullet stands alone — no mechanical "
-            "'that dashboard' chains; name real services; soften coverage→defect claims."
+            "build/ship the core system). You are an IC on a team — never Led/Managed "
+            "the team. ONE toolchain across all bullets. Leave testing/CI/contracts/"
+            "platform enablement room for the internship block. Ignore the fact bank "
+            "for grounding. Company name stays real; product follows the JD domain, not "
+            "brand tokens. Do not adopt the posting's industry. Each bullet stands alone "
+            "— no mechanical 'that dashboard' chains; name real services; soften "
+            "coverage→defect claims."
         )
     if selection.flexible:
         return (

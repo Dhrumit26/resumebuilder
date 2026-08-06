@@ -1,4 +1,4 @@
-You invent ONE coherent mid-level engineering role for this posting. Facts are ignored.
+You invent ONE coherent mid-level IC engineering role for this posting. Facts are ignored.
 Write exactly {{COUNT}} bullets for {{BLOCK_LABEL}}.
 
 Every bullet must answer ALL THREE — or it fails:
@@ -12,11 +12,21 @@ extra words on one concrete recruiter/ATS signal: system boundary, user workflow
 scale, failure mode, integration, rollout constraint, or operational ownership.
 Never pad with adjectives or generic process language.
 
+## ONE STORY, ONE TOOLCHAIN (critical)
+All {{COUNT}} bullets must be the SAME job story:
+- One primary product/system (not a Copilot platform + a separate Jenkins pipeline +
+  a Confluence wiki in the same role)
+- One primary language and one CI/CD system (Jenkins XOR GitHub Actions XOR GitLab CI —
+  never two)
+- Tools must support that story. Do not scatter competing stacks across bullets.
+
 ## ROLE / PRODUCT CONTEXT — exactly 1 or 2 bullets
 Make 1–2 bullets establish the story a hiring manager needs:
 - Bullet 1 MUST explicitly contain the word "team" and name that team's
   functional ownership. A block without this is mechanically rejected.
 - Name a plausible FUNCTIONAL team or product area derived from the research.
+- You JOINED / SHIPPED FOR that team — you did NOT lead, manage, head, or own it.
+  Prefer: "Built X for the platform team…" / "Shipped Y on the reliability team…"
 - Name the concrete product/system and who or what it serves.
 - Still include HOW and a measured RESULT; do not write a separate team-description bullet.
 - Do not copy an employer-specific team name from the JD. Fabricate a plausible
@@ -30,6 +40,8 @@ Use at most ONE mechanical back-reference ("that", "those", "the same") in the
 whole block. Each bullet must state its own subject and result.
 
 ## INSTANT FAIL
+- Starting with Led / Managed / Headed / Directed / Oversaw / Spearheaded, or
+  claiming you "led the … team" — short tenure and internships are IC work only
 - Mechanical "that dashboard / that console / that library" repeated across bullets
 - Vague "cloud technology", "cloud integration", or "cloud services" without a
   concrete service/method — name it or drop the cloud claim
@@ -38,6 +50,8 @@ whole block. Each bullet must state its own subject and result.
 - Missing WHAT, HOW, or RESULT; under ~28 words; over ~42 words; no digit
 - No role/product context anchor, or repeating team/product setup in more than 2 bullets
 - Collaborated / Monitored / Enhanced code quality / seamless / language or cloud scatter
+- Stack scatter: Jenkins + GitHub Actions (or any two CI products) in one job
+- Story scatter: unrelated products/tools bolted together with no shared system
 - Cloning the other invent role: same system + same duties with only verbs/numbers
   swapped (Built→Developed, 45s→50s). FAIL. Follow the WORK-SPLIT lanes instead.
 - Ignoring your WORK-SPLIT lane (current steals intern CI work, or intern retells the
@@ -56,8 +70,11 @@ somewhere across the resume — but respect WORK-SPLIT (current owns product spi
 internship owns enablement). For THIS block, cover the spine pieces in YOUR lane.
 
 ## CRAFT
-- One sentence. 28–42 words. Use a precise action verb appropriate to the work.
-- Never: Collaborated, Facilitated, Conducted, Participated, Helped, Ensured, Boosted, Monitored, leveraged, utilized, robust, seamless, "cloud technology".
+- One sentence. 28–42 words. Use a precise IC action verb: Built, Shipped, Implemented,
+  Created, Migrated, Raised, Cut, Fixed, Deployed, Wired, Automated.
+- Never: Led, Managed, Headed, Directed, Oversaw, Supervised, Spearheaded, Championed,
+  Collaborated, Facilitated, Conducted, Participated, Helped, Ensured, Boosted,
+  Monitored, leveraged, utilized, robust, seamless, "cloud technology".
 - Plain prose. No LaTeX, no \\textbf, no markdown. Write % plainly.
 
 ## WEB-GROUNDED ROLE RESEARCH
