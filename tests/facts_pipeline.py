@@ -718,6 +718,41 @@ def t21b_fabricated_summary_must_match_bullet_stack():
     assert "off-story" in codes or "vague" in codes, codes
 
 
+def t21c_summary_and_bullets_reject_persona_narration():
+    from src.verify import verify_bullet
+
+    fact = _fact("clerxi", "retrieval-services")
+    third = verify_summary(
+        "This engineer builds Python retrieval APIs on AWS. He focuses on latency "
+        "sensitive agent query paths in production services.",
+        [fact],
+        LEXICON,
+        proof_text="Built Python retrieval APIs on AWS.",
+        fabricated_ok=True,
+    )
+    codes = {i.code for i in third}
+    assert "third-person-bio" in codes, codes
+
+    first = verify_summary(
+        "I build Python retrieval APIs on AWS. My focus is latency sensitive paths.",
+        [fact],
+        LEXICON,
+        proof_text="Built Python retrieval APIs on AWS.",
+        fabricated_ok=True,
+    )
+    assert "first-person" in {i.code for i in first}
+
+    bullet_issues = verify_bullet(
+        "This engineer built Python APIs on AWS, cutting latency from 1.8s to 1.1s.",
+        None,
+        LEXICON,
+        grounded=False,
+        min_words=12,
+        max_words=42,
+    )
+    assert "third-person-bio" in {i.code for i in bullet_issues}
+
+
 def t22_keyword_coverage_counts_synonyms():
     result = keyword_coverage(
         "Built responsive pages with HTML, CSS and JavaScript, deployed via GitHub Actions.",

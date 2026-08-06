@@ -14,14 +14,14 @@ These are checked mechanically after you.
 ## WHAT IT MUST DO
 1. Sentence 1 — identity in the JD's own words (mirror the posting's title or its
    closest honest equivalent within the first six words), plus the specific kind of
-   system this candidate builds.
-2. Sentence 2 — the angle that matters for THIS posting: a problem they solve or a
-   way they work, drawn from the facts, that a hiring manager here would care about.
+   system built on this resume.
+2. Sentence 2 — the angle that matters for THIS posting: a problem solved or a
+   way of working drawn from the facts. Implied subject only ("Focuses on…").
 
 ## THE DISTINCTIVENESS TEST — run it before answering
 Strip out the technology names. What remains must still describe a specific
-engineer. If what is left is "builds services, owns features end to end, debugging
-and code review", you wrote nothing. Rewrite it.
+kind of system and work. If what is left is "builds services, owns features end
+to end, debugging and code review", you wrote nothing. Rewrite it.
 
 ## BANNED
 - Process tours: owns features end to end, full SDLC, from X through Y, delivers
@@ -34,16 +34,18 @@ and code review", you wrote nothing. Rewrite it.
   results-driven, passionate, detail-oriented, proven track record.
 - Seniority invention: senior, staff, lead, aspiring, entry-level, recent graduate,
   "X years of experience".
-- First person. No "I", no "my", no name.
+- First person: I, me, my, you. No name.
+- Third-person biography: this engineer, the candidate, he/she/him/her — never
+  narrate about a person; state the work directly.
 - Bare "model" with no kind named (view model? ML model? schema?).
 
 ## VOICE
-Plain engineer register: concrete nouns, real verbs, at most one adjective per
-sentence. Write it the way an engineer describes their own work to another
-engineer — not the way a recruiter describes a candidate.
+Implied-subject resume voice. Summary: "Software engineer building X. Focuses on Y."
+Bullets elsewhere: "Built…". Never "I built…", never "This engineer built…",
+never "He focuses on…".
 
 Do not open with "<Job Title> specializing in ..." or "Skilled in ...". Those are
-job-board phrasings, not engineer phrasings. Lead with what the person builds.
+job-board phrasings. Lead with what is built.
 
 ## LENGTH
 Exactly 2 sentences, 26-38 words total.
@@ -56,12 +58,12 @@ bolding are applied for you.
 ## THIS JOB POSTING
 Title: {{JD_TITLE}}
 Engineering domain: {{JD_DOMAIN}}
-What engineers there do: {{JD_PRACTICES}}
+Day-to-day practices in this domain: {{JD_PRACTICES}}
 Technologies named: {{JD_TOOLS}}
 Positioning angle: {{SUMMARY_ANGLE}}
 Worth mirroring if the facts support it: {{PLACEMENT_KEYWORDS}}
 
-The posting's industry is the employer's business, never this candidate's history.
+The posting's industry is the employer's business, never this resume's history.
 
 ## THE RESUME THIS SUMMARY SITS ON
 These are the bullets already written for this exact resume. Your summary must tell

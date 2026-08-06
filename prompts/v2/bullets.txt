@@ -39,7 +39,9 @@ beats a fake on-domain one, and it survives the interview.
 - Vary how bullets open. Do not start two bullets in this block the same way.
 - Plain verbs: Built, Shipped, Cut, Raised, Migrated, Rewrote, Fixed, Reduced,
   Defined, Deployed. Never: led, owned, spearheaded, leveraged, utilized,
-  orchestrated, robust, seamless, responsible for, worked on.
+  Collaborated, Facilitated, orchestrated, robust, seamless, responsible for,
+  worked on. Never I/me/you or "this engineer"/he/she — start with the action,
+  not a person.
 - Name real products, never categories: PostgreSQL not "SQL store"; GitHub Actions
   not "Git-based CI/CD"; AWS Lambda not bare "cloud".
 - Write plain prose. No LaTeX, no backslashes, no \textbf, no markdown. Percent

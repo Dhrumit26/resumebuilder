@@ -51,6 +51,8 @@ Tools: {{JD_TOOLS}}
 - Keep tech precise: Claude/Copilot are assistants not frameworks; Java+LangChain needs
   LangChain4j or a REST bridge; ECS needs Docker; OAuth login needs OpenID Connect;
   multi-agent cost cuts need caching/routing/compression named.
+- Resume voice only: no I/me/you and no "this engineer"/he/she narration — implied
+  subject (Built… / Software engineer building…).
 - Projects stay closer to their current content unless the suggestion targets them.
 
 ## OUTPUT
