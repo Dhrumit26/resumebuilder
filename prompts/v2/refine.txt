@@ -48,6 +48,9 @@ Tools: {{JD_TOOLS}}
   swapped verbs/numbers. Together they should look like one interview-ready match.
 - Never start bullets with Led/Managed/Headed or claim you led a team — IC verbs only
   (Built/Shipped/Implemented). One CI product and one primary story per role.
+- Keep tech precise: Claude/Copilot are assistants not frameworks; Java+LangChain needs
+  LangChain4j or a REST bridge; ECS needs Docker; OAuth login needs OpenID Connect;
+  multi-agent cost cuts need caching/routing/compression named.
 - Projects stay closer to their current content unless the suggestion targets them.
 
 ## OUTPUT
