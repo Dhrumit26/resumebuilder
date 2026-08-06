@@ -654,9 +654,11 @@ class _Stub:
     def __init__(self, mode="good"):
         self.mode = mode
         self.calls = 0
+        self.prompts = []
 
     def __call__(self, prompt, temperature=0.2, max_tokens=4000, retries=1, role="judge"):
         self.calls += 1
+        self.prompts.append(prompt)
         if "Technical Skills section for a fabricated" in prompt:
             if "Domain: frontend web" in prompt:
                 return {
@@ -792,7 +794,7 @@ class _Stub:
         return {"bullets": facts}
 
 
-def _run(mode="good", jd=None):
+def _run(mode="good", jd=None, intuit_fabricate=True):
     original_json = p2.call_llm_json
     original_web = p2.call_web_research_json
     original_jd = p2.run_jd_agent
@@ -812,11 +814,41 @@ def _run(mode="good", jd=None):
     }
     p2.run_jd_agent = lambda _jd: (jd or BACKEND_JD, True)
     try:
-        return p2.build_resume_v2("A backend engineering role. " * 10), stub
+        return p2.build_resume_v2(
+            "A backend engineering role. " * 10,
+            intuit_fabricate=intuit_fabricate,
+        ), stub
     finally:
         p2.call_llm_json = original_json
         p2.call_web_research_json = original_web
         p2.run_jd_agent = original_jd
+
+
+def t23b_intuit_soft_mode_keeps_real_facts():
+    """Toggle off: Intuit stays fact-grounded; Clerxi still invents."""
+    result, stub = _run(intuit_fabricate=False)
+    by_label = {b.get("block"): b for b in result["meta"]["blocks"]}
+    assert result["meta"]["intuit_fabricate"] is False
+    assert by_label["Clerxi AI"].get("fabricated") is True
+    assert by_label["Intuit"].get("fabricated") is False
+    # Soft Intuit uses the fact-grounded writer prompt (WHAT HAPPENED), not invent.
+    assert any("Intuit" in p and "WHAT HAPPENED:" in p for p in stub.prompts)
+    assert any(
+        ("You invent ONE coherent" in p or "FABRICATED MODE" in p)
+        and "Clerxi" in p
+        for p in stub.prompts
+    )
+
+
+def t23c_apply_intuit_fabricate_mode_only_touches_intuit():
+    selections = select_facts(BANK, BACKEND_JD, SLOTS)
+    assert selections["Intuit"].fabricated is True
+    soft = p2.apply_intuit_fabricate_mode(selections, False)
+    assert soft["Intuit"].fabricated is False
+    assert soft["Clerxi AI"].fabricated is True
+    hard = p2.apply_intuit_fabricate_mode(selections, True)
+    assert hard["Intuit"].fabricated is True
+    assert hard["Clerxi AI"].fabricated is True
 
 
 def t23_pipeline_preserves_template_structure():

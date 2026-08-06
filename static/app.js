@@ -12,10 +12,12 @@ const refineChat = document.getElementById("refine-chat");
 const refineStatus = document.getElementById("refine-status");
 const refineLoading = document.getElementById("refine-loading");
 const resetBtn = document.getElementById("reset-btn");
+const intuitFabricateToggle = document.getElementById("intuit-fabricate");
 
 const RESULT_KEY = "resumeBuilder.latestResult";
 const JD_KEY = "resumeBuilder.jobDescription";
 const VERSION_KEY = "resumeBuilder.storageVersion";
+const INTUIT_FAB_KEY = "resumeBuilder.intuitFabricate";
 const STORAGE_VERSION = "3";
 
 let latestLatex = "";
@@ -27,6 +29,26 @@ function normalizeJd(text) {
 
 function currentJd() {
   return (jobInput && jobInput.value.trim()) || "";
+}
+
+function intuitFabricateEnabled() {
+  return !(intuitFabricateToggle && !intuitFabricateToggle.checked);
+}
+
+function persistIntuitToggle() {
+  try {
+    sessionStorage.setItem(INTUIT_FAB_KEY, intuitFabricateEnabled() ? "1" : "0");
+  } catch (_) { /* private mode */ }
+}
+
+function restoreIntuitToggle() {
+  if (!intuitFabricateToggle) return;
+  try {
+    const saved = sessionStorage.getItem(INTUIT_FAB_KEY);
+    if (saved === "0" || saved === "1") {
+      intuitFabricateToggle.checked = saved === "1";
+    }
+  } catch (_) { /* ignore */ }
 }
 
 function wipeSavedData() {
@@ -61,6 +83,8 @@ try {
     sessionStorage.removeItem(RESULT_KEY);
   }
 } catch (_) { /* ignore */ }
+
+restoreIntuitToggle();
 
 function show(el) { if (el) el.classList.remove("hidden"); }
 function hide(el) { if (el) el.classList.add("hidden"); }
@@ -153,11 +177,14 @@ function renderBuildMeta(meta) {
   if (!el) return;
   if (!meta) { el.innerHTML = ""; return; }
   const lines = (meta.skills_lines || []).join(", ");
+  const invent = meta.intuit_fabricate === false
+    ? "Intuit invent off — real internship facts"
+    : "Intuit invent on — JD-domain story";
   el.innerHTML = `
     <h3>How This Was Built</h3>
     <p class="positioning">
       ${meta.llm_calls ?? "—"} model calls · summary ${meta.summary_words ?? "—"} words ·
-      skills lines: ${esc(lines)}
+      skills lines: ${esc(lines)} · ${esc(invent)}
       ${meta.refine_note ? `<br>${esc(meta.refine_note)}` : ""}
     </p>
   `;
@@ -337,7 +364,10 @@ async function build(jobDescription) {
   const res = await fetch("/api/v2/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ job_description: jobDescription }),
+    body: JSON.stringify({
+      job_description: jobDescription,
+      intuit_fabricate: intuitFabricateEnabled(),
+    }),
   });
   if (!res.ok) {
     let detail = `Generation failed (HTTP ${res.status})`;
@@ -378,6 +408,9 @@ async function refine(suggestion) {
         suggestion,
         sections: latestResult.sections,
         jd_analysis: latestResult.jd_analysis || null,
+        intuit_fabricate: (
+          latestResult.meta && typeof latestResult.meta.intuit_fabricate === "boolean"
+        ) ? latestResult.meta.intuit_fabricate : intuitFabricateEnabled(),
       }),
     });
   } catch (err) {
@@ -455,6 +488,9 @@ async function onRefineClick() {
 
 if (buildBtn) buildBtn.addEventListener("click", onBuildClick);
 if (jobInput) jobInput.addEventListener("input", syncRefineAvailability);
+if (intuitFabricateToggle) {
+  intuitFabricateToggle.addEventListener("change", persistIntuitToggle);
+}
 if (resetBtn) resetBtn.addEventListener("click", onResetClick);
 if (refineBtn) {
   refineBtn.addEventListener("click", (e) => {

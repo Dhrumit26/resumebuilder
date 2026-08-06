@@ -22,6 +22,14 @@
           rows="12"
           placeholder="Paste the full job posting — title, requirements, responsibilities, tech stack, qualifications..."
         ></textarea>
+        <label class="toggle-row" for="intuit-fabricate">
+          <span class="toggle-copy">
+            <strong>Invent Intuit for this JD</strong>
+            <span class="toggle-hint">On: invent Intuit in the posting’s domain. Off: keep Intuit on real CI/tests/React internship facts — safer for AV, robotics, CUDA, hardware.</span>
+          </span>
+          <input id="intuit-fabricate" type="checkbox" checked>
+          <span class="toggle-switch" aria-hidden="true"></span>
+        </label>
         <button id="build-btn" type="button">Generate 1-Page Tailored Resume</button>
         <button id="reset-btn" type="button" class="secondary-btn">Clear saved resume and start fresh</button>
       </section>
@@ -103,6 +111,6 @@
     </footer>
   </div>
 
-  <script src="/static/app.js?v=jd-scoped-3"></script>
+  <script src="/static/app.js?v=intuit-toggle"></script>
 </body>
 </html>

@@ -51,6 +51,14 @@ async def no_store_for_the_app_shell(request, call_next):
 
 class BuildRequest(BaseModel):
     job_description: str = Field(..., min_length=20, description="Target job description")
+    intuit_fabricate: bool = Field(
+        default=True,
+        description=(
+            "When true, invent Intuit bullets in the JD domain. When false, keep "
+            "Intuit on real internship facts (CI/tests/React) so AV/robotics claims "
+            "do not land at Intuit."
+        ),
+    )
 
 
 class RefineRequest(BaseModel):
@@ -60,6 +68,10 @@ class RefineRequest(BaseModel):
     jd_analysis: Optional[dict] = Field(
         default=None,
         description="Optional JD analysis from the last build (skips re-analyzing)",
+    )
+    intuit_fabricate: bool = Field(
+        default=True,
+        description="Match the invent setting used when the resume was generated.",
     )
 
 
@@ -108,7 +120,10 @@ def build_resume(request: BuildRequest):
 @app.post("/api/v2/build")
 def build_resume_facts(request: BuildRequest):
     try:
-        return build_resume_v2(request.job_description)
+        return build_resume_v2(
+            request.job_description,
+            intuit_fabricate=request.intuit_fabricate,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -123,6 +138,7 @@ def refine_resume_facts(request: RefineRequest):
             request.sections,
             request.suggestion,
             request.jd_analysis,
+            intuit_fabricate=request.intuit_fabricate,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

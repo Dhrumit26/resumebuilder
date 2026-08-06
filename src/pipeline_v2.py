@@ -6,8 +6,10 @@
 Differences from the v1 pipeline that matter:
 - By default, writers never invent. Every bullet is licensed by one fact in
   data/facts.yaml, and verify.py checks that mechanically.
-- When a role has fabricated: true (Clerxi), that block invents natively in the
-  JD's domain — craft checks only; Intuit and projects stay fact-grounded.
+- When a role has fabricated: true (Clerxi/Intuit), that block invents natively
+  in the JD's domain — craft checks only. Projects stay fact-grounded.
+- intuit_fabricate=False keeps Intuit on real internship facts so AV/robotics/
+  hardware claims never land at a company that does not do that work.
 - The model never emits LaTeX. skeleton.py fills the shipped templates, so the
   layout and the bullet counts are the templates', not the model's.
 - Quality is MEASURED (keyword coverage, metric density, domain match), not
@@ -19,6 +21,7 @@ from __future__ import annotations
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 
 from .facts import Fact, load_fact_bank
 from .llm import call_llm_json, call_web_research_json
@@ -105,6 +108,26 @@ def _format_facts(facts: list[Fact]) -> str:
             lines.append(f"   honest reframings: {'; '.join(fact.angles)}")
         lines.append("")
     return "\n".join(lines).strip()
+
+
+def apply_intuit_fabricate_mode(
+    selections: dict[str, Selection],
+    intuit_fabricate: bool,
+) -> dict[str, Selection]:
+    """When invent is off for Intuit, keep that block on real internship facts.
+
+    Clerxi can still invent for the JD. Intuit then rephrases CI/testing/React
+    facts instead of claiming CUDA, lidar, or robotics work at Intuit.
+    """
+    if intuit_fabricate:
+        return selections
+    out: dict[str, Selection] = {}
+    for label, sel in selections.items():
+        if sel.kind == "role" and "intuit" in label.lower() and sel.fabricated:
+            out[label] = replace(sel, fabricated=False)
+        else:
+            out[label] = sel
+    return out
 
 
 def _flex_rule(selection: Selection) -> str:
@@ -1029,7 +1052,12 @@ def measure(
     }
 
 
-def build_resume_v2(job_description: str, on_progress=None) -> dict:
+def build_resume_v2(
+    job_description: str,
+    on_progress=None,
+    *,
+    intuit_fabricate: bool = True,
+) -> dict:
     def emit(event: str, payload: dict) -> None:
         if on_progress is None:
             return
@@ -1056,7 +1084,10 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
     }
 
     # --- 3. Select real facts (pure code) -----------------------------------
-    selections = select_facts(bank, analysis, slots_by_label)
+    selections = apply_intuit_fabricate_mode(
+        select_facts(bank, analysis, slots_by_label),
+        intuit_fabricate,
+    )
     missing = [label for label in slots_by_label if label not in selections]
     if missing:
         raise ValueError(
@@ -1238,6 +1269,7 @@ def build_resume_v2(job_description: str, on_progress=None) -> dict:
             "architecture": "facts-v3",
             "final": True,
             "jd_agent_ok": jd_ok,
+            "intuit_fabricate": bool(intuit_fabricate),
             "llm_calls": (
                 1
                 + len(order)
@@ -1355,6 +1387,8 @@ def refine_resume_v2(
     sections: dict,
     suggestion: str,
     jd_analysis: dict | None = None,
+    *,
+    intuit_fabricate: bool = True,
 ) -> dict:
     """Rewrite an existing v2 resume using one user suggestion."""
     suggestion = (suggestion or "").strip()
@@ -1387,7 +1421,10 @@ def refine_resume_v2(
         for section_blocks in (exp_blocks, proj_blocks)
         for block in section_blocks
     }
-    selections = select_facts(bank, analysis, slots_by_label)
+    selections = apply_intuit_fabricate_mode(
+        select_facts(bank, analysis, slots_by_label),
+        intuit_fabricate,
+    )
 
     prompt = _fill(
         _load_v2_prompt("refine.txt"),
@@ -1553,6 +1590,7 @@ def refine_resume_v2(
             "architecture": "facts-v3-refine",
             "final": True,
             "jd_agent_ok": jd_ok,
+            "intuit_fabricate": bool(intuit_fabricate),
             "llm_calls": 1 if jd_analysis else 2,
             "final_score": measurement["score"],
             "refine_note": note,
