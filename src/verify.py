@@ -57,6 +57,24 @@ _BANNED_PHRASES = {
     "end-to-end automation", "cross-functional synergy", "value-add",
 }
 
+# Opening verbs that claim people-management. A new hire / intern cannot lead a team.
+_LEADERSHIP_OPEN = re.compile(
+    r"(?i)^(led|managed|headed|directed|oversaw|supervised|spearheaded|championed)\b"
+)
+_LEADERSHIP_TEAM = re.compile(
+    r"(?i)\b(?:led|managed|headed|directed|oversaw|supervised)\s+"
+    r"(?:the\s+)?(?:[\w/+-]+\s+){0,5}team\b"
+)
+
+# Mutually exclusive CI products — naming two in one job reads as two resumes.
+_CI_RIVAL_FAMILIES: list[tuple[str, tuple[str, ...]]] = [
+    ("GitHub Actions", ("github actions", "github action")),
+    ("Jenkins", ("jenkins",)),
+    ("GitLab CI", ("gitlab ci", "gitlab-ci")),
+    ("CircleCI", ("circleci", "circle ci")),
+    ("Azure DevOps", ("azure devops", "azure pipelines")),
+]
+
 # Vague filler that survives every other check because it says nothing at all.
 _VAGUE_SUMMARY = {
     "modern web technologies", "modern technologies", "modern frameworks",
@@ -539,9 +557,10 @@ def verify_fabricated_block(
         issues.append(
             Issue(
                 "missing-role-context",
-                "bullet 1 must explicitly name a plausible functional team (use the word "
-                "'team') and its concrete product/system; keep what/how/measured-result "
-                "in that same bullet",
+                "bullet 1 must name a plausible functional team (use the word 'team') "
+                "and its concrete product/system — e.g. 'Built X for the platform team…' "
+                "Never claim you Led/Managed the team. Keep what/how/measured-result in "
+                "that same bullet",
             )
         )
     elif len(context_indices) > 2:
@@ -658,6 +677,32 @@ def verify_fabricated_block(
             )
         )
 
+    ci_hits = [
+        label
+        for label, needles in _CI_RIVAL_FAMILIES
+        if any(n in low for n in needles)
+    ]
+    if len(ci_hits) > 1:
+        issues.append(
+            Issue(
+                "stack-scatter",
+                f"named rival CI systems ({', '.join(ci_hits)}) in one job — pick ONE "
+                f"({ci_hits[0]}) and keep every bullet on that same toolchain/story",
+            )
+        )
+
+    for i, text in enumerate(plains):
+        stripped = text.strip()
+        if _LEADERSHIP_OPEN.search(stripped) or _LEADERSHIP_TEAM.search(stripped):
+            issues.append(
+                Issue(
+                    "leadership-claim",
+                    f"bullet {i + 1} claims leadership (Led/Managed … team) — rewrite as "
+                    f"IC work (Built/Shipped/Implemented/Created) for a team you joined, "
+                    f"not a team you led. Short tenure and internships cannot lead orgs.",
+                )
+            )
+
     # Product setting in bullet 1 only — later bullets stand alone (no "that X" spam).
     setting_re = re.compile(
         r"\b(?:platform|service|console|dashboard|portal|application|pipeline|"
@@ -723,7 +768,8 @@ def verify_fabricated_block(
     # Fluff / meeting theater / empty JD cosplay.
     fluff_open = re.compile(
         r"(?i)^(facilitated|collaborated|conducted|participated|helped|ensured|"
-        r"boosted|monitored|enhanced(?:\s+code\s+quality)?)\b"
+        r"boosted|monitored|enhanced(?:\s+code\s+quality)?|"
+        r"led|managed|headed|directed|oversaw|supervised|spearheaded|championed)\b"
     )
     fluff_anywhere = re.compile(
         r"(?i)\b(?:collaborated with|facilitated|participated in|"

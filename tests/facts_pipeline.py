@@ -526,6 +526,46 @@ def t15m_fabricated_roles_need_one_or_two_product_context_anchors():
     assert "context-spam" in spam_codes, spam_codes
 
 
+def t15n_fabricated_rejects_leadership_and_rival_ci_stacks():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "backend services",
+        "domain_practices": ["API development", "CI"],
+        "concepts": ["backend development"],
+        "tools": ["Java", "Jenkins"],
+    }
+    led = [
+        "Led the Backend Infrastructure Engineering team at Clerxi AI, developing "
+        "Java microservices with Spring Boot, raising throughput from 500 to 750 rps.",
+        "Designed REST APIs with AWS Lambda in Java, improving retrieval from 60% to 85% "
+        "for frontend developers across multiple workflows.",
+        "Implemented Redis caching in Java, cutting latency from 200ms to 100ms during "
+        "peak traffic for mobile application backends.",
+        "Raised JUnit coverage from 70% to 90% on payment handlers, contributing to "
+        "fewer production defects across six release cycles.",
+        "Automated release checks with Jenkins pipelines, shrinking deploy validation "
+        "from 2 hours to 30 minutes for critical services.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(led, jd)}
+    assert "leadership-claim" in codes, codes
+
+    scattered = [
+        "Built Java CI gates for the platform enablement team, wiring Jenkins jobs that "
+        "cut flaky deploy failures from 18% to 4% across nightly suites.",
+        "Raised JUnit coverage from 70% to 90% on shared services, contributing to fewer "
+        "regressions reaching staging across six release cycles.",
+        "Automated GitHub Actions workflows for the same suite, shrinking PR check time "
+        "from 45 minutes to 18 and unblocking weekly releases.",
+        "Containerized test runners with Docker, reducing environment setup from 2 hours "
+        "to 25 minutes for partner integration dry-runs.",
+        "Added contract fixtures in Java for partner APIs, cutting failed handshake "
+        "retries from 12% to 3% during peak partner traffic.",
+    ]
+    scatter_codes = {i.code for i in verify_fabricated_block(scattered, jd)}
+    assert "stack-scatter" in scatter_codes, scatter_codes
+
+
 def t16_frozen_pairing_must_stay_intact():
     fact = _fact("intuit", "ci-migration")
     issues = verify_bullet(
