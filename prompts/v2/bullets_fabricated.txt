@@ -39,9 +39,28 @@ Each bullet must read cleanly alone. Do NOT chain with mechanical backrefs:
 Use at most ONE mechanical back-reference ("that", "those", "the same") in the
 whole block. Each bullet must state its own subject and result.
 
+## TECH PRECISION (use exact product names)
+- Claude / GitHub Copilot / ChatGPT are models or coding assistants — NEVER call
+  them "AI agent frameworks". Say "AI coding assistants such as …" or name a real
+  framework (LangChain, LangChain4j, AutoGen).
+- LangChain is primarily Python/TypeScript. With Java/Spring use LangChain4j, or
+  say the Java backend called a Python LangChain service over REST APIs.
+- AWS ECS only with containers: name Docker and optionally ECR / Fargate / EC2.
+- OAuth 2.0 is authorization. For login/authentication say OpenID Connect with
+  OAuth 2.0 when that is the flow.
+- Multi-agent cost/inference cuts need a mechanism: semantic caching, model
+  routing, prompt compression, or selective agent invocation — not the agents alone.
+- Prefer precise product wording: "scalable microservices architecture" (Spring Boot);
+  FastAPI is a Python API framework; Next.js/React/TypeScript with Node.js as runtime;
+  Plaid Link for bank linking; Dwolla for ACH / account-to-account transfers.
+
 ## INSTANT FAIL
 - Starting with Led / Managed / Headed / Directed / Oversaw / Spearheaded, or
   claiming you "led the … team" — short tenure and internships are IC work only
+- Calling Claude/Copilot/ChatGPT an "agent framework"
+- Java + LangChain without LangChain4j or a REST/Python-service bridge
+- ECS without Docker/containers; OAuth 2.0 claimed as login without OpenID Connect
+- Multi-agent cost cuts with no caching/routing/compression mechanism
 - Mechanical "that dashboard / that console / that library" repeated across bullets
 - Vague "cloud technology", "cloud integration", or "cloud services" without a
   concrete service/method — name it or drop the cloud claim

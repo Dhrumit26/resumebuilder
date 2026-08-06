@@ -75,6 +75,37 @@ _CI_RIVAL_FAMILIES: list[tuple[str, tuple[str, ...]]] = [
     ("Azure DevOps", ("azure devops", "azure pipelines")),
 ]
 
+# Cost-saving mechanisms that make "multi-agent cut inference cost" credible.
+_AGENT_COST_MECHANISMS = (
+    "semantic caching", "cache", "caching", "model routing", "routing",
+    "prompt compression", "compression", "selective agent", "selective invocation",
+    "batching", "top-k", "embedding-dimension", "cheaper model", "distill",
+)
+
+_MODEL_AS_FRAMEWORK = re.compile(
+    r"(?i)\b(?:ai\s+)?(?:agent\s+)?frameworks?\s+(?:like|such as|including)\s+"
+    r"[^.]{0,80}\b(?:claude|copilot|chatgpt|gpt-?4|gpt-?3\.5|gemini)\b"
+)
+_JAVA_LANGCHAIN = re.compile(r"(?i)\b(?:java|spring(?:\s*boot)?)\b")
+_LANGCHAIN = re.compile(r"(?i)\blangchain(?:4j)?\b")
+_LANGCHAIN4J = re.compile(r"(?i)\blangchain4j\b")
+_LANGCHAIN_BRIDGE = re.compile(
+    r"(?i)\b(?:rest(?:ful)?\s+apis?|http\s+apis?|python\s+service|microservice)\b"
+)
+_ECS = re.compile(r"(?i)\b(?:aws\s+)?ecs\b|\belastic\s+container\s+service\b")
+_ECS_CONTAINER = re.compile(
+    r"(?i)\b(?:docker|container(?:ized|s)?|ecr|fargate|ecs\s+on\s+ec2)\b"
+)
+_OAUTH_AUTHN = re.compile(
+    r"(?i)\boauth\s*2(?:\.0)?\b.{0,40}\b(?:login|logins|authentication|authenticate|sign[- ]?in)\b"
+    r"|\b(?:login|logins|authentication|authenticate|sign[- ]?in)\b.{0,40}\boauth\s*2(?:\.0)?\b"
+)
+_OIDC = re.compile(r"(?i)\b(?:openid\s+connect|oidc)\b")
+_MULTI_AGENT_COST = re.compile(
+    r"(?i)\bmulti[- ]agent\b.{0,100}\b(?:inference\s+)?(?:cost|costs|spend|token)\b"
+    r"|\b(?:inference\s+)?(?:cost|costs|spend|token).{0,100}\bmulti[- ]agent\b"
+)
+
 # Vague filler that survives every other check because it says nothing at all.
 _VAGUE_SUMMARY = {
     "modern web technologies", "modern technologies", "modern frameworks",
@@ -534,6 +565,68 @@ def role_context_bullet_indices(bullets: list[str]) -> list[int]:
     return found
 
 
+def _tech_precision_issues(plains: list[str]) -> list[Issue]:
+    """Catch common tech mislabels that make invent bullets read uninformed."""
+    issues: list[Issue] = []
+    for i, text in enumerate(plains):
+        low = text.lower()
+        n = i + 1
+
+        if _MODEL_AS_FRAMEWORK.search(text):
+            issues.append(
+                Issue(
+                    "tech-imprecise",
+                    f"bullet {n} calls Claude/Copilot/ChatGPT an agent framework — "
+                    f"they are models/coding assistants. Say 'AI coding assistants "
+                    f"such as Claude and GitHub Copilot' or name a real framework "
+                    f"(LangChain, LangChain4j)",
+                )
+            )
+
+        if _JAVA_LANGCHAIN.search(text) and _LANGCHAIN.search(text) and not _LANGCHAIN4J.search(text):
+            if not _LANGCHAIN_BRIDGE.search(text):
+                issues.append(
+                    Issue(
+                        "tech-imprecise",
+                        f"bullet {n} pairs Java/Spring with LangChain — use LangChain4j "
+                        f"for Java, or say the Java backend called a Python LangChain "
+                        f"service over REST APIs",
+                    )
+                )
+
+        if _ECS.search(text) and not _ECS_CONTAINER.search(text):
+            issues.append(
+                Issue(
+                    "tech-imprecise",
+                    f"bullet {n} mentions ECS without containers — ECS runs "
+                    f"containerized apps; name Docker and optionally ECR/Fargate/EC2",
+                )
+            )
+
+        if _OAUTH_AUTHN.search(text) and not _OIDC.search(text):
+            issues.append(
+                Issue(
+                    "tech-imprecise",
+                    f"bullet {n} uses OAuth 2.0 for login/authentication — OAuth 2.0 "
+                    f"is authorization; say 'OpenID Connect with OAuth 2.0' if that "
+                    f"is what you used",
+                )
+            )
+
+        if _MULTI_AGENT_COST.search(text):
+            if not any(m in low for m in _AGENT_COST_MECHANISMS):
+                issues.append(
+                    Issue(
+                        "tech-imprecise",
+                        f"bullet {n} claims multi-agent cut inference/cost without a "
+                        f"mechanism — name model routing, semantic caching, prompt "
+                        f"compression, or selective agent invocation",
+                    )
+                )
+
+    return issues
+
+
 def verify_fabricated_block(
     bullets: list[str],
     analysis: dict,
@@ -702,6 +795,8 @@ def verify_fabricated_block(
                     f"not a team you led. Short tenure and internships cannot lead orgs.",
                 )
             )
+
+    issues.extend(_tech_precision_issues(plains))
 
     # Product setting in bullet 1 only — later bullets stand alone (no "that X" spam).
     setting_re = re.compile(

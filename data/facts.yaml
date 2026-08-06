@@ -268,17 +268,17 @@ projects:
         lead: true
         core: >-
           Built a full-stack banking app with multi-account linking, real-time balances,
-          transaction history, and secure fund transfers through Plaid and Dwolla REST API
-          integrations.
+          transaction history, and secure fund transfers through Plaid Link for bank
+          account connections and Dwolla for ACH / account-to-account transfers via REST APIs.
         tools: [Plaid, Dwolla, REST APIs]
         themes: [full-stack, integrations, api-design, frontend-ui, security-auth, product-engineering]
         metrics: []
 
       - id: stack
         core: >-
-          Implemented it with Next.js 14, React, TypeScript, PostgreSQL, OAuth 2.0, and
-          GitHub Actions CI/CD, adding pagination and spending analytics.
-        tools: [Next.js, React, TypeScript, PostgreSQL, OAuth 2.0, GitHub Actions]
+          Implemented it with Next.js 14, React, TypeScript, PostgreSQL, OpenID Connect
+          with OAuth 2.0, and GitHub Actions CI/CD, adding pagination and spending analytics.
+        tools: [Next.js, React, TypeScript, PostgreSQL, OAuth 2.0, OpenID Connect, GitHub Actions]
         themes: [frontend-ui, react, typescript-js, databases, ci-cd, security-auth, full-stack]
         metrics: []
 

@@ -566,6 +566,46 @@ def t15n_fabricated_rejects_leadership_and_rival_ci_stacks():
     assert "stack-scatter" in scatter_codes, scatter_codes
 
 
+def t15o_fabricated_rejects_imprecise_tech_claims():
+    from src.verify import verify_fabricated_block
+
+    jd = {
+        "domain": "backend AI services",
+        "domain_practices": ["agent workflows", "API development"],
+        "concepts": ["multi-agent", "LLM"],
+        "tools": ["Java", "AWS"],
+    }
+    bad = [
+        "Built Java APIs for the platform team integrating AI agent frameworks like Claude "
+        "and Copilot, raising successful drafts from 40% to 72% of sampled threads.",
+        "Wired a Java Spring Boot backend with LangChain for retrieval, cutting query time "
+        "from 1.8s to 1.1s across production agent workflows under load.",
+        "Deployed Java services on AWS ECS, shrinking release dry-runs from 3 hours to "
+        "45 minutes for staging parity with production inference settings.",
+        "Added OAuth 2.0 for login authentication on the agent console, reducing failed "
+        "sign-ins from 8% to 2% during peak support traffic windows.",
+        "Shipped a multi-agent system that reduced inference costs by 80%, improving "
+        "budget headroom from $12k to $2.4k monthly for the same traffic.",
+    ]
+    codes = {i.code for i in verify_fabricated_block(bad, jd)}
+    assert "tech-imprecise" in codes, codes
+
+    good = [
+        "Built Java APIs for the platform team using LangChain4j agent workflows, raising "
+        "successful support drafts from 40% to 72% of sampled production threads.",
+        "Deployed containerized Java services with Docker on AWS ECS Fargate, shrinking "
+        "release dry-runs from 3 hours to 45 minutes for staging parity.",
+        "Added OpenID Connect with OAuth 2.0 for console login, reducing failed sign-ins "
+        "from 8% to 2% during peak support traffic windows across two regions.",
+        "Cut multi-agent inference spend from $12k to $2.4k monthly with semantic caching "
+        "and model routing on the same Java agent orchestration path.",
+        "Raised JUnit coverage on agent handlers from 48% to 82%, contributing to fewer "
+        "retrieval regressions reaching staging across six release cycles.",
+    ]
+    good_codes = {i.code for i in verify_fabricated_block(good, jd)}
+    assert "tech-imprecise" not in good_codes, good_codes
+
+
 def t16_frozen_pairing_must_stay_intact():
     fact = _fact("intuit", "ci-migration")
     issues = verify_bullet(
