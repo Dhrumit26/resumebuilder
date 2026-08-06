@@ -12,13 +12,15 @@ stack) as those bullets. Do not introduce a different stack or product story.
 - Exactly 2 sentences, 26–38 words total.
 
 ## WHAT IT MUST DO
-1. Sentence 1 — who they are for THIS posting + the specific system they build.
-2. Sentence 2 — how they work on that system in a way this hiring manager cares
-   about (reliability, latency, test rigor, shipping cadence) — still no numbers.
+1. Sentence 1 — identity for THIS posting (mirror the title) + the specific system
+   built on this resume.
+2. Sentence 2 — how that system is worked (reliability, latency, shipping) — still
+   no numbers. Implied subject only: "Focuses on…" not "This engineer focuses…"
 
 ## DISTINCTIVENESS
-Strip the tool names. What remains must still be a specific engineer. If what is
-left is "builds scalable reliable backends and collaborates across product", rewrite.
+Strip the tool names. What remains must still name a specific kind of system and
+work style. If what is left is "builds scalable reliable backends and collaborates
+across product", rewrite.
 
 ## BANNED
 - collaborates / collaborate with / across engineering and product
@@ -26,7 +28,9 @@ left is "builds scalable reliable backends and collaborates across product", rew
 - scalable (decoration), reliable backends, cloud infrastructure (bare)
 - robust, seamless, cutting-edge, passionate, specializing in, skilled in
 - owns features end to end, full SDLC, senior/staff/lead, years of experience
-- First person. Process tours. Industry cosplay from the posting.
+- First person: I, me, my, you
+- Third-person biography: this engineer, the candidate, he/she/him/her
+- Narrating about a person. State the work: "Software engineer building X. Focuses on Y."
 
 ## FORMAT
 Plain sentence text only — no LaTeX, no backslashes, no markdown.
@@ -34,7 +38,7 @@ Plain sentence text only — no LaTeX, no backslashes, no markdown.
 ## THIS JOB POSTING
 Title: {{JD_TITLE}}
 Engineering domain: {{JD_DOMAIN}}
-What engineers there do: {{JD_PRACTICES}}
+Day-to-day practices in this domain: {{JD_PRACTICES}}
 Technologies named: {{JD_TOOLS}}
 Positioning angle: {{SUMMARY_ANGLE}}
 Worth mirroring if the bullets support it: {{PLACEMENT_KEYWORDS}}
@@ -45,7 +49,7 @@ Worth mirroring if the bullets support it: {{PLACEMENT_KEYWORDS}}
 ## WEB-GROUNDED ROLE RESEARCH
 {{WEB_RESEARCH}}
 Use research for accurate terminology only. The bullets remain the source of
-truth for what this candidate claims.
+truth for claims on this page.
 
 ## OUTPUT
 {"summary": "..."}

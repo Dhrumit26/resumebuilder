@@ -95,6 +95,8 @@ internship owns enablement). For THIS block, cover the spine pieces in YOUR lane
   Collaborated, Facilitated, Conducted, Participated, Helped, Ensured, Boosted,
   Monitored, leveraged, utilized, robust, seamless, "cloud technology".
 - Plain prose. No LaTeX, no \\textbf, no markdown. Write % plainly.
+- Resume voice only: no I/me/you, and never "this engineer" / he/she narration.
+  Start with the action (Built/Shipped/Implemented), not a person.
 
 ## WEB-GROUNDED ROLE RESEARCH
 {{WEB_RESEARCH}}

@@ -143,6 +143,37 @@ _TRAILING_WORDS = {
     "that", "which", "from", "into", "as", "at", "via", "through",
 }
 
+# Resume voice: no first person, and no third-person biography about the owner.
+_FIRST_PERSON = re.compile(r"(?i)\b(?:I|me|my|mine|myself|you|your|yours|yourself)\b")
+_THIRD_PERSON_BIO = re.compile(
+    r"(?i)\b(?:this|the)\s+(?:software\s+)?(?:engineer|candidate|developer|applicant)\b"
+    r"|\b(?:he|she|him|her|himself|herself)\b"
+    r"|\b(?:his|hers)\b"
+)
+
+
+def _persona_voice_issues(plain: str, *, where: str) -> list[Issue]:
+    """Reject I/me and 'this engineer did…' narration — use implied-subject resume voice."""
+    issues: list[Issue] = []
+    if _FIRST_PERSON.search(plain):
+        issues.append(
+            Issue(
+                "first-person",
+                f"{where}: no I/me/my/you — write implied-subject resume voice "
+                f"(Built… / Software engineer building…)",
+            )
+        )
+    if _THIRD_PERSON_BIO.search(plain):
+        issues.append(
+            Issue(
+                "third-person-bio",
+                f"{where}: no 'this engineer' / he/she/they narration — do not talk "
+                f"about the person; state the work directly (Built… / Focuses on…)",
+            )
+        )
+    return issues
+
+
 _STOPWORDS = {
     "the", "a", "an", "and", "or", "but", "of", "to", "in", "on", "for", "with",
     "by", "from", "at", "as", "that", "this", "it", "its", "into", "through",
@@ -325,6 +356,8 @@ def verify_bullet(
     if "\\textbf" in bullet:
         issues.append(Issue("manual-bold", "do not bold — bolding is applied automatically"))
 
+    issues.extend(_persona_voice_issues(plain, where="bullet"))
+
     # Compression grammar: "cut latency 38%" is missing its preposition.
     if re.search(r"\b(cut|reduced|dropped|raised|increased|improved|lowered)\s+[\w\s]{0,30}?\d+%", low):
         if not re.search(r"\b(by|from|to)\b[\w\s]{0,20}?\d+%", low):
@@ -437,10 +470,10 @@ def verify_summary(
                 )
             )
 
-    if re.search(r"\bI\b|\bmy\b", plain):
-        issues.append(Issue("first-person", "no first person in a resume summary"))
     if re.search(r"(?<!\\)%", summary):
         issues.append(Issue("bare-percent", "escape percent signs as \\%"))
+
+    issues.extend(_persona_voice_issues(plain, where="summary"))
 
     return issues
 
